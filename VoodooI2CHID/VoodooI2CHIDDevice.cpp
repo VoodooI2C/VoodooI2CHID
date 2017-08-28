@@ -8,7 +8,7 @@
 
 #include <IOKit/hid/IOHIDDevice.h>
 #include "VoodooI2CHIDDevice.hpp"
-#incude "VoodooI2CControllerNub.hpp"
+#include "../../../VoodooI2C/VoodooI2C/VoodooI2CController/VoodooI2CControllerNub.hpp"
 
 #define super IOHIDDevice
 OSDefineMetaClassAndAbstractStructors(VoodooI2CHIDDevice, IOHIDDevice);
@@ -36,7 +36,7 @@ void VoodooI2CHIDDevice::free() {
 }
 
 VoodooI2CHIDDevice* VoodooI2CHIDDevice::probe(IOService* provider, SInt32* score) {
-    
+    return this;
 }
 
 bool VoodooI2CHIDDevice::start(IOService* provider) {
