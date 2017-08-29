@@ -19,10 +19,35 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>IOKitPersonalities</key>
-	<dict/>
+    <dict>
+        <key>VoodooI2CHIDDevice</key>
+        <dict>
+            <key>CFBundleIdentifier</key>
+            <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+            <key>IOClass</key>
+            <string>VoodooI2CHIDDevice</string>
+            <key>IONameMatch</key>
+            <string>PNP0C50</string>
+            <key>IOProviderClass</key>
+            <string>VoodooI2CDeviceNub</string>
+        </dict>
+	</dict>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2017 Alexandre Daoud. All rights reserved.</string>
-	<key>OSBundleLibraries</key>
-	<dict/>
+    <key>OSBundleLibraries</key>
+    <dict>
+        <key>com.alexandred.VoodooI2C</key>
+        <string>2.0</string>
+        <key>com.apple.iokit.IOACPIFamily</key>
+        <string>1.4</string>
+        <key>com.apple.iokit.IOHIDFamily</key>
+        <string>2.0</string>
+        <key>com.apple.kpi.iokit</key>
+        <string>15.6</string>
+        <key>com.apple.kpi.libkern</key>
+        <string>15.6</string>
+        <key>com.apple.kpi.mach</key>
+        <string>13.0</string>
+    </dict>
 </dict>
 </plist>

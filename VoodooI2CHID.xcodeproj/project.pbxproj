@@ -48,19 +48,11 @@
 		AC0DE5E11F4FFB4B006149C8 /* VoodooI2CHID */ = {
 			isa = PBXGroup;
 			children = (
-				AC0DE5F01F50154C006149C8 /* API Headers */,
 				AC0DE5E61F4FFB4B006149C8 /* Info.plist */,
 				AC0DE5EC1F4FFDB2006149C8 /* VoodooI2CHIDDevice.cpp */,
 				AC0DE5ED1F4FFDB2006149C8 /* VoodooI2CHIDDevice.hpp */,
 			);
 			path = VoodooI2CHID;
-			sourceTree = "<group>";
-		};
-		AC0DE5F01F50154C006149C8 /* API Headers */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = "API Headers";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -239,6 +231,7 @@
 		AC0DE5EA1F4FFB4B006149C8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_DOCUMENTATION_COMMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.0.0d1;
 				INFOPLIST_FILE = VoodooI2CHID/Info.plist;
@@ -254,6 +247,7 @@
 		AC0DE5EB1F4FFB4B006149C8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_DOCUMENTATION_COMMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.0.0d1;
 				INFOPLIST_FILE = VoodooI2CHID/Info.plist;
