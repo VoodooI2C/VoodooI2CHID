@@ -13,12 +13,17 @@
 #include <IOKit/IOKitKeys.h>
 #include <IOKit/IOService.h>
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
+#include <IOKit/IOInterruptEventSource.h>
+#include <IOKit/hid/IOHIDDevice.h>
 #include "../../../Dependencies/helpers.hpp"
+
+#define I2C_HID_PWR_ON  0x00
+#define I2C_HID_PWR_SLEEP 0x01
 
 typedef union {
     UInt8 data[4];
     struct __attribute__((__packed__)) cmd {
-        UInt16 regiser;
+        UInt16 reg;
         UInt8 report_type_id;
         UInt8 opcode;
     } c;
@@ -47,8 +52,6 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
   OSDeclareDefaultStructors(VoodooI2CHIDDevice);
 
  public:
-    bool attach(IOService* provider);
-    void detach(IOService* provider);
     bool init(OSDictionary* properties);
     void free();
     IOReturn getHIDDescriptor();
@@ -63,16 +66,29 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     virtual OSNumber* newVersionNumber() const override;
     virtual OSString* newTransportString() const override;
     virtual OSString* newManufacturerString() const override;
-    virtual OSNumber* newPrimaryUsageNumber() const override;
-    virtual OSNumber* newPrimaryUsagePageNumber() const override;
 
  protected:
+    const char* name;
+
+    IOReturn setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options);
  private:
     IOACPIPlatformDevice* acpi_device;
     VoodooI2CDeviceNub* api;
+    bool awake;
+    IOCommandGate* command_gate;
     UInt16 hid_descriptor_register;
     VoodooI2CHIDDeviceHIDDescriptor* hid_descriptor;
-    const char* name;
+    IOInterruptEventSource* interrupt_source;
+    bool read_in_progress;
+    UInt32* reset_event;
+    IOWorkLoop* work_loop;
+
+    void getInputReport();
+    void interruptOccured(OSObject* owner, IOInterruptEventSource* src, int intCount);
+    void releaseResources();
+    IOReturn resetHIDDevice();
+    IOReturn setHIDPowerState(VoodooI2CState state);
+    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
 };
 
 
