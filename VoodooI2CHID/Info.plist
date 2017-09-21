@@ -31,28 +31,67 @@
 				<key>compatible</key>
 				<string>PNP0C50</string>
 			</dict>
-            <key>IOProbeScore</key>
-            <integer>100</integer>
+			<key>IOProbeScore</key>
+			<integer>100</integer>
 			<key>IOProviderClass</key>
 			<string>VoodooI2CDeviceNub</string>
 		</dict>
-        <key>VoodooI2CPrecisionTouchpadDevice</key>
+        <key>VoodooI2CHIDDevice Precision Touchpad HID Event Driver</key>
         <dict>
             <key>CFBundleIdentifier</key>
             <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-            <key>IOClass</key>
-            <string>VoodooI2CPrecisionTouchpadDevice</string>
+            <key>DeviceUsagePairs</key>
+            <array>
+                <dict>
+                    <key>DeviceUsage</key>
+                    <integer>5</integer>
+                    <key>DeviceUsagePage</key>
+                    <integer>13</integer>
+                </dict>
+            </array>
             <key>IOPropertyMatch</key>
             <dict>
-                <key>compatible</key>
-                <string>PNP0C50</string>
+                <key>Transport</key>
+                <string>I2C</string>
             </dict>
             <key>IOProbeScore</key>
-            <integer>200</integer>
+            <integer>300</integer>
+            <key>IOClass</key>
+            <string>VoodooI2CPrecisionTouchpadHIDEventDriver</string>
             <key>IOProviderClass</key>
-            <string>VoodooI2CDeviceNub</string>
+            <string>IOHIDInterface</string>
         </dict>
-
+		<key>VoodooI2CHIDDevice Multitouch HID Event Driver</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>DeviceUsagePairs</key>
+			<array>
+				<dict>
+					<key>DeviceUsage</key>
+					<integer>4</integer>
+					<key>DeviceUsagePage</key>
+					<integer>13</integer>
+				</dict>
+				<dict>
+					<key>DeviceUsage</key>
+					<integer>5</integer>
+					<key>DeviceUsagePage</key>
+					<integer>13</integer>
+				</dict>
+			</array>
+			<key>IOPropertyMatch</key>
+			<dict>
+				<key>Transport</key>
+				<string>I2C</string>
+			</dict>
+			<key>IOProbeScore</key>
+			<integer>200</integer>
+			<key>IOClass</key>
+			<string>VoodooI2CMultitouchHIDEventDriver</string>
+			<key>IOProviderClass</key>
+			<string>IOHIDInterface</string>
+		</dict>
 		<key>VoodooI2CHIDDevice Generic Mouse HID Event Driver</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
