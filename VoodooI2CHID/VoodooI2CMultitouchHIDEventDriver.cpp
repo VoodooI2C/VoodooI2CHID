@@ -45,7 +45,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
     event.contact_count = contact_count_element->getValue();
     event.transducers = digitiser.transducers;
     
-    multitouch_interface->handleInterruptReport(event);
+    multitouch_interface->handleInterruptReport(event, timestamp);
 }
 
 void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime timestamp, UInt32 report_id) {
@@ -91,6 +91,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
         element_is_current = (element->getReportID() == report_id) && (CMP_ABSOLUTETIME(&timestamp, &element_timestamp)==0);
 
         transducer->id = report_id;
+        transducer->timestamp = element_timestamp;
 
         usage_page = element->getUsagePage();
         usage = element->getUsage();
