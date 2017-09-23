@@ -28,6 +28,9 @@
 #include <IOKit/hid/IOHIDUsageTables.h>
 
 #include "../../../Multitouch Support/VoodooI2CDigitiserStylus.hpp"
+#include "../../../Multitouch Support/VoodooI2CMultitouchInterface.hpp"
+#include "../../../Multitouch Support/MultitouchHelpers.hpp"
+
 #include "../../../Dependencies/helpers.hpp"
 
 #define kHIDUsage_Dig_Confidence kHIDUsage_Dig_TouchValid
@@ -53,15 +56,17 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     IOReturn parseDigitizerTransducerElement(IOHIDElement* element, IOHIDElement* parent);
     IOReturn parseElements();
     void processDigitizerElements();
+    IOReturn publishMultitouchInterface();
     static inline void setButtonState(DigitiserTransducerButtonState* state, UInt32 bit, UInt32 value, AbsoluteTime timestamp);
     void setDigitizerProperties();
     virtual IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
     void handleStop(IOService* provider);
  protected:
     bool awake = true;
-    IOHIDInterface* interface;
+    IOHIDInterface* hid_interface;
  private:
     SInt32 absolute_axis_removal_percentage = 15;
+    VoodooI2CMultitouchInterface* multitouch_interface;
     OSArray* supported_elements;
 };
 
