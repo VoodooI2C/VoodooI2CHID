@@ -205,6 +205,12 @@ VoodooI2CHIDDevice* VoodooI2CHIDDevice::probe(IOService* provider, SInt32* score
 }
 
 void VoodooI2CHIDDevice::releaseResources() {
+    if (command_gate) {
+        work_loop->removeEventSource(command_gate);
+        command_gate->release();
+        command_gate = NULL;
+    }
+
     if (interrupt_source) {
         interrupt_source->disable();
         work_loop->removeEventSource(interrupt_source);
@@ -244,6 +250,19 @@ IOReturn VoodooI2CHIDDevice::resetHIDDevice() {
     api->writeI2C(command.data, 4);
 
     read_in_progress = false;
+    
+    AbsoluteTime absolute_time;
+
+    // Device is required to complete a host-initiated reset in at most 5 seconds.
+
+    nanoseconds_to_absolutetime(5000000000, &absolute_time);
+    
+    IOReturn sleep = command_gate->commandSleep(reset_event, absolute_time);
+
+    if (sleep == THREAD_TIMED_OUT) {
+        IOLog("%s::%s Timeout waiting for device to complete host initiated reset\n", getName(), name);
+        return kIOReturnTimeout;
+    }
 
     return kIOReturnSuccess;
 }
@@ -374,16 +393,19 @@ bool VoodooI2CHIDDevice::start(IOService* provider) {
     }
 
     work_loop->addEventSource(interrupt_source);
-
-    resetHIDDevice();
-    
-    PMinit();
-    
     interrupt_source->enable();
-    awake = true;
-    
+
+    command_gate = IOCommandGate::commandGate(this);
+    if (!command_gate || (work_loop->addEventSource(command_gate) != kIOReturnSuccess)) {
+        IOLog("%s::%s Could not open command gate\n", getName(), name);
+        goto exit;
+    }
+
+    PMinit();
     api->joinPMtree(this);
     registerPowerDriver(this, VoodooI2CIOPMPowerStates, kVoodooI2CIOPMNumberPowerStates);
+    
+    resetHIDDevice();
 
     registerService();
 

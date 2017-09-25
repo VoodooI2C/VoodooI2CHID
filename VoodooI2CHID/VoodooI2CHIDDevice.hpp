@@ -79,6 +79,7 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
  private:
     IOACPIPlatformDevice* acpi_device;
     VoodooI2CDeviceNub* api;
+    IOCommandGate* command_gate;
     UInt16 hid_descriptor_register;
     VoodooI2CHIDDeviceHIDDescriptor* hid_descriptor;
     IOInterruptEventSource* interrupt_source;
