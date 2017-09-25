@@ -172,7 +172,10 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                     case kHIDUsage_Dig_Quality:
                         if (value)
                             transducer->is_valid = true;
+                        else
+                            transducer->is_valid = false;
                         handled    |= element_is_current;
+                        break;
                     case kHIDUsage_Dig_BarrelPressure:
                         if (stylus) {
                             stylus->barrel_pressure.update(element->getValue(), timestamp);
