@@ -50,7 +50,7 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     bool didTerminate(IOService* provider, IOOptionBits options, bool* defer);
     void handleDigitizerReport(AbsoluteTime timestamp, UInt32 report_id);
     void handleDigitizerTransducerReport(VoodooI2CDigitiserTransducer* transducer, AbsoluteTime timestamp, UInt32 report_id);
-    void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id);
+    virtual void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id);
     bool handleStart(IOService* provider);
     IOReturn parseDigitizerElement(IOHIDElement* element);
     IOReturn parseDigitizerTransducerElement(IOHIDElement* element, IOHIDElement* parent);
