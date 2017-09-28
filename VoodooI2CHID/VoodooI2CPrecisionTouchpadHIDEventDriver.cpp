@@ -23,6 +23,15 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
     report->writeBytes(0, &buffer, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
     
     hid_interface->setReport(report, kIOHIDReportTypeFeature, input_mode_element->getReportID());
+    
+    ready = true;
+}
+
+void VoodooI2CPrecisionTouchpadHIDEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) {
+    if (!ready)
+        return;
+
+    super::handleInterruptReport(timestamp, report, report_type, report_id);
 }
 
 bool VoodooI2CPrecisionTouchpadHIDEventDriver::handleStart(IOService* provider) {

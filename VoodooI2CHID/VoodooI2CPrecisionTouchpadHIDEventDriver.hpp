@@ -31,11 +31,13 @@ class VoodooI2CPrecisionTouchpadHIDEventDriver : public VoodooI2CMultitouchHIDEv
   OSDeclareDefaultStructors(VoodooI2CPrecisionTouchpadHIDEventDriver);
 
  public:
+    void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id);
     bool handleStart(IOService* provider);
     IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
 
  protected:
  private:
+    bool ready = false;
     void enterPrecisionTouchpadMode();
 };
 
