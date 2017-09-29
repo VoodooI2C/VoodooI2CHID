@@ -124,8 +124,8 @@ IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
 
 void VoodooI2CHIDDevice::getInputReport() {
     unsigned char* report = (unsigned char *)IOMalloc(hid_descriptor->wMaxInputLength);
-    
-    api->readI2C(report, hid_descriptor->wMaxInputLength);
+
+    command_gate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &VoodooI2CHIDDevice::getInputReportGated), report, &hid_descriptor->wMaxInputLength);
     
     int return_size = report[0] | report[1] << 8;
 
@@ -154,6 +154,10 @@ void VoodooI2CHIDDevice::getInputReport() {
     IOFree(report, hid_descriptor->wMaxInputLength);
 
     read_in_progress = false;
+}
+
+IOReturn VoodooI2CHIDDevice::getInputReportGated(unsigned char* report, UInt16* length) {
+    return api->readI2C(report, *length);
 }
 
 void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSource* src, int intCount) {
@@ -258,11 +262,12 @@ IOReturn VoodooI2CHIDDevice::resetHIDDevice() {
 
     nanoseconds_to_absolutetime(5000000000, &absolute_time);
 
+    read_in_progress = false;
+
     IOReturn sleep = command_gate->commandSleep(&reset_event, absolute_time);
 
     if (sleep == THREAD_TIMED_OUT) {
         IOLog("%s::%s Timeout waiting for device to complete host initiated reset\n", getName(), name);
-        read_in_progress = false;
         return kIOReturnTimeout;
     }
 
@@ -282,19 +287,15 @@ IOReturn VoodooI2CHIDDevice::setHIDPowerState(VoodooI2CState state) {
 }
 
 IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) {
-    return command_gate->attemptAction(OSMemberFunctionCast(IOCommandGate::Action, this, &VoodooI2CHIDDevice::setReportEnter), report, &reportType, &options);
-}
-
-IOReturn VoodooI2CHIDDevice::setReportEnter(IOMemoryDescriptor* report, IOHIDReportType* reportType, IOOptionBits* options) {
-    if (*reportType != kIOHIDReportTypeFeature && *reportType != kIOHIDReportTypeOutput)
+    if (reportType != kIOHIDReportTypeFeature && reportType != kIOHIDReportTypeOutput)
         return kIOReturnBadArgument;
     
     UInt16 data_register = hid_descriptor->wDataRegister;
-    UInt8 raw_report_type = (*reportType == kIOHIDReportTypeFeature) ? 0x03 : 0x02;
+    UInt8 raw_report_type = (reportType == kIOHIDReportTypeFeature) ? 0x03 : 0x02;
     UInt8 idx = 0;
     UInt16 size;
     UInt16 arguments_length;
-    UInt8 report_id = *options & 0xFF;
+    UInt8 report_id = options & 0xFF;
     UInt8* buffer = (UInt8*)IOMalloc(report->getLength());
     report->readBytes(0, buffer, report->getLength());
     
@@ -327,6 +328,8 @@ IOReturn VoodooI2CHIDDevice::setReportEnter(IOMemoryDescriptor* report, IOHIDRep
     
     UInt8 length = 4;
 
+    read_in_progress = true;
+
     VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*)IOMalloc(4 + arguments_length);
     memset(command, 0, 4+arguments_length);
     command->c.reg = hid_descriptor->wCommandRegister;
@@ -341,6 +344,8 @@ IOReturn VoodooI2CHIDDevice::setReportEnter(IOMemoryDescriptor* report, IOHIDRep
     
     IOFree(command, 4+arguments_length);
     IOFree(arguments, arguments_length);
+
+    read_in_progress = false;
     return ret;
 }
 
@@ -369,8 +374,8 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
     return kIOPMAckImplied;
 }
 
-bool VoodooI2CHIDDevice::start(IOService* provider) {
-    work_loop = IOWorkLoop::workLoop();
+bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
+    work_loop = getWorkLoop();
     
     if (!work_loop) {
         IOLog("%s::%s Could not get work loop\n", getName(), name);
@@ -383,11 +388,6 @@ bool VoodooI2CHIDDevice::start(IOService* provider) {
     if (!command_gate || (work_loop->addEventSource(command_gate) != kIOReturnSuccess)) {
         IOLog("%s::%s Could not open command gate\n", getName(), name);
         goto exit;
-    }
-
-    if (!super::start(provider)) {
-        IOLog("%s::%s super::start failed\n", getName(), name);
-        return false;
     }
 
     acpi_device->retain();
@@ -413,10 +413,6 @@ bool VoodooI2CHIDDevice::start(IOService* provider) {
     api->joinPMtree(this);
     registerPowerDriver(this, VoodooI2CIOPMPowerStates, kVoodooI2CIOPMNumberPowerStates);
 
-    registerService();
-
-    IOLog("%s::%s Successfully started I2C HID device\n", getName(), name);
-
     return true;
 exit:
     releaseResources();
@@ -430,10 +426,6 @@ void VoodooI2CHIDDevice::stop(IOService* provider) {
 }
 
 IOReturn VoodooI2CHIDDevice::newReportDescriptor(IOMemoryDescriptor** descriptor) const {
-    return command_gate->attemptAction(OSMemberFunctionCast(IOCommandGate::Action, this, &VoodooI2CHIDDevice::newReportDescriptorEnter), descriptor);
-}
-
-IOReturn VoodooI2CHIDDevice::newReportDescriptorEnter(IOMemoryDescriptor** descriptor) {
     if (!hid_descriptor->wReportDescLength) {
         IOLog("%s::%s Invalid report descriptor size\n", getName(), name);
         return kIOReturnDeviceError;

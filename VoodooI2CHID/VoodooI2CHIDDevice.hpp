@@ -57,11 +57,10 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     IOReturn getHIDDescriptor();
     IOReturn getHIDDescriptorAddress();
     VoodooI2CHIDDevice* probe(IOService* provider, SInt32* score);
-    bool start(IOService* provider);
+    bool handleStart(IOService* provider);
     void stop(IOService* provider);
 
     virtual IOReturn newReportDescriptor(IOMemoryDescriptor** descriptor) const override;
-    IOReturn newReportDescriptorEnter(IOMemoryDescriptor** descriptor);
     virtual OSNumber* newVendorIDNumber() const override;
     virtual OSNumber* newProductIDNumber() const override;
     virtual OSNumber* newVersionNumber() const override;
@@ -72,12 +71,12 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     bool awake;
     const char* name;
     bool read_in_progress;
+    IOWorkLoop* work_loop;
 
     IOReturn resetHIDDevice();
     IOReturn setHIDPowerState(VoodooI2CState state);
     IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
     IOReturn setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options);
-    IOReturn setReportEnter(IOMemoryDescriptor* report, IOHIDReportType* reportType, IOOptionBits* options);
  private:
     IOACPIPlatformDevice* acpi_device;
     VoodooI2CDeviceNub* api;
@@ -86,9 +85,9 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     VoodooI2CHIDDeviceHIDDescriptor* hid_descriptor;
     IOInterruptEventSource* interrupt_source;
     bool* reset_event;
-    IOWorkLoop* work_loop;
 
     void getInputReport();
+    IOReturn getInputReportGated(unsigned char* report, UInt16* length);
     void interruptOccured(OSObject* owner, IOInterruptEventSource* src, int intCount);
     void releaseResources();
 };

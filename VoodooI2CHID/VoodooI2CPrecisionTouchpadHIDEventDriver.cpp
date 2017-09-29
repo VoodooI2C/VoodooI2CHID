@@ -12,9 +12,10 @@
 OSDefineMetaClassAndStructors(VoodooI2CPrecisionTouchpadHIDEventDriver, VoodooI2CMultitouchHIDEventDriver);
 
 void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
+    IOLog("PrecisionTouchPadMode Entered!\n");
     // We should really do this using `input_mode_element->setValue(INPUT_MODE_TOUCHPAD)`
     // but I am not able to get it to work.
-    
+
     VoodooI2CPrecisionTouchpadFeatureReport buffer;
     buffer.value = INPUT_MODE_TOUCHPAD;
     buffer.reserved = 0x00;
@@ -56,6 +57,7 @@ IOReturn VoodooI2CPrecisionTouchpadHIDEventDriver::setPowerState(unsigned long w
             awake = false;
     } else {
         if (!awake) {
+            IOSleep(10);
             enterPrecisionTouchpadMode();
 
             awake = true;
