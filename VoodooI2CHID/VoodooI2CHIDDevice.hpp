@@ -58,6 +58,7 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     IOReturn getHIDDescriptorAddress();
     VoodooI2CHIDDevice* probe(IOService* provider, SInt32* score);
     bool handleStart(IOService* provider);
+    bool start(IOService* provider);
     void stop(IOService* provider);
 
     virtual IOReturn newReportDescriptor(IOMemoryDescriptor** descriptor) const override;
@@ -84,10 +85,10 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     UInt16 hid_descriptor_register;
     VoodooI2CHIDDeviceHIDDescriptor* hid_descriptor;
     IOInterruptEventSource* interrupt_source;
+    bool ready_for_input;
     bool* reset_event;
 
     void getInputReport();
-    IOReturn getInputReportGated(unsigned char* report, UInt16* length);
     void interruptOccured(OSObject* owner, IOInterruptEventSource* src, int intCount);
     void releaseResources();
 };

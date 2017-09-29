@@ -12,7 +12,6 @@
 OSDefineMetaClassAndStructors(VoodooI2CPrecisionTouchpadHIDEventDriver, VoodooI2CMultitouchHIDEventDriver);
 
 void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
-    IOLog("PrecisionTouchPadMode Entered!\n");
     // We should really do this using `input_mode_element->setValue(INPUT_MODE_TOUCHPAD)`
     // but I am not able to get it to work.
 

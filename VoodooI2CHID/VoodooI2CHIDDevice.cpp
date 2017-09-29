@@ -125,7 +125,7 @@ IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
 void VoodooI2CHIDDevice::getInputReport() {
     unsigned char* report = (unsigned char *)IOMalloc(hid_descriptor->wMaxInputLength);
 
-    command_gate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &VoodooI2CHIDDevice::getInputReportGated), report, &hid_descriptor->wMaxInputLength);
+    api->readI2C(report, hid_descriptor->wMaxInputLength);
     
     int return_size = report[0] | report[1] << 8;
 
@@ -135,7 +135,10 @@ void VoodooI2CHIDDevice::getInputReport() {
         command_gate->commandWakeup(&reset_event);
         return;
     }
-    
+
+    if (!ready_for_input)
+        return;
+
     if (return_size > hid_descriptor->wMaxInputLength) {
         IOLog("%s: Incomplete report %d/%d\n", getName(), hid_descriptor->wMaxInputLength, return_size);
         read_in_progress = false;
@@ -154,10 +157,6 @@ void VoodooI2CHIDDevice::getInputReport() {
     IOFree(report, hid_descriptor->wMaxInputLength);
 
     read_in_progress = false;
-}
-
-IOReturn VoodooI2CHIDDevice::getInputReportGated(unsigned char* report, UInt16* length) {
-    return api->readI2C(report, *length);
 }
 
 void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSource* src, int intCount) {
@@ -409,14 +408,29 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
 
     resetHIDDevice();
 
+
     PMinit();
     api->joinPMtree(this);
     registerPowerDriver(this, VoodooI2CIOPMPowerStates, kVoodooI2CIOPMNumberPowerStates);
+    
+    // Give the reset a bit of time so that IOHIDDevice doesnt happen to start requesting the report
+    // descriptor before the driver is ready
+
+    IOSleep(100);
 
     return true;
 exit:
     releaseResources();
     return false;
+}
+
+bool VoodooI2CHIDDevice::start(IOService* provider) {
+    if (!super::start(provider))
+        return false;
+
+    ready_for_input = true;
+
+    return true;
 }
 
 void VoodooI2CHIDDevice::stop(IOService* provider) {
