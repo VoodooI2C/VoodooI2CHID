@@ -101,12 +101,14 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
             case kHIDPage_GenericDesktop:
                 switch (usage) {
                     case kHIDUsage_GD_X:
-                        transducer->coordinates.x.update(element->getValue(), timestamp);
-                        handled    |= element_is_current;
+                    {transducer->coordinates.x.update(element->getValue(), timestamp);
+                        transducer->logical_max_x = element->getLogicalMax();
+                        handled    |= element_is_current;}
                         break;
                     case kHIDUsage_GD_Y:
-                        transducer->coordinates.y.update(element->getValue(), timestamp);
-                        handled    |= element_is_current;
+                    {transducer->coordinates.y.update(element->getValue(), timestamp);
+                        transducer->logical_max_y = element->getLogicalMax();
+                        handled    |= element_is_current;}
                         break;
                     case kHIDUsage_GD_Z:
                         transducer->coordinates.z.update(element->getValue(), timestamp);
