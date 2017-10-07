@@ -61,6 +61,7 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     void setDigitizerProperties();
     virtual IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
     void handleStop(IOService* provider);
+    bool start(IOService* provider);
  protected:
     bool awake = true;
     IOHIDInterface* hid_interface;
