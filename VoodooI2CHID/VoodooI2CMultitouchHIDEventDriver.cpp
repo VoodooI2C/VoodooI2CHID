@@ -221,6 +221,8 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     if (!hid_interface)
         return false;
 
+    hid_interface->setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+
     if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
         return false;
 
@@ -688,4 +690,13 @@ exit:
 
 IOReturn VoodooI2CMultitouchHIDEventDriver::setPowerState(unsigned long whichState, IOService* whatDevice) {
     return kIOPMAckImplied;
+}
+
+bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
+    if (!super::start(provider))
+        return false;
+
+    setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+
+    return true;
 }
