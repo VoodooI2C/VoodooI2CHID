@@ -19,7 +19,7 @@
 		AC0556971F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VoodooI2CPrecisionTouchpadHIDEventDriver.cpp; sourceTree = "<group>"; };
 		AC0556981F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = VoodooI2CPrecisionTouchpadHIDEventDriver.hpp; sourceTree = "<group>"; };
 		AC0DE5DF1F4FFB4B006149C8 /* VoodooI2CHID.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoodooI2CHID.kext; sourceTree = BUILT_PRODUCTS_DIR; };
-		AC0DE5E61F4FFB4B006149C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AC0DE5E61F4FFB4B006149C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = VoodooI2CHID/Info.plist; sourceTree = "<group>"; };
 		AC0DE5EC1F4FFDB2006149C8 /* VoodooI2CHIDDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VoodooI2CHIDDevice.cpp; sourceTree = "<group>"; };
 		AC0DE5ED1F4FFDB2006149C8 /* VoodooI2CHIDDevice.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = VoodooI2CHIDDevice.hpp; sourceTree = "<group>"; };
 		ACCFCF211F69C1DC003E4131 /* VoodooI2CMultitouchHIDEventDriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VoodooI2CMultitouchHIDEventDriver.cpp; sourceTree = "<group>"; };
@@ -40,6 +40,7 @@
 		AC0DE5D51F4FFB4B006149C8 = {
 			isa = PBXGroup;
 			children = (
+				AC0DE5E61F4FFB4B006149C8 /* Info.plist */,
 				AC0DE5E11F4FFB4B006149C8 /* VoodooI2CHID */,
 				AC0DE5E01F4FFB4B006149C8 /* Products */,
 			);
@@ -56,7 +57,6 @@
 		AC0DE5E11F4FFB4B006149C8 /* VoodooI2CHID */ = {
 			isa = PBXGroup;
 			children = (
-				AC0DE5E61F4FFB4B006149C8 /* Info.plist */,
 				AC0DE5EC1F4FFDB2006149C8 /* VoodooI2CHIDDevice.cpp */,
 				AC0DE5ED1F4FFDB2006149C8 /* VoodooI2CHIDDevice.hpp */,
 				ACCFCF211F69C1DC003E4131 /* VoodooI2CMultitouchHIDEventDriver.cpp */,
@@ -261,7 +261,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.alexandred.VoodooI2CHID;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.11;
+				SDKROOT = macosx;
 				WRAPPER_EXTENSION = kext;
 			};
 			name = Debug;
@@ -283,7 +283,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.alexandred.VoodooI2CHID;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.11;
+				SDKROOT = macosx;
 				WRAPPER_EXTENSION = kext;
 			};
 			name = Release;

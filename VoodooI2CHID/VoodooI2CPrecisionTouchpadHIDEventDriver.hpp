@@ -27,17 +27,31 @@ typedef struct __attribute__((__packed__)) {
     UInt8 reserved;
 } VoodooI2CPrecisionTouchpadFeatureReport;
 
+/* Implements an HID Event Driver for Precision Touchpad devices as specified by Microsoft's protocol in the following document: https://docs.microsoft.com/en-us/windows-hardware/design/component-guidelines/precision-touchpad-devices
+ *
+ * The members of this class are responsible for instructing a Precision Touchpad device to enter Touchpad mode.
+ */
+
 class VoodooI2CPrecisionTouchpadHIDEventDriver : public VoodooI2CMultitouchHIDEventDriver {
   OSDeclareDefaultStructors(VoodooI2CPrecisionTouchpadHIDEventDriver);
 
  public:
+    /* @inherit */
+    
     void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id);
+
+    /* @inherit */
+
     bool handleStart(IOService* provider);
+
+    /* @inherit */
     IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
 
  protected:
  private:
     bool ready = false;
+
+    /* Sends a report to the device to instruct it to enter Touchpad mode */
     void enterPrecisionTouchpadMode();
 };
 
