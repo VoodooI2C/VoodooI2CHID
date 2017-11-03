@@ -44,7 +44,7 @@ void VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             last_y = y;
             last_id = transducer->secondary_id;
             
-    //  Begin long press right click routine.  Increasing compare_input_counter will lengthen the time until execution.
+    //  Begin long press right click routine.  Increasing compare_input_counter check will lengthen the time until execution.
 
             UInt16 temp_x = x;
             UInt16 temp_y = y;
@@ -94,7 +94,7 @@ void VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             // know to reset the clicktick counter.
             
     
-            this->timerSource->setTimeoutMS(14);
+            this->timer_source->setTimeoutMS(14);
 
           }
 
@@ -174,6 +174,7 @@ void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime time
     
     if (contact_count_element->getValue()>=2) {
         super::handleInterruptReport(timestamp, report, report_type, report_id);
+        
     } else {
         
         //  Process single touch data
@@ -187,19 +188,21 @@ void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime time
 bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     if (!super::handleStart(provider))
         return false;
+    
+    name = getMatchedName(provider);
 
-    this->workLoop = getWorkLoop();
-    if (!this->workLoop){
-        IOLog("%s::Unable to get workloop\n", getName());
+    this->work_loop = getWorkLoop();
+    if (!this->work_loop){
+        IOLog("%s::%s::Unable to get workloop\n", getName(), name);
         stop(provider);
         return false;
     }
     
-    this->workLoop->retain();
+    this->work_loop->retain();
 
-    this->timerSource = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CTouchscreenHIDEventDriver::fingerLift));
+    this->timer_source = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CTouchscreenHIDEventDriver::fingerLift));
     
-    this->workLoop->addEventSource(this->timerSource);
+    this->work_loop->addEventSource(this->timer_source);
     
     return true;
 }

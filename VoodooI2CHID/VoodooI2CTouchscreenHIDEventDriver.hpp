@@ -40,16 +40,23 @@ public:
     bool handleStart(IOService* provider);
 
 protected:
+    const char* name;
 private:
-    IOWorkLoop *workLoop;
-    IOTimerEventSource *timerSource;
+    IOWorkLoop *work_loop;
+    IOTimerEventSource *timer_source;
     
-    int click_tick = 0;
+    /* transducer variables
+     */
+    
     UInt16 buttons = 0;
     IOFixed last_x = 0;
     IOFixed last_y = 0;
     SInt32 last_id = 0;
     
+    /* handler variables
+     */
+    
+    int click_tick = 0;
     bool right_click = false;
     UInt16 compare_input_x = 0;
     UInt16 compare_input_y = 0;
