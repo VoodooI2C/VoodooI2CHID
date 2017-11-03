@@ -40,7 +40,6 @@ public:
     bool handleStart(IOService* provider);
 
 protected:
-    const char* name;
 private:
     IOWorkLoop *work_loop;
     IOTimerEventSource *timer_source;

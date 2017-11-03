@@ -189,11 +189,9 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     if (!super::handleStart(provider))
         return false;
     
-    name = getMatchedName(provider);
-
     this->work_loop = getWorkLoop();
     if (!this->work_loop){
-        IOLog("%s::%s::Unable to get workloop\n", getName(), name);
+        IOLog("%s::Unable to get workloop\n", getName());
         stop(provider);
         return false;
     }
