@@ -21,31 +21,31 @@ void VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
     for (int index = 0; index < contact_count_element->getValue(); index++) {
         
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
-                
+        
         
         if (transducer->type==kDigitiserTransducerFinger && contact_count_element->getValue()>=2) {
             
             //  Our finger event is multitouch reset clicktick and wait to be dispatched to the multitouch engines.
             
             click_tick = 0;
-
+            
         }
         
         
         if (transducer->type==kDigitiserTransducerFinger && transducer->tip_switch.value()){
             
-    //  Convert logical coordinates to IOFixed and Scaled;
+            //  Convert logical coordinates to IOFixed and Scaled;
             
             IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
             IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
             
-    //  Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
+            //  Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
             last_x = x;
             last_y = y;
             last_id = transducer->secondary_id;
             
-    //  Begin long press right click routine.  Increasing compare_input_counter check will lengthen the time until execution.
-
+            //  Begin long press right click routine.  Increasing compare_input_counter check will lengthen the time until execution.
+            
             UInt16 temp_x = x;
             UInt16 temp_y = y;
             
@@ -72,12 +72,12 @@ void VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
                 }
             }
             //  End long press right click routine.
-                
-
-        //  We need the first couple of single touch events to be in hover mode.  In modes such as Mission Control, this allows us
-        //  to select and drag windows vs just select and exit.  We are mimicking a cursor being moved into position prior to
-        //  executing a drag movement.  There is little noticeable affect in other circumstances.  This also assists in transitioning
-        //  between single / multitouch.
+            
+            
+            //  We need the first couple of single touch events to be in hover mode.  In modes such as Mission Control, this allows us
+            //  to select and drag windows vs just select and exit.  We are mimicking a cursor being moved into position prior to
+            //  executing a drag movement.  There is little noticeable affect in other circumstances.  This also assists in transitioning
+            //  between single / multitouch.
             
             if (click_tick<=2){
                 buttons = 0x0;
@@ -87,18 +87,18 @@ void VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             }
             if (right_click)
                 buttons = 0x2;
-
+            
             dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, buttons, x, y);
-
+            
             //  This timer serves to let us know when a finger based event is finished executing as well as let us
             // know to reset the clicktick counter.
             
-    
+            
             this->timer_source->setTimeoutMS(14);
-
-          }
-
-     }
+            
+        }
+        
+    }
     
 }
 
@@ -120,14 +120,22 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkStylus(AbsoluteTime timestamp, Voo
             IOFixed z = ((stylus->coordinates.z.value() * 1.0f) / stylus->logical_max_z) * 65535;
             IOFixed stylus_pressure = ((stylus->tip_pressure.value() * 1.0f) /stylus->pressure_physical_max) * 65535;
             
-            buttons=stylus->tip_switch.value();
+            if (stylus->barrel_switch.value() != 0x0 && stylus->barrel_switch.value() !=0x2 && (stylus->barrel_switch.value()-barrel_switch_offset) != 0x2)
+                barrel_switch_offset = stylus->barrel_switch.value();
+            if (stylus->eraser.value() != 0x0 && stylus->eraser.value() !=0x2 && (stylus->eraser.value()-eraser_switch_offset) != 0x4)
+                eraser_switch_offset = stylus->eraser.value();
             
-            if (stylus->barrel_switch)
-                buttons = stylus->barrel_switch.value();
-            if (stylus->eraser)
-                buttons = stylus->eraser.value();
+            stylus_buttons=stylus->tip_switch.value();
             
-            dispatchDigitizerEventWithTiltOrientation(timestamp, stylus->secondary_id, stylus->type, stylus->in_range, buttons, x, y, z, stylus_pressure, stylus->barrel_pressure.value(), stylus->azi_alti_orientation.twist.value(), stylus->tilt_orientation.x_tilt.value(), stylus->tilt_orientation.y_tilt.value());
+            if (stylus->barrel_switch.value()==0x2 || (stylus->barrel_switch.value() - barrel_switch_offset)==0x2) {
+                stylus_buttons = 0x2;
+            }
+            
+            if (stylus->eraser.value()==0x4 || (stylus->eraser.value() - eraser_switch_offset) == 0x4){
+                stylus_buttons = 0x4;
+            }
+            
+            dispatchDigitizerEventWithTiltOrientation(timestamp, stylus->secondary_id, stylus->type, stylus->in_range, stylus_buttons, x, y, z, stylus_pressure, stylus->barrel_pressure.value(), stylus->azi_alti_orientation.twist.value(), stylus->tilt_orientation.x_tilt.value(), stylus->tilt_orientation.y_tilt.value());
             
             return true;
         }
@@ -143,20 +151,20 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     // component.  Greater accuracy / error rejection is achieved by filtering by tip_switch vs transducer id in the
     //  checkFingerTouch function, however, this has the side effect of not releasing the pointer.  This watchdog
     //  timer is needed regardless so the pointer release is best done here.
-
+    
     
     click_tick=0;
     uint64_t now_abs;
     clock_get_uptime(&now_abs);
-
+    
     dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, 0x0, last_x, last_y);
-   
+    
     
     //  If a right click has been executed, we reset our counter and ensure that pointer is not stuck in right
     //  click button down situation.
     
     if (right_click) {
-    right_click = false;
+        right_click = false;
     }
     
 }
@@ -197,7 +205,7 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     }
     
     this->work_loop->retain();
-
+    
     this->timer_source = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CTouchscreenHIDEventDriver::fingerLift));
     
     this->work_loop->addEventSource(this->timer_source);

@@ -23,22 +23,24 @@
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
 
 /* Implements an HID Event Driver for touchscreen devices as well as stylus input.
-*/
+ */
 
 class VoodooI2CTouchscreenHIDEventDriver : private VoodooI2CMultitouchHIDEventDriver {
     OSDeclareDefaultStructors(VoodooI2CTouchscreenHIDEventDriver);
-
+    
 public:
     /* Checks the event contact count and if finger touches >= 2 are detected, the event is immediately dispatched
      * to the multitouch engine interface.  The 'else' convention used vs 'elseif' is intentional and results in
      * smoother gesture recognition and execution.  If single touch is detected, first the transducer is checked for stylus operation
      * and if false, the transducer is checked for finger touch.
+     *
+     * @inherit
      */
     void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) override;
     
     /* @inherit */
     bool handleStart(IOService* provider);
-
+    
 protected:
 private:
     IOWorkLoop *work_loop;
@@ -47,9 +49,12 @@ private:
     /* transducer variables
      */
     
-    UInt16 buttons = 0;
+    UInt32 buttons = 0;
+    UInt32 stylus_buttons = 0;
     IOFixed last_x = 0;
     IOFixed last_y = 0;
+    UInt32 barrel_switch_offset = 0;
+    UInt32 eraser_switch_offset = 0;
     SInt32 last_id = 0;
     
     /* handler variables
@@ -63,11 +68,19 @@ private:
     
     /* The transducer is checked for singletouch finger based operation and the pointer event dispatched. This function
      * also handles a long-press, right-click function.
+     *
+     * @timestamp The timestamp of the current event being processed
+     *
+     * @event The current event
      */
     void checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
     
-    /* The transducer is checked for stylus operation and pointer event dispatched.  x,y,z & pressure information is 
+    /* The transducer is checked for stylus operation and pointer event dispatched.  x,y,z & pressure information is
      * obtained in a logical format and converted to IOFixed variables.
+     *
+     * @timestamp The timestamp of the current event being processed
+     *
+     * @event The current event
      */
     bool checkStylus(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
     
