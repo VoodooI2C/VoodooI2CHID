@@ -69,7 +69,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
     bool handled = false;
     UInt32 element_index = 0;
     UInt32 element_count = 0;
-
+    
     if (!transducer->elements)
         return;
     
@@ -81,22 +81,22 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
         UInt32 usage;
         UInt32 value;
         
-        VoodooI2CDigitiserStylus* stylus = OSDynamicCast(VoodooI2CDigitiserStylus, transducer);
-
+        VoodooI2CDigitiserStylus* stylus = (VoodooI2CDigitiserStylus*)transducer;
+        
         element = OSDynamicCast(IOHIDElement, transducer->elements->getObject(element_index));
         if (!element)
             continue;
-
+        
         element_timestamp = element->getTimeStamp();
         element_is_current = (element->getReportID() == report_id) && (CMP_ABSOLUTETIME(&timestamp, &element_timestamp)==0);
-
+        
         transducer->id = report_id;
         transducer->timestamp = element_timestamp;
-
+        
         usage_page = element->getUsagePage();
         usage = element->getUsage();
         value = element->getValue();
-
+        
         switch (usage_page) {
             case kHIDPage_GenericDesktop:
                 switch (usage) {
@@ -111,8 +111,9 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         handled    |= element_is_current;}
                         break;
                     case kHIDUsage_GD_Z:
-                        transducer->coordinates.z.update(element->getValue(), timestamp);
-                        handled    |= element_is_current;
+                    {transducer->coordinates.z.update(element->getValue(), timestamp);
+                        transducer->logical_max_z = element->getLogicalMax();
+                        handled    |= element_is_current;}
                         break;
                 }
                 break;
@@ -138,15 +139,16 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         break;
                     case kHIDUsage_Dig_TipPressure:
                     case kHIDUsage_Dig_SecondaryTipSwitch:
-                        transducer->tip_pressure.update(element->getValue(), timestamp);
-                        handled    |= element_is_current;
+                    {transducer->tip_pressure.update(element->getValue(), timestamp);
+                        transducer->pressure_physical_max = element->getPhysicalMax();
+                        handled    |= element_is_current;}
                         break;
                     case kHIDUsage_Dig_XTilt:
-                        transducer->tilt_orientation.x_tilt.update(element->getValue(), timestamp);
+                        transducer->tilt_orientation.x_tilt.update(element->getScaledFixedValue(kIOHIDValueScaleTypePhysical), timestamp);
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_YTilt:
-                        transducer->tilt_orientation.y_tilt.update(element->getValue(), timestamp);
+                        transducer->tilt_orientation.y_tilt.update(element->getScaledFixedValue(kIOHIDValueScaleTypePhysical), timestamp);
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_Azimuth:
@@ -158,7 +160,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_Twist:
-                        transducer->azi_alti_orientation.twist.update(element->getValue(), timestamp);
+                        transducer->azi_alti_orientation.twist.update(element->getScaledFixedValue(kIOHIDValueScaleTypePhysical), timestamp);
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_Width:
@@ -180,7 +182,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         break;
                     case kHIDUsage_Dig_BarrelPressure:
                         if (stylus) {
-                            stylus->barrel_pressure.update(element->getValue(), timestamp);
+                            stylus->barrel_pressure.update(element->getScaledFixedValue(kIOHIDValueScaleTypeCalibrated), timestamp);
                             handled    |= element_is_current;
                         }
                         break;
