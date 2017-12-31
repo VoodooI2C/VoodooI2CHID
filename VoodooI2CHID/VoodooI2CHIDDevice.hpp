@@ -16,6 +16,7 @@
 #include <IOKit/IOInterruptEventSource.h>
 #include <IOKit/hid/IOHIDDevice.h>
 #include "../../../Dependencies/helpers.hpp"
+#include <IOKit/hid/IOHIDElement.h>
 
 #define I2C_HID_PWR_ON  0x00
 #define I2C_HID_PWR_SLEEP 0x01
@@ -76,6 +77,15 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     virtual void free();
+    
+    /*Gets the latest value of an element by issuing a getReport request to the
+     * device. Necessary due to changes between 10.11 and 10.12.
+     * @element The element whose vaue is to be updated
+     *
+     * @return The new value of the element
+     */
+
+    UInt32 getElementValue(IOHIDElement* element);
 
     /*
      * Issues an I2C-HID command to get the HID descriptor from the device.
@@ -91,6 +101,8 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     IOReturn getHIDDescriptorAddress();
+    
+    IOReturn getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options);
 
     /* Probes the candidate I2C-HID device to see if this driver can indeed drive it
      * @provider The provider which we have matched against

@@ -30,6 +30,17 @@ void VoodooI2CHIDDevice::free() {
     super::free();
 }
 
+UInt32 VoodooI2CHIDDevice::getElementValue(IOHIDElement* element) {
+    IOHIDElementCookie cookie = element->getCookie();
+
+    if (!cookie)
+        return 0;
+
+    updateElementValues(&cookie);
+
+    return element->getValue();
+}
+
 IOReturn VoodooI2CHIDDevice::getHIDDescriptor() {
     VoodooI2CHIDDeviceCommand command;
     command.c.reg = hid_descriptor_register;
@@ -130,7 +141,7 @@ void VoodooI2CHIDDevice::getInputReport() {
     int return_size = report[0] | report[1] << 8;
 
     if (!return_size) {
-        IOLog("%s::%s Device sent a 0-length report\n", getName(), name);
+        // IOLog("%s::%s Device sent a 0-length report\n", getName(), name);
         read_in_progress = false;
         command_gate->commandWakeup(&reset_event);
         return;
@@ -140,7 +151,7 @@ void VoodooI2CHIDDevice::getInputReport() {
         return;
 
     if (return_size > hid_descriptor->wMaxInputLength) {
-        IOLog("%s: Incomplete report %d/%d\n", getName(), hid_descriptor->wMaxInputLength, return_size);
+        // IOLog("%s: Incomplete report %d/%d\n", getName(), hid_descriptor->wMaxInputLength, return_size);
         read_in_progress = false;
         return;
     }
@@ -159,6 +170,53 @@ void VoodooI2CHIDDevice::getInputReport() {
     read_in_progress = false;
 }
 
+IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) {
+    if (reportType != kIOHIDReportTypeFeature && reportType != kIOHIDReportTypeInput)
+        return kIOReturnBadArgument;
+
+    UInt8 args[3];
+    IOReturn ret;
+    int args_len = 0;
+    UInt16 read_register = hid_descriptor->wDataRegister;
+    UInt8 report_id = options & 0xFF;
+    UInt8 raw_report_type = (reportType == kIOHIDReportTypeFeature) ? 0x03 : 0x01;
+
+    UInt8* buffer = (UInt8*)IOMalloc(report->getLength());
+    
+    
+    if (report_id >= 0x0F) {
+        args[args_len++] = report_id;
+        report_id = 0x0F;
+    }
+
+    args[args_len++] = read_register & 0xFF;
+    args[args_len++] = read_register >> 8;
+    
+    UInt8 length = 4;
+    
+    read_in_progress = true;
+    
+    VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*)IOMalloc(4 + args_len);
+    memset(command, 0, 4+args_len);
+    command->c.reg = hid_descriptor->wCommandRegister;
+    command->c.opcode = 0x02;
+    command->c.report_type_id = report_id | raw_report_type << 4;
+    
+    UInt8* raw_command = (UInt8*)command;
+    
+    memcpy(raw_command + length, args, args_len);
+    length += args_len;
+    ret = api->writeReadI2C(raw_command, length, buffer, report->getLength());
+    
+    report->writeBytes(0, buffer+2, report->getLength()-2);
+    
+    IOFree(command, 4+args_len);
+    
+    read_in_progress = false;
+
+    return ret;
+}
+
 void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSource* src, int intCount) {
     if (read_in_progress)
         return;
@@ -171,7 +229,7 @@ void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSourc
     kern_return_t ret = kernel_thread_start(OSMemberFunctionCast(thread_continue_t, this, &VoodooI2CHIDDevice::getInputReport), this, &new_thread);
     if (ret != KERN_SUCCESS){
         read_in_progress = false;
-        IOLog("%s::%s Thread error while attempint to get input report\n", getName(), name);
+        IOLog("%s::%s Thread error while attempting to get input report\n", getName(), name);
     } else {
         thread_deallocate(new_thread);
     }

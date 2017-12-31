@@ -7,6 +7,7 @@
 //
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
+#include <IOKit/hid/IOHIDInterface.h>
 
 #define GetReportType( type )                                               \
 ((type <= kIOHIDElementTypeInput_ScanCodes) ? kIOHIDReportTypeInput :   \
@@ -232,6 +233,11 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
 
     if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
         return false;
+    
+    hid_device = OSDynamicCast(VoodooI2CHIDDevice, hid_interface->getParentEntry(gIOServicePlane));
+    
+    if (!hid_device)
+        return false;
 
     OSObject* object = copyProperty(kIOHIDAbsoluteAxisBoundsRemovalPercentage, gIOServicePlane);
 
@@ -247,7 +253,9 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
 
     if (parseElements() != kIOReturnSuccess)
         return false;
-
+    
+    IOLog("report: %d\n", hid_device->getElementValue(contact_count_max_element));
+    
     PMinit();
     hid_interface->joinPMtree(this);
     registerPowerDriver(this, VoodooI2CIOPMPowerStates, kVoodooI2CIOPMNumberPowerStates);
@@ -268,6 +276,9 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
 
     if (input_mode_element)
         OSSafeReleaseNULL(input_mode_element);
+    
+    if (contact_count_max_element)
+        OSSafeReleaseNULL(contact_count_max_element);
 
     if (multitouch_interface) {
         multitouch_interface->stop(this);
@@ -327,6 +338,12 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
     if (element->getUsage() == kHIDUsage_Dig_DeviceMode) {
         input_mode_element = element;
         input_mode_element->retain();
+        return kIOReturnSuccess;
+    }
+    
+    if (element->getUsage() == kHIDUsage_Dig_ContactCountMaximum) {
+        contact_count_max_element = element;
+        contact_count_max_element-> retain();
         return kIOReturnSuccess;
     }
 
@@ -687,6 +704,7 @@ void VoodooI2CMultitouchHIDEventDriver::setDigitizerProperties() {
 
     properties->setObject("Contact Count Element", contact_count_element);
     properties->setObject("Input Mode Element", input_mode_element);
+    properties->setObject("Contact Count Maximum  Element", contact_count_max_element);
     properties->setObject("Transducers", digitiser.transducers);
 
     setProperty("Digitizer", properties);

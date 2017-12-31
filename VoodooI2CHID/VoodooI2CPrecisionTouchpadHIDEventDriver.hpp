@@ -15,6 +15,7 @@
 #include <IOKit/IOBufferMemoryDescriptor.h>
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
+#include <kern/clock.h>
 
 #define kHIDUsage_Dig_Surface_Switch 0x57
 #define kHIDUsage_Dig_Button_Switch 0x58

@@ -26,7 +26,10 @@
 #include <IOKit/hidsystem/IOHIDTypes.h>
 #include <IOKit/hid/IOHIDPrivateKeys.h>
 #include <IOKit/hid/IOHIDUsageTables.h>
+#include <IOKit/hid/IOHIDDevice.h>
 
+
+#include "VoodooI2CHIDDevice.hpp"
 #include "../../../Multitouch Support/VoodooI2CDigitiserStylus.hpp"
 #include "../../../Multitouch Support/VoodooI2CMultitouchInterface.hpp"
 #include "../../../Multitouch Support/MultitouchHelpers.hpp"
@@ -35,11 +38,15 @@
 
 #define kHIDUsage_Dig_Confidence kHIDUsage_Dig_TouchValid
 
+struct __attribute__((__packed__)) {
+    uint8_t ReportID;
+    uint8_t contact_count;
+} TestReport;
+
 /* Implements an HID Event Driver for HID devices that expose a digitiser usage page.
  *
  * The members of this class are responsible for parsing, processing and interpreting digitiser-related HID objects.
  */
-
 
 class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
   OSDeclareDefaultStructors(VoodooI2CMultitouchHIDEventDriver);
@@ -47,6 +54,7 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
  public:
     IOHIDElement* input_mode_element;
     IOHIDElement* contact_count_element;
+    IOHIDElement* contact_count_max_element;
     struct {
         OSArray*           transducers;
         bool               native;
@@ -192,6 +200,8 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     SInt32 absolute_axis_removal_percentage = 15;
     VoodooI2CMultitouchInterface* multitouch_interface;
     OSArray* supported_elements;
+    
+    VoodooI2CHIDDevice* hid_device;
 };
 
 
