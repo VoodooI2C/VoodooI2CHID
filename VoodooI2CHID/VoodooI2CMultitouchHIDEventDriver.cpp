@@ -254,8 +254,6 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     if (parseElements() != kIOReturnSuccess)
         return false;
     
-    IOLog("report: %d\n", hid_device->getElementValue(contact_count_max_element));
-    
     PMinit();
     hid_interface->joinPMtree(this);
     registerPowerDriver(this, VoodooI2CIOPMPowerStates, kVoodooI2CIOPMNumberPowerStates);
