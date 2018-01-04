@@ -8,6 +8,7 @@
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
 #include <IOKit/hid/IOHIDInterface.h>
+#include <math.h>
 
 #define GetReportType( type )                                               \
 ((type <= kIOHIDElementTypeInput_ScanCodes) ? kIOHIDReportTypeInput :   \
@@ -415,7 +416,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                         
                         UInt32 physical_max_x = raw_physical_max_x;
                         
-                        physical_max_x *= (10^(-(unit_exponent - -2)));
+                        physical_max_x *= pow(10,(-(unit_exponent - -2)));
                         
                         if (sub_element->getUnit() == 0x13){
                             physical_max_x *= 2.54;
@@ -437,7 +438,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                         
                         UInt32 physical_max_y = raw_physical_max_y;
                         
-                        physical_max_y *= (10^(-(unit_exponent - -2)));
+                        physical_max_y *= pow(10,(-(unit_exponent - -2)));
                         
                         if (sub_element->getUnit() == 0x13){
                             physical_max_y *= 2.54;
