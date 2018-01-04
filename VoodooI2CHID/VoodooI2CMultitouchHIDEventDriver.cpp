@@ -18,7 +18,7 @@
 OSDefineMetaClassAndStructors(VoodooI2CMultitouchHIDEventDriver, IOHIDEventService);
 
 static int pow(int x, int y){
-    int ret = x;
+    int ret = 1;
     while (y > 0){
         ret *= x;
         y--;
