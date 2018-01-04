@@ -8,7 +8,6 @@
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
 #include <IOKit/hid/IOHIDInterface.h>
-#include <math.h>
 
 #define GetReportType( type )                                               \
 ((type <= kIOHIDElementTypeInput_ScanCodes) ? kIOHIDReportTypeInput :   \
@@ -17,6 +16,15 @@
 
 #define super IOHIDEventService
 OSDefineMetaClassAndStructors(VoodooI2CMultitouchHIDEventDriver, IOHIDEventService);
+
+static int pow(int x, int y){
+    int ret = x;
+    while (y > 0){
+        ret *= x;
+        y--;
+    }
+    return ret;
+}
 
 void VoodooI2CMultitouchHIDEventDriver::calibrateJustifiedPreferredStateElement(IOHIDElement* element, SInt32 removal_percentage) {
     UInt32 sat_min   = element->getLogicalMin();
