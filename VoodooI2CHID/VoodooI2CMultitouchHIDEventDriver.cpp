@@ -403,13 +403,47 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
 
                 if (sub_element->conformsTo(kHIDPage_GenericDesktop, kHIDUsage_GD_X)) {
                     if (!multitouch_interface->logical_max_x) {
-                        multitouch_interface->logical_max_x = element->getLogicalMax();
-                        multitouch_interface->physical_max_x = element->getPhysicalMax();
+                        multitouch_interface->logical_max_x = sub_element->getLogicalMax();
+                        
+                        UInt32 raw_physical_max_x = sub_element->getPhysicalMax();
+                        
+                        UInt8 raw_unit_exponent = sub_element->getUnitExponent();
+                        if (raw_unit_exponent >> 3){
+                            raw_unit_exponent = raw_unit_exponent | 0xf0; //Raise the 4-bit int to an 8-bit int
+                        }
+                        SInt8 unit_exponent = *(SInt8 *)&raw_unit_exponent;
+                        
+                        UInt32 physical_max_x = raw_physical_max_x;
+                        
+                        physical_max_x *= (10^(-(unit_exponent - -2)));
+                        
+                        if (sub_element->getUnit() == 0x13){
+                            physical_max_x *= 2.54;
+                        }
+                        
+                        multitouch_interface->physical_max_x = physical_max_x;
                     }
                 } else if (sub_element->conformsTo(kHIDPage_GenericDesktop, kHIDUsage_GD_Y)) {
                     if (!multitouch_interface->logical_max_y) {
-                        multitouch_interface->logical_max_y = element->getLogicalMax();
-                        multitouch_interface->physical_max_y = element->getPhysicalMax();
+                        multitouch_interface->logical_max_y = sub_element->getLogicalMax();
+                        
+                        UInt32 raw_physical_max_y = sub_element->getPhysicalMax();
+                        
+                        UInt8 raw_unit_exponent = sub_element->getUnitExponent();
+                        if (raw_unit_exponent >> 3){
+                            raw_unit_exponent = raw_unit_exponent | 0xf0; //Raise the 4-bit int to an 8-bit int
+                        }
+                        SInt8 unit_exponent = *(SInt8 *)&raw_unit_exponent;
+                        
+                        UInt32 physical_max_y = raw_physical_max_y;
+                        
+                        physical_max_y *= (10^(-(unit_exponent - -2)));
+                        
+                        if (sub_element->getUnit() == 0x13){
+                            physical_max_y *= 2.54;
+                        }
+                        
+                        multitouch_interface->physical_max_y = physical_max_y;
                     }
                 } else if (sub_element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_ContactIdentifier)) {
                     wrapper->contact_identifier = sub_element;
