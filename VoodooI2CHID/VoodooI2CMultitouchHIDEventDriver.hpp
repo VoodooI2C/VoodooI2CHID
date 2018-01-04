@@ -30,6 +30,8 @@
 
 
 #include "VoodooI2CHIDDevice.hpp"
+#include "VoodooI2CHIDTransducerWrapper.hpp"
+
 #include "../../../Multitouch Support/VoodooI2CDigitiserStylus.hpp"
 #include "../../../Multitouch Support/VoodooI2CMultitouchInterface.hpp"
 #include "../../../Multitouch Support/MultitouchHelpers.hpp"
@@ -47,12 +49,28 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
   OSDeclareDefaultStructors(VoodooI2CMultitouchHIDEventDriver);
 
  public:
-    IOHIDElement* input_mode_element;
-    IOHIDElement* contact_count_element;
-    IOHIDElement* contact_count_max_element;
     struct {
+        OSArray*           fingers;
+        OSArray*           styluses;
+        
         OSArray*           transducers;
-        bool               native;
+        
+        // report level elements
+        
+        IOHIDElement*      contact_count;
+        IOHIDElement*      input_mode;
+        IOHIDElement*      button;
+        
+        // collection level elements
+        
+        IOHIDElement*      contact_count_maximum;
+    
+        
+        bool               hybrid_reporting = false;
+        UInt8              hybrid_current_transducer_id = 1;
+        UInt8              hybrid_current_contact_count = 0;
+        
+        UInt8              transducer_multiplier;
     } digitiser;
 
     /* Calibrates an HID element
@@ -79,12 +97,12 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     void handleDigitizerReport(AbsoluteTime timestamp, UInt32 report_id);
 
     /* Called during the interrupt routine to set transducer values
-     * @transducer The transducer to be updated
+     * @wrapper The transducer wrapper to be updated
      * @timestamp The timestamp of the interrupt report
      * @report_id The report ID of the interrupt report
      */
 
-    void handleDigitizerTransducerReport(VoodooI2CDigitiserTransducer* transducer, AbsoluteTime timestamp, UInt32 report_id);
+    void handleDigitizerTransducerReport(VoodooI2CHIDTransducerWrapper* wrapper, AbsoluteTime timestamp, UInt32 report_id);
 
     /* Called during the interrupt routine to handle an interrupt report
      * @timestamp The timestamp of the interrupt report
@@ -191,12 +209,11 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
  protected:
     bool awake = true;
     IOHIDInterface* hid_interface;
+    VoodooI2CHIDDevice* hid_device;
  private:
     SInt32 absolute_axis_removal_percentage = 15;
     VoodooI2CMultitouchInterface* multitouch_interface;
     OSArray* supported_elements;
-    
-    VoodooI2CHIDDevice* hid_device;
 };
 
 

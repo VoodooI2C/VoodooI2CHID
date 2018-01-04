@@ -18,12 +18,12 @@ void VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
     
     //  If there is a finger touch event, decide if it is single or multitouch.
     
-    for (int index = 0; index < contact_count_element->getValue(); index++) {
+    for (int index = 0; index < digitiser.contact_count->getValue(); index++) {
         
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
         
         
-        if (transducer->type==kDigitiserTransducerFinger && contact_count_element->getValue()>=2) {
+        if (transducer->type==kDigitiserTransducerFinger && digitiser.contact_count->getValue()>=2) {
             
             //  Our finger event is multitouch reset clicktick and wait to be dispatched to the multitouch engines.
             
@@ -49,7 +49,7 @@ void VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             UInt16 temp_x = x;
             UInt16 temp_y = y;
             
-            if (!right_click && contact_count_element->getValue()==1 && transducer->type==kDigitiserTransducerFinger && transducer->tip_switch) {
+            if (!right_click && digitiser.contact_count->getValue()==1 && transducer->type==kDigitiserTransducerFinger && transducer->tip_switch) {
                 if (temp_x == compare_input_x && temp_y == compare_input_y) {
                     compare_input_counter = compare_input_counter + 1;
                     compare_input_x = temp_x;
@@ -175,12 +175,12 @@ void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime time
     
     handleDigitizerReport(timestamp, report_id);
     VoodooI2CMultitouchEvent event;
-    event.contact_count = contact_count_element->getValue();
+    event.contact_count = digitiser.contact_count->getValue();
     event.transducers = digitiser.transducers;
     
     //  Send multitouch information to the multitouch interface
     
-    if (contact_count_element->getValue()>=2) {
+    if (digitiser.contact_count->getValue()>=2) {
         super::handleInterruptReport(timestamp, report, report_type, report_id);
         
     } else {

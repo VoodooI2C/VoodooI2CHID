@@ -11,6 +11,8 @@
 		4E9F1E841F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4E9F1E821F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.hpp */; };
 		AC0556991F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC0556971F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.cpp */; };
 		AC05569A1F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.hpp in Headers */ = {isa = PBXBuildFile; fileRef = AC0556981F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.hpp */; };
+		AC0B0C551FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC0B0C531FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.cpp */; };
+		AC0B0C561FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.hpp in Headers */ = {isa = PBXBuildFile; fileRef = AC0B0C541FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.hpp */; };
 		AC0DE5EE1F4FFDB2006149C8 /* VoodooI2CHIDDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE5EC1F4FFDB2006149C8 /* VoodooI2CHIDDevice.cpp */; };
 		AC0DE5EF1F4FFDB2006149C8 /* VoodooI2CHIDDevice.hpp in Headers */ = {isa = PBXBuildFile; fileRef = AC0DE5ED1F4FFDB2006149C8 /* VoodooI2CHIDDevice.hpp */; };
 		ACCFCF231F69C1DC003E4131 /* VoodooI2CMultitouchHIDEventDriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ACCFCF211F69C1DC003E4131 /* VoodooI2CMultitouchHIDEventDriver.cpp */; };
@@ -22,6 +24,8 @@
 		4E9F1E821F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = VoodooI2CTouchscreenHIDEventDriver.hpp; sourceTree = "<group>"; };
 		AC0556971F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VoodooI2CPrecisionTouchpadHIDEventDriver.cpp; sourceTree = "<group>"; };
 		AC0556981F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = VoodooI2CPrecisionTouchpadHIDEventDriver.hpp; sourceTree = "<group>"; };
+		AC0B0C531FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VoodooI2CHIDTransducerWrapper.cpp; sourceTree = "<group>"; };
+		AC0B0C541FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = VoodooI2CHIDTransducerWrapper.hpp; sourceTree = "<group>"; };
 		AC0DE5DF1F4FFB4B006149C8 /* VoodooI2CHID.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoodooI2CHID.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC0DE5E61F4FFB4B006149C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = VoodooI2CHID/Info.plist; sourceTree = "<group>"; };
 		AC0DE5EC1F4FFDB2006149C8 /* VoodooI2CHIDDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VoodooI2CHIDDevice.cpp; sourceTree = "<group>"; };
@@ -69,6 +73,8 @@
 				AC0556981F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.hpp */,
 				4E9F1E811F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.cpp */,
 				4E9F1E821F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.hpp */,
+				AC0B0C531FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.cpp */,
+				AC0B0C541FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.hpp */,
 			);
 			path = VoodooI2CHID;
 			sourceTree = "<group>";
@@ -84,6 +90,7 @@
 				AC05569A1F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.hpp in Headers */,
 				4E9F1E841F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.hpp in Headers */,
 				AC0DE5EF1F4FFDB2006149C8 /* VoodooI2CHIDDevice.hpp in Headers */,
+				AC0B0C561FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -159,6 +166,7 @@
 				4E9F1E831F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.cpp in Sources */,
 				ACCFCF231F69C1DC003E4131 /* VoodooI2CMultitouchHIDEventDriver.cpp in Sources */,
 				AC0DE5EE1F4FFDB2006149C8 /* VoodooI2CHIDDevice.cpp in Sources */,
+				AC0B0C551FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,6 +264,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libstdc++";
 				CLANG_WARN_DOCUMENTATION_COMMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.0.0d1;
@@ -279,6 +289,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libstdc++";
 				CLANG_WARN_DOCUMENTATION_COMMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.0.0d1;

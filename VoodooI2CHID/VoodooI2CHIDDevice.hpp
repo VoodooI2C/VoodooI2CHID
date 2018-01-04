@@ -59,6 +59,8 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
   OSDeclareDefaultStructors(VoodooI2CHIDDevice);
 
  public:
+    const char* name;
+
     /* Initialises a <VoodooI2CHIDDevice> object
      * @properties Contains the properties of the matched provider
      *
@@ -189,7 +191,6 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
 
  protected:
     bool awake;
-    const char* name;
     bool read_in_progress;
     IOWorkLoop* work_loop;
 

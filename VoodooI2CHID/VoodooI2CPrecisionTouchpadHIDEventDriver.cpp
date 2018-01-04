@@ -22,7 +22,7 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
     IOBufferMemoryDescriptor* report = IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task, 0, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
     report->writeBytes(0, &buffer, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
     
-    hid_interface->setReport(report, kIOHIDReportTypeFeature, input_mode_element->getReportID());
+    hid_interface->setReport(report, kIOHIDReportTypeFeature, digitiser.input_mode->getReportID());
     
     ready = true;
 }
@@ -38,10 +38,10 @@ bool VoodooI2CPrecisionTouchpadHIDEventDriver::handleStart(IOService* provider) 
     if (!super::handleStart(provider))
         return false;
 
-    if (!input_mode_element)
+    if (!digitiser.input_mode)
         return false;
 
-    IOLog("%s Putting device into Precision Touchpad Mode\n", getName());
+    IOLog("%s::%s Putting device into Precision Touchpad Mode\n", getName(), hid_device->name);
 
     enterPrecisionTouchpadMode();
 
