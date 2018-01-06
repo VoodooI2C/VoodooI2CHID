@@ -73,13 +73,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
     handleDigitizerReport(timestamp, report_id);
     
     if (!digitiser.hybrid_reporting || (digitiser.hybrid_current_transducer_id == digitiser.hybrid_current_contact_count - 1)) {
-        /*
-        for (int i = 0; i < digitiser.transducers->getCount(); i++) {
-            VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, digitiser.transducers->getObject(i));
-            if (transducer->is_valid)
-                IOLog("Transducer ID: %d, X: %d, Y: %d, tip_switch: %d\n", i, transducer->coordinates.x.value(), transducer->coordinates.y.value(), transducer->tip_switch.value());
-        }
-         */
+         
         VoodooI2CMultitouchEvent event;
         if (!digitiser.hybrid_reporting)
             event.contact_count = digitiser.contact_count->getValue();
@@ -128,6 +122,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
 
 void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2CHIDTransducerWrapper* wrapper, AbsoluteTime timestamp, UInt32 report_id) {
     bool handled = false;
+    bool has_confidence = false;
     UInt32 element_index = 0;
     UInt32 element_count = 0;
     VoodooI2CDigitiserTransducer* transducer;
@@ -154,6 +149,8 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
         UInt32 usage_page;
         UInt32 usage;
         UInt32 value;
+        bool got_x = false;
+        bool got_y = false;
         
         VoodooI2CDigitiserStylus* stylus = (VoodooI2CDigitiserStylus*)transducer;
         
@@ -175,14 +172,20 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
             case kHIDPage_GenericDesktop:
                 switch (usage) {
                     case kHIDUsage_GD_X:
-                    {transducer->coordinates.x.update(element->getValue(), timestamp);
+                    {if (!got_x) {
+                        transducer->coordinates.x.update(element->getValue(), timestamp);
                         transducer->logical_max_x = element->getLogicalMax();
-                        handled    |= element_is_current;}
+                        handled    |= element_is_current;
+                        got_x = true;
+                    }}
                         break;
                     case kHIDUsage_GD_Y:
-                    {transducer->coordinates.y.update(element->getValue(), timestamp);
+                    {if (!got_y){
+                        transducer->coordinates.y.update(element->getValue(), timestamp);
                         transducer->logical_max_y = element->getLogicalMax();
-                        handled    |= element_is_current;}
+                        handled    |= element_is_current;
+                        got_y = true;
+                    }}
                         break;
                     case kHIDUsage_GD_Z:
                     {transducer->coordinates.z.update(element->getValue(), timestamp);
@@ -252,6 +255,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                             transducer->is_valid = true;
                         else
                             transducer->is_valid = false;
+                        has_confidence = true;
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_BarrelPressure:
@@ -291,6 +295,9 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                 break;
         }
     }
+    
+    if (!has_confidence)
+        transducer->is_valid = true;
     
     if (!handled)
         return;
@@ -448,7 +455,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                         
                         UInt32 physical_max_x = raw_physical_max_x;
                         
-                        physical_max_x *= pow(10,(-(unit_exponent - -2)));
+                        physical_max_x *= pow(10,(unit_exponent - -2));
                         
                         if (sub_element->getUnit() == 0x13){
                             physical_max_x *= 2.54;
@@ -470,7 +477,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                         
                         UInt32 physical_max_y = raw_physical_max_y;
                         
-                        physical_max_y *= pow(10,(-(unit_exponent - -2)));
+                        physical_max_y *= pow(10,(unit_exponent - -2));
                         
                         if (sub_element->getUnit() == 0x13){
                             physical_max_y *= 2.54;

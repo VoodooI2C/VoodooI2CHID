@@ -180,7 +180,7 @@ void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime time
     
     //  Send multitouch information to the multitouch interface
     
-    if (digitiser.contact_count->getValue()>=2) {
+    if (event.contact_count>=2) {
         super::handleInterruptReport(timestamp, report, report_type, report_id);
         
     } else {
