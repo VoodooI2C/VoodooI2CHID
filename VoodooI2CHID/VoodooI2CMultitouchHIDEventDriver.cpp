@@ -545,7 +545,11 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
             || element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_DeviceConfiguration)
             )
             parseDigitizerElement(element);
+        
+        if (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchScreen))
+            multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, OSBoolean::withBoolean(true));
         }
+    
 
     if (digitiser.styluses->getCount() == 0 && digitiser.fingers->getCount() == 0)
         return kIOReturnError;
@@ -590,8 +594,6 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
 }
 
 IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
-    OSBoolean* integrated;
-
     multitouch_interface = new VoodooI2CMultitouchInterface;
     
     if (!multitouch_interface || !multitouch_interface->init(NULL)) {
@@ -606,15 +608,10 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
         goto exit;
     }
 
-    integrated = OSDynamicCast(OSBoolean, getProperty(kIOHIDDisplayIntegratedKey));
-
-    if (integrated)
-        multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, integrated);
-    else
-        multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, OSBoolean::withBoolean(false));
-
     multitouch_interface->setProperty(kIOHIDVendorIDKey, getVendorID(), 32);
     multitouch_interface->setProperty(kIOHIDProductIDKey, getProductID(), 32);
+    
+    multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, OSBoolean::withBoolean(false));
 
     multitouch_interface->registerService();
     
