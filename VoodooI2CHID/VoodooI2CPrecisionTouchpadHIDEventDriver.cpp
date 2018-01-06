@@ -41,7 +41,7 @@ bool VoodooI2CPrecisionTouchpadHIDEventDriver::handleStart(IOService* provider) 
     if (!digitiser.input_mode)
         return false;
 
-    IOLog("%s::%s Putting device into Precision Touchpad Mode\n", getName(), hid_device->name);
+    IOLog("%s::%s Putting device into Precision Touchpad Mode\n", getName(), name);
 
     enterPrecisionTouchpadMode();
 

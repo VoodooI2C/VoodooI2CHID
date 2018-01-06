@@ -49,11 +49,6 @@
 					<integer>13</integer>
 				</dict>
 			</array>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>Transport</key>
-				<string>I2C</string>
-			</dict>
 			<key>IOProbeScore</key>
 			<integer>300</integer>
 			<key>IOClass</key>
@@ -92,6 +87,12 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>DeviceUsagePairs</key>
 			<array>
+                <dict>
+                    <key>DeviceUsage</key>
+                    <integer>4</integer>
+                    <key>DeviceUsagePage</key>
+                    <integer>13</integer>
+                </dict>
 				<dict>
 					<key>DeviceUsage</key>
 					<integer>5</integer>
@@ -99,11 +100,6 @@
 					<integer>13</integer>
 				</dict>
 			</array>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>Transport</key>
-				<string>I2C</string>
-			</dict>
 			<key>IOProbeScore</key>
 			<integer>200</integer>
 			<key>IOClass</key>
@@ -276,20 +272,20 @@
 	</dict>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2017 Alexandre Daoud. All rights reserved.</string>
-    <key>OSBundleLibraries</key>
-    <dict>
-        <key>com.alexandred.VoodooI2C</key>
-        <string>2.0</string>
-        <key>com.apple.iokit.IOACPIFamily</key>
-        <string>1.4</string>
-        <key>com.apple.iokit.IOHIDFamily</key>
-        <string>2.0</string>
-        <key>com.apple.kpi.iokit</key>
-        <string>15.6</string>
-        <key>com.apple.kpi.libkern</key>
-        <string>15.6</string>
-        <key>com.apple.kpi.mach</key>
-        <string>13.0</string>
-    </dict>
+	<key>OSBundleLibraries</key>
+	<dict>
+		<key>com.alexandred.VoodooI2C</key>
+		<string>2.0</string>
+		<key>com.apple.iokit.IOACPIFamily</key>
+		<string>1.4</string>
+		<key>com.apple.iokit.IOHIDFamily</key>
+		<string>2.0</string>
+		<key>com.apple.kpi.iokit</key>
+		<string>15.6</string>
+		<key>com.apple.kpi.libkern</key>
+		<string>15.6</string>
+		<key>com.apple.kpi.mach</key>
+		<string>13.0</string>
+	</dict>
 </dict>
 </plist>

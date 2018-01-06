@@ -79,15 +79,6 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     virtual void free();
-    
-    /*Gets the latest value of an element by issuing a getReport request to the
-     * device. Necessary due to changes between 10.11 and 10.12.
-     * @element The element whose vaue is to be updated
-     *
-     * @return The new value of the element
-     */
-
-    UInt32 getElementValue(IOHIDElement* element);
 
     /*
      * Issues an I2C-HID command to get the HID descriptor from the device.

@@ -44,6 +44,28 @@ bool VoodooI2CMultitouchHIDEventDriver::didTerminate(IOService* provider, IOOpti
     return super::didTerminate(provider, options, defer);
 }
 
+UInt32 VoodooI2CMultitouchHIDEventDriver::getElementValue(IOHIDElement* element) {
+    IOHIDElementCookie cookie = element->getCookie();
+    
+    if (!cookie)
+        return 0;
+    
+    hid_device->updateElementValues(&cookie);
+    
+    return element->getValue();
+}
+
+const char* VoodooI2CMultitouchHIDEventDriver::getProductName() {
+    VoodooI2CHIDDevice* i2c_hid_device = OSDynamicCast(VoodooI2CHIDDevice, hid_device);
+
+    if (i2c_hid_device)
+        return i2c_hid_device->name;
+    
+    OSString* name = getProduct();
+
+    return name->getCStringNoCopy();
+}
+
 void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id) {
     if (!readyForReports() || report_type != kIOHIDReportTypeInput)
         return;
@@ -285,10 +307,12 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
         return false;
     
-    hid_device = OSDynamicCast(VoodooI2CHIDDevice, hid_interface->getParentEntry(gIOServicePlane));
+    hid_device = OSDynamicCast(IOHIDDevice, hid_interface->getParentEntry(gIOServicePlane));
     
     if (!hid_device)
         return false;
+    
+    name = getProductName();
 
     OSObject* object = copyProperty(kIOHIDAbsoluteAxisBoundsRemovalPercentage, gIOServicePlane);
 
@@ -318,7 +342,7 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
         return false;
 
     if (parseElements() != kIOReturnSuccess) {
-        IOLog("%s::%s Could not parse multitouch elements\n", getName(), hid_device->name);
+        IOLog("%s::%s Could not parse multitouch elements\n", getName(), name);
         return false;
     }
     
@@ -519,12 +543,12 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
     if (digitiser.styluses->getCount() == 0 && digitiser.fingers->getCount() == 0)
         return kIOReturnError;
 
-    UInt8 contact_count_maximum = hid_device->getElementValue(digitiser.contact_count_maximum);
+    UInt8 contact_count_maximum = getElementValue(digitiser.contact_count_maximum);
 
     float transducer_multiplier = (1.0f*contact_count_maximum)/(1.0f*digitiser.fingers->getCount());
 
     if (static_cast<float>(static_cast<int>(transducer_multiplier)) != transducer_multiplier) {
-        IOLog("%s::%s Unknown digitiser type: got %d finger collections and a %d maximum contact count, aborting\n", getName(), hid_device->name, digitiser.fingers->getCount(), contact_count_maximum);
+        IOLog("%s::%s Unknown digitiser type: got %d finger collections and a %d maximum contact count, aborting\n", getName(), name, digitiser.fingers->getCount(), contact_count_maximum);
         return kIOReturnInvalid;
     }
     

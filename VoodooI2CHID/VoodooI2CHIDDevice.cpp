@@ -30,17 +30,6 @@ void VoodooI2CHIDDevice::free() {
     super::free();
 }
 
-UInt32 VoodooI2CHIDDevice::getElementValue(IOHIDElement* element) {
-    IOHIDElementCookie cookie = element->getCookie();
-
-    if (!cookie)
-        return 0;
-
-    updateElementValues(&cookie);
-
-    return element->getValue();
-}
-
 IOReturn VoodooI2CHIDDevice::getHIDDescriptor() {
     VoodooI2CHIDDeviceCommand command;
     command.c.reg = hid_descriptor_register;

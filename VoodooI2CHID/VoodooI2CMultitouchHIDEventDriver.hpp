@@ -89,6 +89,17 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
 
     bool didTerminate(IOService* provider, IOOptionBits options, bool* defer);
 
+    /*Gets the latest value of an element by issuing a getReport request to the
+     * device. Necessary due to changes between 10.11 and 10.12.
+     * @element The element whose vaue is to be updated
+     *
+     * @return The new value of the element
+     */
+    
+    UInt32 getElementValue(IOHIDElement* element);
+    
+    const char* getProductName();
+
     /* Called during the interrupt routine to interate over transducers
      * @timestamp The timestamp of the interrupt report
      * @report_id The report ID of the interrupt report
@@ -207,9 +218,10 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
 
     bool start(IOService* provider);
  protected:
+    const char* name;
     bool awake = true;
     IOHIDInterface* hid_interface;
-    VoodooI2CHIDDevice* hid_device;
+    IOHIDDevice* hid_device;
  private:
     SInt32 absolute_axis_removal_percentage = 15;
     VoodooI2CMultitouchInterface* multitouch_interface;
