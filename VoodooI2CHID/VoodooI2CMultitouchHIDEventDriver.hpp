@@ -53,6 +53,7 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
         OSArray*           fingers;
         OSArray*           styluses;
         
+        OSArray*           wrappers;
         OSArray*           transducers;
         
         // report level elements
@@ -66,11 +67,9 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
         IOHIDElement*      contact_count_maximum;
     
         
-        bool               hybrid_reporting = false;
-        UInt8              hybrid_current_transducer_id = 1;
-        UInt8              hybrid_current_contact_count = 0;
-        
-        UInt8              transducer_multiplier;
+        UInt8              current_contact_count = 1;
+        UInt8              report_count = 1;
+        UInt8              current_report = 1;
     } digitiser;
 
     /* Calibrates an HID element
@@ -108,12 +107,12 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     void handleDigitizerReport(AbsoluteTime timestamp, UInt32 report_id);
 
     /* Called during the interrupt routine to set transducer values
-     * @wrapper The transducer wrapper to be updated
+     * @transducer The transducer to be updated
      * @timestamp The timestamp of the interrupt report
      * @report_id The report ID of the interrupt report
      */
 
-    void handleDigitizerTransducerReport(VoodooI2CHIDTransducerWrapper* wrapper, AbsoluteTime timestamp, UInt32 report_id);
+    void handleDigitizerTransducerReport(VoodooI2CDigitiserTransducer* transducer, AbsoluteTime timestamp, UInt32 report_id);
 
     /* Called during the interrupt routine to handle an interrupt report
      * @timestamp The timestamp of the interrupt report

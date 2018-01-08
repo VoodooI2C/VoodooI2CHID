@@ -21,13 +21,9 @@ class VoodooI2CHIDTransducerWrapper : public OSObject {
   OSDeclareDefaultStructors(VoodooI2CHIDTransducerWrapper);
 
  public:
-    IOHIDElement* hid_element;
     OSArray*      transducers;
-    DigitiserTransducerType type;
-    
-    IOHIDElement* contact_identifier;
 
-    static VoodooI2CHIDTransducerWrapper* withElement(IOHIDElement* element, DigitiserTransducerType);
+    static VoodooI2CHIDTransducerWrapper* wrapper();
 };
 
 

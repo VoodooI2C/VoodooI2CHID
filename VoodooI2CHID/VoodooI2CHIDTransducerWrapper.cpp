@@ -11,7 +11,7 @@
 #define super OSObject
 OSDefineMetaClassAndStructors(VoodooI2CHIDTransducerWrapper, OSObject);
 
-VoodooI2CHIDTransducerWrapper* VoodooI2CHIDTransducerWrapper::withElement(IOHIDElement* element, DigitiserTransducerType transducer_type) {
+VoodooI2CHIDTransducerWrapper* VoodooI2CHIDTransducerWrapper::wrapper() {
     VoodooI2CHIDTransducerWrapper* wrapper = NULL;
     
     wrapper = new VoodooI2CHIDTransducerWrapper;
@@ -23,23 +23,7 @@ VoodooI2CHIDTransducerWrapper* VoodooI2CHIDTransducerWrapper::withElement(IOHIDE
         wrapper = NULL;
         goto exit;
     }
-    
-    wrapper->type        = transducer_type;
-    wrapper->hid_element     = element;
-    
-    if (wrapper->hid_element)
-        wrapper->hid_element->retain();
-    
     wrapper->transducers = OSArray::withCapacity(4);
-    
-    if (!wrapper->transducers) {
-        if (wrapper->hid_element)
-            OSSafeReleaseNULL(wrapper->hid_element);
-        wrapper = NULL;
-        goto exit;
-    } else {
-        wrapper->hid_element->retain();
-    }
     
 exit:
     return wrapper;
