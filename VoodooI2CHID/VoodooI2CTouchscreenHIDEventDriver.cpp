@@ -19,10 +19,12 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
     
     //  If there is a finger touch event, decide if it is single or multitouch.
     
-    for (int index = 0; index < digitiser.contact_count->getValue(); index++) {
+    for (int index = 0; index < digitiser.contact_count->getValue() + 1; index++) {
         
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
         
+        if (!transducer)
+            return false;
         
         if (transducer->type==kDigitiserTransducerFinger && digitiser.contact_count->getValue()>=2) {
             
@@ -182,19 +184,20 @@ void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime time
     
     //  Send multitouch information to the multitouch interface
     
-    if (!event.contact_count || event.contact_count > 5) {
+    if (event.contact_count > 5) {
         return;
     }
+
     if (event.contact_count>=2) {
         multitouch_interface->handleInterruptReport(event, timestamp);
     } else {
         
         //  Process single touch data
         
-        if (checkStylus(timestamp, event) || checkFingerTouch(timestamp, event))
-            return;
-        
-        multitouch_interface->handleInterruptReport(event, timestamp);
+        if (!checkStylus(timestamp, event)) {
+            if (!checkFingerTouch(timestamp, event))
+                multitouch_interface->handleInterruptReport(event, timestamp);
+        }
     }
 }
 
