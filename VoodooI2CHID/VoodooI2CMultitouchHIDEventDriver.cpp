@@ -163,8 +163,6 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
         UInt32 usage_page;
         UInt32 usage;
         UInt32 value;
-        bool got_x = false;
-        bool got_y = false;
         
         VoodooI2CDigitiserStylus* stylus = (VoodooI2CDigitiserStylus*)transducer;
         
@@ -197,7 +195,6 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         transducer->coordinates.y.update(element->getValue(), timestamp);
                         transducer->logical_max_y = element->getLogicalMax();
                         handled    |= element_is_current;
-                        got_y = false;
                     }
                         break;
                     case kHIDUsage_GD_Z:

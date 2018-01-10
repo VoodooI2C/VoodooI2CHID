@@ -72,8 +72,9 @@ private:
      * @timestamp The timestamp of the current event being processed
      *
      * @event The current event
+     * @return `true` if we got a finger touch event, `false` otherwise
      */
-    void checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
+    bool checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
     
     /* The transducer is checked for stylus operation and pointer event dispatched.  x,y,z & pressure information is
      * obtained in a logical format and converted to IOFixed variables.

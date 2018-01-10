@@ -14,7 +14,8 @@ OSDefineMetaClassAndStructors(VoodooI2CTouchscreenHIDEventDriver, VoodooI2CMulti
 
 // Override of VoodooI2CMultitouchHIDEventDriver
 
-void VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
+bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
+    bool got_transducer = false;
     
     //  If there is a finger touch event, decide if it is single or multitouch.
     
@@ -33,7 +34,7 @@ void VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
         
         
         if (transducer->type==kDigitiserTransducerFinger && transducer->tip_switch.value()){
-            
+            got_transducer = true;
             //  Convert logical coordinates to IOFixed and Scaled;
             
             IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
@@ -99,7 +100,7 @@ void VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
         }
         
     }
-    
+    return got_transducer;
 }
 
 bool VoodooI2CTouchscreenHIDEventDriver::checkStylus(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
@@ -174,22 +175,26 @@ void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime time
         return;
     
     handleDigitizerReport(timestamp, report_id);
+
     VoodooI2CMultitouchEvent event;
     event.contact_count = digitiser.contact_count->getValue();
     event.transducers = digitiser.transducers;
     
     //  Send multitouch information to the multitouch interface
     
+    if (!event.contact_count || event.contact_count > 5) {
+        return;
+    }
     if (event.contact_count>=2) {
-        super::handleInterruptReport(timestamp, report, report_type, report_id);
-        
+        multitouch_interface->handleInterruptReport(event, timestamp);
     } else {
         
         //  Process single touch data
         
-        if (!checkStylus(timestamp, event))
-            checkFingerTouch(timestamp, event);
+        if (checkStylus(timestamp, event) || checkFingerTouch(timestamp, event))
+            return;
         
+        multitouch_interface->handleInterruptReport(event, timestamp);
     }
 }
 
