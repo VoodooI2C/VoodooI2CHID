@@ -116,6 +116,18 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
     
     if (!wrapper)
         return;
+    
+    // Check if we are sending the report to the right wrapper, 99% of the time, `digitiser.current_report - 1` will
+    // be the correct index but in rare circumstances, it won't be so we should ensure we have the right index
+    
+    UInt8 finger_count = digitiser.fingers->getCount();
+    
+    UInt8 first_identifier = wrapper->first_identifier->getValue() ? wrapper->first_identifier->getValue() : 0;
+    
+    UInt8 actual_index = static_cast<int>(roundUp(first_identifier + 1, finger_count)/finger_count) - 1;
+    
+    if (actual_index != digitiser.current_report - 1)
+        wrapper = OSDynamicCast(VoodooI2CHIDTransducerWrapper, digitiser.wrappers->getObject(actual_index));
 
     for (int i = 0; i < wrapper->transducers->getCount(); i++) {
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, wrapper->transducers->getObject(i));
@@ -583,6 +595,18 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
             
             wrapper->transducers->setObject(transducer);
             digitiser.transducers->setObject(transducer);
+        }
+        
+        VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, wrapper->transducers->getObject(0));
+        
+        for (int j = 0; j < transducer->collection->getChildElements()->getCount(); j++) {
+            IOHIDElement* element = OSDynamicCast(IOHIDElement, transducer->collection->getChildElements()->getObject(j));
+            
+            if (!element)
+                continue;
+            
+            if (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_ContactIdentifier))
+                wrapper->first_identifier = element;
         }
         
     }
