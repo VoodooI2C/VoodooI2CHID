@@ -122,12 +122,18 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
     
     UInt8 finger_count = digitiser.fingers->getCount();
     
+    if (!wrapper->first_identifier)
+        return;
+    
     UInt8 first_identifier = wrapper->first_identifier->getValue() ? wrapper->first_identifier->getValue() : 0;
     
     UInt8 actual_index = static_cast<int>(roundUp(first_identifier + 1, finger_count)/finger_count) - 1;
     
-    if (actual_index != digitiser.current_report - 1)
+    if (actual_index != digitiser.current_report - 1) {
         wrapper = OSDynamicCast(VoodooI2CHIDTransducerWrapper, digitiser.wrappers->getObject(actual_index));
+        if (!wrapper)
+            return;
+    }
 
     for (int i = 0; i < wrapper->transducers->getCount(); i++) {
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, wrapper->transducers->getObject(i));
