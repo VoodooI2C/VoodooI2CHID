@@ -72,6 +72,12 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
         UInt8              current_report = 1;
     } digitiser;
 
+	struct {
+        OSArray *           elements;
+        UInt8               bootMouseData[4];
+        bool                appleVendorSupported;
+    } keyboard;
+
     /* Calibrates an HID element
      * @element The element to be calibrated
      * @removalPercentage The percentage by which the element is calibrated
@@ -105,6 +111,13 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      */
 
     void handleDigitizerReport(AbsoluteTime timestamp, UInt32 report_id);
+
+    /* Called during the interrupt routine to interate over keyboard events
+     * @timestamp The timestamp of the interrupt report
+     * @report_id The report ID of the interrupt report
+     */
+
+    void handleKeboardReport(AbsoluteTime timeStamp, UInt32 reportID);
 
     /* Called during the interrupt routine to set transducer values
      * @transducer The transducer to be updated
@@ -144,6 +157,17 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      */
 
     IOReturn parseDigitizerElement(IOHIDElement* element);
+
+    /* Parses a keyboard usage page element
+     * @element The element to parse
+     *
+     * This function is reponsible for examining the child elements of a digitser elements to determine the
+     * capabilities of the keyboard.
+     *
+     * @return *true* on successful parse, *false* otherwise
+     */
+
+    bool parseKeyboardElement(IOHIDElement* element);
 
     /* Parses a digitiser transducer element
      * @element The element to parse
@@ -190,6 +214,7 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      */
 
     void setDigitizerProperties();
+	void setKeyboardProperties();
 
     /* Called by the OS in order to notify the driver that the device should change power state
      * @whichState The power state the device is expected to enter represented by either
