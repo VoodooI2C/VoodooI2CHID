@@ -256,6 +256,10 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
         
         dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, 0x0, cursor_x, cursor_y);
         
+        last_x = cursor_x;
+        last_y = cursor_y;
+        last_id = transducer->secondary_id;
+        
         start_scroll = false;
         
         
