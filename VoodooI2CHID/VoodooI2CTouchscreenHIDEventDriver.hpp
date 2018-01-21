@@ -62,6 +62,7 @@ private:
     
     int click_tick = 0;
     bool right_click = false;
+    bool start_scroll = true;
     UInt16 compare_input_x = 0;
     UInt16 compare_input_y = 0;
     int compare_input_counter = 0;
@@ -89,6 +90,15 @@ private:
      * stuck in a 'right click' mode after the long-press right-click function has been triggered.
      */
     void fingerLift();
+    
+    /* Resets the pointer to the current finger location when scrolling begins
+     *
+     * @timestamp The timestamp of the current event being processed
+     *
+     * @event The current event
+     */
+    
+    void scrollPosition(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
     
 };
 #endif /* VoodooI2CTouchscreenHIDEventDriver_hpp */
