@@ -222,6 +222,7 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     IOHIDInterface* hid_interface;
     IOHIDDevice* hid_device;
     VoodooI2CMultitouchInterface* multitouch_interface;
+    bool should_have_interface = true;
  private:
     SInt32 absolute_axis_removal_percentage = 15;
     OSArray* supported_elements;

@@ -25,7 +25,7 @@
 /* Implements an HID Event Driver for touchscreen devices as well as stylus input.
  */
 
-class VoodooI2CTouchscreenHIDEventDriver : private VoodooI2CMultitouchHIDEventDriver {
+class VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDEventDriver {
     OSDeclareDefaultStructors(VoodooI2CTouchscreenHIDEventDriver);
     
 public:
@@ -36,12 +36,21 @@ public:
      *
      * @inherit
      */
-    void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) override;
+    virtual void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) override;
     
     /* @inherit */
     bool handleStart(IOService* provider);
     
 protected:
+    /* The transducer is checked for stylus operation and pointer event dispatched.  x,y,z & pressure information is
+     * obtained in a logical format and converted to IOFixed variables.
+     *
+     * @timestamp The timestamp of the current event being processed
+     *
+     * @event The current event
+     */
+
+    bool checkStylus(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
 private:
     IOWorkLoop *work_loop;
     IOTimerEventSource *timer_source;
@@ -75,15 +84,6 @@ private:
      * @return `true` if we got a finger touch event, `false` otherwise
      */
     bool checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
-    
-    /* The transducer is checked for stylus operation and pointer event dispatched.  x,y,z & pressure information is
-     * obtained in a logical format and converted to IOFixed variables.
-     *
-     * @timestamp The timestamp of the current event being processed
-     *
-     * @event The current event
-     */
-    bool checkStylus(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
     
     /* This timeout based function executes a singletouch finger based pointer lift event as well as ensures that the pointer is not
      * stuck in a 'right click' mode after the long-press right-click function has been triggered.

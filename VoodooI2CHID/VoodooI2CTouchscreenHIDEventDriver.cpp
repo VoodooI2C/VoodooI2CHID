@@ -113,8 +113,7 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkStylus(AbsoluteTime timestamp, Voo
     
     for (int index = 0, count = event.transducers->getCount(); index < count; index++) {
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
-        
-        
+
         if (transducer->type==kDigitiserTransducerStylus && transducer->in_range){
             
             VoodooI2CDigitiserStylus* stylus = (VoodooI2CDigitiserStylus*)transducer;
@@ -179,24 +178,30 @@ void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime time
     handleDigitizerReport(timestamp, report_id);
 
     VoodooI2CMultitouchEvent event;
-    event.contact_count = digitiser.contact_count->getValue();
-    event.transducers = digitiser.transducers;
     
-    //  Send multitouch information to the multitouch interface
+    if (digitiser.contact_count) {
+        event.contact_count = digitiser.contact_count->getValue();
+        event.transducers = digitiser.transducers;
     
-    if (event.contact_count > 5) {
-        return;
-    }
+        //  Send multitouch information to the multitouch interface
+    
+        if (!event.contact_count)
+            return;
+    
+        if (event.contact_count > 5) {
+            return;
+        }
 
-    if (event.contact_count>=2) {
-        multitouch_interface->handleInterruptReport(event, timestamp);
-    } else {
+        if (event.contact_count>=2) {
+            multitouch_interface->handleInterruptReport(event, timestamp);
+        } else {
         
-        //  Process single touch data
+            //  Process single touch data
         
-        if (!checkStylus(timestamp, event)) {
-            if (!checkFingerTouch(timestamp, event))
-                multitouch_interface->handleInterruptReport(event, timestamp);
+            if (!checkStylus(timestamp, event)) {
+                if (!checkFingerTouch(timestamp, event))
+                    multitouch_interface->handleInterruptReport(event, timestamp);
+            }
         }
     }
 }

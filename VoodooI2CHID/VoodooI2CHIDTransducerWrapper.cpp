@@ -11,6 +11,14 @@
 #define super OSObject
 OSDefineMetaClassAndStructors(VoodooI2CHIDTransducerWrapper, OSObject);
 
+void VoodooI2CHIDTransducerWrapper::free() {
+    if (transducers)
+        transducers->flushCollection();
+    OSSafeReleaseNULL(transducers);
+
+    super::free();
+}
+
 VoodooI2CHIDTransducerWrapper* VoodooI2CHIDTransducerWrapper::wrapper() {
     VoodooI2CHIDTransducerWrapper* wrapper = NULL;
     

@@ -25,6 +25,7 @@ class VoodooI2CHIDTransducerWrapper : public OSObject {
     
     IOHIDElement* first_identifier;
 
+    void free();
     static VoodooI2CHIDTransducerWrapper* wrapper();
 };
 
