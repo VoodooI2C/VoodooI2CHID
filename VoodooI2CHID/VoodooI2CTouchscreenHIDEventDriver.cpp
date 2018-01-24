@@ -156,6 +156,7 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     
     
     click_tick=0;
+    start_scroll=true;
     uint64_t now_abs;
     clock_get_uptime(&now_abs);
     
@@ -176,13 +177,13 @@ void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime time
         return;
     
     handleDigitizerReport(timestamp, report_id);
-
+    
     VoodooI2CMultitouchEvent event;
     
     if (digitiser.contact_count) {
         event.contact_count = digitiser.contact_count->getValue();
         event.transducers = digitiser.transducers;
-    
+
         //  Send multitouch information to the multitouch interface
     
         if (!event.contact_count)
@@ -193,7 +194,14 @@ void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime time
         }
 
         if (event.contact_count>=2) {
-            multitouch_interface->handleInterruptReport(event, timestamp);
+        
+        if (event.contact_count==2 && start_scroll) {
+            scrollPosition(timestamp, event);
+        } else if (event.contact_count==2 && !start_scroll) {
+            this->timer_source->setTimeoutMS(14);
+        }
+        
+        multitouch_interface->handleInterruptReport(event, timestamp);
         } else {
         
             //  Process single touch data
@@ -224,6 +232,47 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     this->work_loop->addEventSource(this->timer_source);
     
     return true;
+}
+
+
+void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
+    
+    
+    if (start_scroll) {
+        
+        int index=0;
+        VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
+        if (transducer->type==kDigitiserTransducerStylus) {
+            index=1;
+            transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
+        }
+        
+        IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
+        IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
+        
+        index++;
+        transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
+        
+        IOFixed x2 = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
+        IOFixed y2 = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
+        
+        IOFixed cursor_x = (x+x2)/2;
+        IOFixed cursor_y = (y+y2)/2;
+        
+        dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, 0x0, cursor_x, cursor_y);
+        
+        last_x = cursor_x;
+        last_y = cursor_y;
+        last_id = transducer->secondary_id;
+        
+        start_scroll = false;
+        
+        
+    }
+    
+    this->timer_source->setTimeoutMS(14);
+    
+    
 }
 
 
