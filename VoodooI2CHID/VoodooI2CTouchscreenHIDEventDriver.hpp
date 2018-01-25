@@ -14,6 +14,8 @@
 #include <IOKit/IOService.h>
 #include <IOKit/IOTimerEventSource.h>
 #include <IOKit/IOWorkLoop.h>
+#include <IOKit/graphics/IOFramebuffer.h>
+#include <IOKit/graphics/IODisplay.h>
 
 #include "../../../Multitouch Support/VoodooI2CDigitiserStylus.hpp"
 #include "../../../Multitouch Support/VoodooI2CMultitouchInterface.hpp"
@@ -55,6 +57,9 @@ private:
     IOWorkLoop *work_loop;
     IOTimerEventSource *timer_source;
     
+    IOFramebuffer* active_framebuffer;
+    UInt8 current_rotation;
+    
     /* transducer variables
      */
     
@@ -86,10 +91,22 @@ private:
      */
     bool checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
     
+    /* Checks to see if the x and y coordinates need to be modified
+     * to account for a rotation
+     *
+     * @x A pointer to the x coordinate
+     * @y A pointer to the y coordinate
+     *
+     */
+
+    void checkRotation(IOFixed* x, IOFixed* y);
+    
     /* This timeout based function executes a singletouch finger based pointer lift event as well as ensures that the pointer is not
      * stuck in a 'right click' mode after the long-press right-click function has been triggered.
      */
     void fingerLift();
+    
+    IOFramebuffer* getFramebuffer();
     
     /* Resets the pointer to the current finger location when scrolling begins
      *

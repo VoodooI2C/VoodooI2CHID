@@ -42,6 +42,8 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
             IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
             
+            checkRotation(&x, &y);
+            
             //  Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
             last_x = x;
             last_y = y;
@@ -105,6 +107,20 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
     return got_transducer;
 }
 
+void VoodooI2CTouchscreenHIDEventDriver::checkRotation(IOFixed* x, IOFixed* y) {
+    if (active_framebuffer) {
+        if (current_rotation & kIOFBSwapAxes) {
+            IOFixed old_x = *x;
+            *x = *y;
+            *y = old_x;
+        }
+        if (current_rotation & kIOFBInvertX)
+            *x = 65535 - *x;
+        if (current_rotation & kIOFBInvertY)
+            *y = 65535 - *y;
+    }
+}
+
 bool VoodooI2CTouchscreenHIDEventDriver::checkStylus(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
     
     //  Check the current transducers for stylus operation, dispatch the pointer events and return true.
@@ -121,6 +137,8 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkStylus(AbsoluteTime timestamp, Voo
             IOFixed y = ((stylus->coordinates.y.value() * 1.0f) / stylus->logical_max_y) * 65535;
             IOFixed z = ((stylus->coordinates.z.value() * 1.0f) / stylus->logical_max_z) * 65535;
             IOFixed stylus_pressure = ((stylus->tip_pressure.value() * 1.0f) /stylus->pressure_physical_max) * 65535;
+            
+            checkRotation(&x, &y);
             
             if (stylus->barrel_switch.value() != 0x0 && stylus->barrel_switch.value() !=0x2 && (stylus->barrel_switch.value()-barrel_switch_offset) != 0x2)
                 barrel_switch_offset = stylus->barrel_switch.value();
@@ -172,6 +190,32 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     
 }
 
+IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
+    IODisplay* display = NULL;
+    IOFramebuffer* framebuffer = NULL;
+    
+    OSDictionary *match = serviceMatching("IODisplay");
+    OSIterator *iterator = getMatchingServices(match);
+
+    if (iterator) {
+        display = OSDynamicCast(IODisplay, iterator->getNextObject());
+        
+        if (display) {
+            
+            IOLog("%s::Got active display\n", getName());
+            
+            framebuffer = OSDynamicCast(IOFramebuffer, display->getParentEntry(gIOServicePlane)->getParentEntry(gIOServicePlane));
+            
+            if (framebuffer)
+                IOLog("%s::Got active framebuffer\n", getName());
+        }
+        
+        iterator->release();
+    }
+    
+    return framebuffer;
+}
+
 void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) {
     if (!readyForReports() || report_type != kIOHIDReportTypeInput)
         return;
@@ -179,6 +223,15 @@ void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime time
     handleDigitizerReport(timestamp, report_id);
     
     VoodooI2CMultitouchEvent event;
+    
+    if (!active_framebuffer)
+        active_framebuffer = getFramebuffer();
+
+    if (active_framebuffer) {
+        OSNumber* number = OSDynamicCast(OSNumber, active_framebuffer->getProperty(kIOFBTransformKey));
+        current_rotation = number->unsigned8BitValue() / 0x10;
+        multitouch_interface->setProperty(kIOFBTransformKey, OSNumber::withNumber(current_rotation, 8));
+    }
     
     if (digitiser.contact_count) {
         event.contact_count = digitiser.contact_count->getValue();
@@ -231,6 +284,8 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     
     this->work_loop->addEventSource(this->timer_source);
     
+    active_framebuffer = getFramebuffer();
+    
     return true;
 }
 
@@ -258,6 +313,8 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
         
         IOFixed cursor_x = (x+x2)/2;
         IOFixed cursor_y = (y+y2)/2;
+        
+        checkRotation(&cursor_x, &cursor_y);
         
         dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, 0x0, cursor_x, cursor_y);
         
