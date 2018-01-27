@@ -216,14 +216,7 @@ IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
     return framebuffer;
 }
 
-void VoodooI2CTouchscreenHIDEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) {
-    if (!readyForReports() || report_type != kIOHIDReportTypeInput)
-        return;
-    
-    handleDigitizerReport(timestamp, report_id);
-    
-    VoodooI2CMultitouchEvent event;
-    
+void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp){
     if (!active_framebuffer)
         active_framebuffer = getFramebuffer();
 

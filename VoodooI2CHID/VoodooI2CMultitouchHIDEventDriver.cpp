@@ -55,6 +55,11 @@ bool VoodooI2CMultitouchHIDEventDriver::didTerminate(IOService* provider, IOOpti
     return super::didTerminate(provider, options, defer);
 }
 
+void VoodooI2CMultitouchHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp) {
+    if (multitouch_interface)
+        multitouch_interface->handleInterruptReport(event, timestamp);
+}
+
 UInt32 VoodooI2CMultitouchHIDEventDriver::getElementValue(IOHIDElement* element) {
     IOHIDElementCookie cookie = element->getCookie();
     
@@ -98,8 +103,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
         event.contact_count = digitiser.current_contact_count;
         event.transducers = digitiser.transducers;
 
-        if (multitouch_interface)
-            multitouch_interface->handleInterruptReport(event, timestamp);
+        forwardReport(event, timestamp);
         
         digitiser.report_count = 1;
         digitiser.current_report = 1;

@@ -38,7 +38,7 @@ public:
      *
      * @inherit
      */
-    virtual void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) override;
+    virtual void forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp);
     
     /* @inherit */
     bool handleStart(IOService* provider);

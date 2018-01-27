@@ -105,7 +105,7 @@ IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
         setProperty("HIDDescriptorAddress", number);
         hid_descriptor_register = number->unsigned16BitValue();
     }
-    
+
     if (result)
         result->release();
     
@@ -236,6 +236,10 @@ VoodooI2CHIDDevice* VoodooI2CHIDDevice::probe(IOService* provider, SInt32* score
         IOLog("%s::%s Could not get ACPI device\n", getName(), name);
         return NULL;
     }
+    
+    // Sometimes an I2C HID will have power state methods, lets turn it on in case
+    
+    acpi_device->evaluateObject("_PS0");
 
     api = OSDynamicCast(VoodooI2CDeviceNub, provider);
     

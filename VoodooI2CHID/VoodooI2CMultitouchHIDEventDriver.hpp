@@ -223,6 +223,8 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     IOHIDDevice* hid_device;
     VoodooI2CMultitouchInterface* multitouch_interface;
     bool should_have_interface = true;
+
+    virtual void forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp);
  private:
     SInt32 absolute_axis_removal_percentage = 15;
     OSArray* supported_elements;
