@@ -15,7 +15,12 @@
 
 #include "VoodooI2CSensor.hpp"
 
-#define kHIDUsage_Snsr_Orientation_Quaternion 0x483
+typedef struct {
+    SInt16 x;
+    SInt16 y;
+    SInt16 z;
+    SInt16 w;
+} VoodooI2CQuaternion;
 
 class VoodooI2CDeviceOrientationSensor : public VoodooI2CSensor {
   OSDeclareDefaultStructors(VoodooI2CDeviceOrientationSensor);

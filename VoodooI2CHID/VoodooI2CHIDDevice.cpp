@@ -340,6 +340,19 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     if (reportType != kIOHIDReportTypeFeature && reportType != kIOHIDReportTypeOutput)
         return kIOReturnBadArgument;
     
+    IOLog("VoodooI2C Set Report: ");
+    
+    char* buff= (char*)IOMalloc(report->getLength());
+    report->readBytes(0, buff, report->getLength());
+    
+    for (int i = 0; i < report->getLength(); i++) {
+        IOLog("0x%x ", buff[i]);
+    }
+    
+    IOLog("\n");
+    
+    IOFree(buff, report->getLength());
+    
     UInt16 data_register = hid_descriptor->wDataRegister;
     UInt8 raw_report_type = (reportType == kIOHIDReportTypeFeature) ? 0x03 : 0x02;
     UInt8 idx = 0;

@@ -21,15 +21,9 @@ void VoodooI2CDeviceOrientationSensor::handleInterruptReport(AbsoluteTime timest
 
     OSData* data = quaternion->getDataValue();
 
-    char* buffer = (char*)data->getBytesNoCopy();
-
-    IOLog("VoodooI2C quaternion report: ");
-
-    for (int i = 0; i < sizeof(buffer); i++) {
-        IOLog("0x%x ", buffer[i]);
-    }
-
-    IOLog("\n");
+    VoodooI2CQuaternion* quaternion = (VoodooI2CQuaternion*)data->getBytesNoCopy();
+    
+    // IOLog("VoodooI2C Quaternion x: %d, y: %d, z: %d, w: %d\n", quaternion->x, quaternion->y, quaternion->z, quaternion->w);
 }
 
 bool VoodooI2CDeviceOrientationSensor::start(IOService* provider) {

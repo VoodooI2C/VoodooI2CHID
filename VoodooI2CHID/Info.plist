@@ -56,26 +56,26 @@
 			<key>IOProviderClass</key>
 			<string>IOHIDInterface</string>
 		</dict>
-        <key>VoodooI2CHIDDevice Stylus HID Event Driver</key>
-        <dict>
-            <key>CFBundleIdentifier</key>
-            <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-            <key>DeviceUsagePairs</key>
-            <array>
-                <dict>
-                    <key>DeviceUsage</key>
-                    <integer>2</integer>
-                    <key>DeviceUsagePage</key>
-                    <integer>13</integer>
-                </dict>
-            </array>
-            <key>IOProbeScore</key>
-            <integer>300</integer>
-            <key>IOClass</key>
-            <string>VoodooI2CStylusHIDEventDriver</string>
-            <key>IOProviderClass</key>
-            <string>IOHIDInterface</string>
-        </dict>
+		<key>VoodooI2CHIDDevice Stylus HID Event Driver</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>DeviceUsagePairs</key>
+			<array>
+				<dict>
+					<key>DeviceUsage</key>
+					<integer>2</integer>
+					<key>DeviceUsagePage</key>
+					<integer>13</integer>
+				</dict>
+			</array>
+			<key>IOProbeScore</key>
+			<integer>300</integer>
+			<key>IOClass</key>
+			<string>VoodooI2CStylusHIDEventDriver</string>
+			<key>IOProviderClass</key>
+			<string>IOHIDInterface</string>
+		</dict>
 		<key>VoodooI2CHIDDevice Precision Touchpad HID Event Driver</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
@@ -119,12 +119,12 @@
 					<key>DeviceUsagePage</key>
 					<integer>13</integer>
 				</dict>
-                <dict>
-                    <key>DeviceUsage</key>
-                    <integer>2</integer>
-                    <key>DeviceUsagePage</key>
-                    <integer>13</integer>
-                </dict>
+				<dict>
+					<key>DeviceUsage</key>
+					<integer>2</integer>
+					<key>DeviceUsagePage</key>
+					<integer>13</integer>
+				</dict>
 			</array>
 			<key>IOProbeScore</key>
 			<integer>200</integer>
@@ -295,39 +295,39 @@
 			<key>IOProviderClass</key>
 			<string>IOHIDInterface</string>
 		</dict>
-        <key>Intel ACPI Sensor Hub Enabler</key>
-        <dict>
-            <key>IOClass</key>
-            <string>VoodooI2CSensorHubEnabler</string>
-            <key>CFBundleIdentifier</key>
-            <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-            <key>IONameMatch</key>
-            <array>
-                <string>INT33D0</string>
-            </array>
-            <key>IOProviderClass</key>
-            <string>IOACPIPlatformDevice</string>
-        </dict>
-        <key>Sensor Hub Event Driver</key>
-        <dict>
-            <key>CFBundleIdentifier</key>
-            <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-            <key>DeviceUsagePairs</key>
-            <array>
-                <dict>
-                    <key>DeviceUsage</key>
-                    <integer>1</integer>
-                    <key>DeviceUsagePage</key>
-                    <integer>32</integer>
-                </dict>
-            </array>
-            <key>IOProbeScore</key>
-            <integer>100</integer>
-            <key>IOClass</key>
-            <string>VoodooI2CSensorHubEventDriver</string>
-            <key>IOProviderClass</key>
-            <string>IOHIDInterface</string>
-        </dict>
+		<key>Intel ACPI Sensor Hub Enabler</key>
+		<dict>
+			<key>IOClass</key>
+			<string>VoodooI2CSensorHubEnabler</string>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IONameMatch</key>
+			<array>
+				<string>INT33D0</string>
+			</array>
+			<key>IOProviderClass</key>
+			<string>IOACPIPlatformDevice</string>
+		</dict>
+		<key>Sensor Hub Event Driver</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>DeviceUsagePairs</key>
+			<array>
+				<dict>
+					<key>DeviceUsage</key>
+					<integer>1</integer>
+					<key>DeviceUsagePage</key>
+					<integer>32</integer>
+				</dict>
+			</array>
+			<key>IOProbeScore</key>
+			<integer>100</integer>
+			<key>IOClass</key>
+			<string>VoodooI2CSensorHubEventDriver</string>
+			<key>IOProviderClass</key>
+			<string>IOHIDInterface</string>
+		</dict>
 	</dict>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2017 Alexandre Daoud. All rights reserved.</string>
@@ -337,8 +337,8 @@
 		<string>2.0</string>
 		<key>com.apple.iokit.IOACPIFamily</key>
 		<string>1.4</string>
-        <key>com.apple.iokit.IOGraphicsFamily</key>
-        <string>2.4.1</string>
+		<key>com.apple.iokit.IOGraphicsFamily</key>
+		<string>2.4.1</string>
 		<key>com.apple.iokit.IOHIDFamily</key>
 		<string>2.0</string>
 		<key>com.apple.kpi.iokit</key>

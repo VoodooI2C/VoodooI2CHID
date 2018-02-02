@@ -20,6 +20,7 @@
 
 class VoodooI2CSensor;
 class VoodooI2CDeviceOrientationSensor;
+class VoodooI2CAccelerometerSensor;
 
 class VoodooI2CSensorHubEventDriver : public IOHIDEventService {
   OSDeclareDefaultStructors(VoodooI2CSensorHubEventDriver);

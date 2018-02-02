@@ -10,6 +10,7 @@
 
 #include "VoodooI2CSensor.hpp"
 #include "VoodooI2CDeviceOrientationSensor.hpp"
+#include "VoodooI2CAccelerometerSensor.hpp"
 
 #define super IOHIDEventService
 OSDefineMetaClassAndStructors(VoodooI2CSensorHubEventDriver, IOHIDEventService);
@@ -107,8 +108,8 @@ IOReturn VoodooI2CSensorHubEventDriver::parseSensorParent(IOHIDElement* parent) 
         if (!sensor_element)
             continue;
 
-        if (sensor_element->conformsTo(kHIDPage_Sensor, kHIDUsage_Snsr_Orientation_DeviceOrientation))
-            sensor = VoodooI2CDeviceOrientationSensor::withElement(sensor_element, this);
+        if (sensor_element->conformsTo(kHIDPage_Sensor, kHIDUsage_Snsr_Motion_Accelerometer3D))
+            sensor = VoodooI2CAccelerometerSensor::withElement(sensor_element, this);
         
         if (sensor)
             sensors->setObject(sensor);

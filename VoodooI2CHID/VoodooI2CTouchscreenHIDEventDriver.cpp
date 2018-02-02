@@ -226,7 +226,7 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
         multitouch_interface->setProperty(kIOFBTransformKey, OSNumber::withNumber(current_rotation, 8));
     }
     
-    if (digitiser.contact_count) {
+    if (event.contact_count) {
         event.contact_count = digitiser.contact_count->getValue();
         event.transducers = digitiser.transducers;
 

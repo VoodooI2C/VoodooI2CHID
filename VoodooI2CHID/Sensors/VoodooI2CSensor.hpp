@@ -18,6 +18,8 @@
 #include <IOKit/hid/IOHIDElement.h>
 #include <IOKit/hid/IOHIDUsageTables.h>
 
+#include "VoodooI2CSensorsConstants.h"
+
 typedef struct __attribute__((__packed__)) {
     UInt8 value;
     UInt8 reserved;
@@ -37,16 +39,22 @@ class VoodooI2CSensor : public IOService {
     
     virtual void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id);
     static VoodooI2CSensor* withElement(IOHIDElement* element, IOService* event_driver);
-
  protected:
-    VoodooI2CSensorHubEventDriver* event_driver;
-    IOHIDElement* power_state;
-    IOHIDElement* reporting_state;
-
-    UInt32 getElementValue(IOHIDElement* element);
- private:
+    bool awake;
     IOReturn changeState(IOHIDElement* state_element, UInt16 state_usage);
+    VoodooI2CSensorHubEventDriver* event_driver;
+    
+    IOHIDElement* power_state;
+    UInt32 current_power_state;
+    
+    
+    IOHIDElement* reporting_state;
+    UInt32 current_reporting_state;
+
     static UInt8 findPropertyIndex(IOHIDElement* element, UInt16 usage);
+    UInt32 getElementValue(IOHIDElement* element);
+    void setElementValue(IOHIDElement* element, UInt32 value);
+ private:
 };
 
 
