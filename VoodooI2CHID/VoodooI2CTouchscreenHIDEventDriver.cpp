@@ -61,9 +61,6 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
                     compare_input_y = temp_y;
                     
                     if (compare_input_counter >= 120 && !right_click) {
-                        uint64_t now_abs;
-                        clock_get_uptime(&now_abs);
-                        dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, 0x2, last_x, last_y);
                         compare_input_x = 0;
                         compare_input_y = 0;
                         compare_input_counter = 0;
