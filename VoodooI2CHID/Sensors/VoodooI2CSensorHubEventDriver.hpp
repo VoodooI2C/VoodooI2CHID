@@ -16,7 +16,7 @@
 #include <IOKit/hid/IOHIDDevice.h>
 #include <IOKit/hid/IOHIDEventService.h>
 
-#include "VoodooI2CHIDDevice.hpp"
+#include "../../VoodooI2CHID/VoodooI2CHIDDevice.hpp"
 
 class VoodooI2CSensor;
 class VoodooI2CDeviceOrientationSensor;
