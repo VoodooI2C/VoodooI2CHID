@@ -267,6 +267,13 @@ void VoodooI2CHIDDevice::releaseResources() {
         command_gate->release();
         command_gate = NULL;
     }
+    
+    if (interrupt_simulator) {
+        interrupt_simulator->disable();
+        work_loop->removeEventSource(interrupt_simulator);
+        interrupt_simulator->release();
+        interrupt_simulator = NULL;
+    }
 
     if (interrupt_source) {
         interrupt_source->disable();
@@ -339,17 +346,10 @@ IOReturn VoodooI2CHIDDevice::setHIDPowerState(VoodooI2CState state) {
 IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) {
     if (reportType != kIOHIDReportTypeFeature && reportType != kIOHIDReportTypeOutput)
         return kIOReturnBadArgument;
-    
-    IOLog("VoodooI2C Set Report: ");
+
     
     char* buff= (char*)IOMalloc(report->getLength());
     report->readBytes(0, buff, report->getLength());
-    
-    for (int i = 0; i < report->getLength(); i++) {
-        IOLog("0x%x ", buff[i]);
-    }
-    
-    IOLog("\n");
     
     IOFree(buff, report->getLength());
     
@@ -463,12 +463,19 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
     
     interrupt_source = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &VoodooI2CHIDDevice::interruptOccured), api, 0);
     if (!interrupt_source) {
-        IOLog("%s::%s Could not get interrupt event source\n", getName(), name);
-        goto exit;
+        IOLog("%s::%s Warning: Could not get interrupt event source, using polling instead\n", getName(), name);
+        interrupt_simulator = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CHIDDevice::simulateInterrupt));
+        
+        if (!interrupt_simulator) {
+            IOLog("%s::%s Could not get timer event source\n", getName(), name);
+            goto exit;
+        }
+        work_loop->addEventSource(interrupt_simulator);
+        interrupt_simulator->setTimeoutMS(200);
+    } else {
+        work_loop->addEventSource(interrupt_source);
+        interrupt_source->enable();
     }
-
-    work_loop->addEventSource(interrupt_source);
-    interrupt_source->enable();
 
     resetHIDDevice();
 
@@ -556,4 +563,9 @@ OSString* VoodooI2CHIDDevice::newTransportString() const {
 
 OSString* VoodooI2CHIDDevice::newManufacturerString() const {
     return OSString::withCString("Apple");
+}
+
+void VoodooI2CHIDDevice::simulateInterrupt(OSObject* owner, IOTimerEventSource* timer) {
+    interruptOccured(owner, NULL, NULL);
+    interrupt_simulator->setTimeoutMS(INTERRUPT_SIMULATOR_TIMEOUT);
 }

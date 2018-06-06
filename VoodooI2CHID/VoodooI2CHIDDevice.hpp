@@ -14,9 +14,12 @@
 #include <IOKit/IOService.h>
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
 #include <IOKit/IOInterruptEventSource.h>
+#include <IOKit/IOTimerEventSource.h>
 #include <IOKit/hid/IOHIDDevice.h>
 #include "../../../Dependencies/helpers.hpp"
 #include <IOKit/hid/IOHIDElement.h>
+
+#define INTERRUPT_SIMULATOR_TIMEOUT 5
 
 #define I2C_HID_PWR_ON  0x00
 #define I2C_HID_PWR_SLEEP 0x01
@@ -119,6 +122,8 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     bool handleStart(IOService* provider);
+    
+    void simulateInterrupt(OSObject* owner, IOTimerEventSource* timer);
     
     /* Sets a few properties that are needed after <IOHIDDevice> finishes starting
      * @provider The provider which we have matched against
@@ -226,6 +231,7 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     IOCommandGate* command_gate;
     UInt16 hid_descriptor_register;
     VoodooI2CHIDDeviceHIDDescriptor* hid_descriptor;
+    IOTimerEventSource* interrupt_simulator;
     IOInterruptEventSource* interrupt_source;
     bool ready_for_input;
     bool* reset_event;
