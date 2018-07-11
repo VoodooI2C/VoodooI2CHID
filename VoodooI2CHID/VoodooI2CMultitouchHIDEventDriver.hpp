@@ -40,6 +40,10 @@
 
 #define kHIDUsage_Dig_Confidence kHIDUsage_Dig_TouchValid
 
+#define kKeyboardGetStatus iokit_vendor_specific_msg(1)
+#define kKeyboardSetStatus iokit_vendor_specific_msg(2)
+#define kKeyboardKeyEvent iokit_vendor_specific_msg(3)
+
 /* Implements an HID Event Driver for HID devices that expose a digitiser usage page.
  *
  * The members of this class are responsible for parsing, processing and interpreting digitiser-related HID objects.
@@ -216,6 +220,8 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      */
 
     bool start(IOService* provider);
+    
+    virtual IOReturn message(UInt32 type, IOService* provider, void* argument);
  protected:
     const char* name;
     bool awake = true;
@@ -228,6 +234,10 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
  private:
     SInt32 absolute_axis_removal_percentage = 15;
     OSArray* supported_elements;
+    
+    bool ignoreall;
+    uint64_t maxaftertyping = 500000000;
+    uint64_t keytime = 0;
 };
 
 

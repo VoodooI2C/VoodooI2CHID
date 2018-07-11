@@ -28,6 +28,7 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
 }
 
 void VoodooI2CPrecisionTouchpadHIDEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) {
+
     if (!ready)
         return;
 
@@ -35,6 +36,8 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::handleInterruptReport(AbsoluteTim
 }
 
 bool VoodooI2CPrecisionTouchpadHIDEventDriver::handleStart(IOService* provider) {
+    this->setProperty("receiveKeyboardNotifications", true);
+
     if (!super::handleStart(provider))
         return false;
 

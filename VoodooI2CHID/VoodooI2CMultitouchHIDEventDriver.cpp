@@ -83,6 +83,20 @@ const char* VoodooI2CMultitouchHIDEventDriver::getProductName() {
 }
 
 void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id) {
+    
+    // Touchpad is disabled through ApplePS2Keyboard request
+    if (ignoreall)
+        return;
+    
+    uint64_t now_abs;
+    clock_get_uptime(&now_abs);
+    uint64_t now_ns;
+    absolutetime_to_nanoseconds(now_abs, &now_ns);
+    
+    // Ignore touchpad interaction(s) shortly after typing
+    if (now_ns - keytime < maxaftertyping)
+        return;
+    
     if (!readyForReports() || report_type != kIOHIDReportTypeInput)
         return;
 
@@ -715,4 +729,44 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
 
     return true;
+}
+
+IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* provider, void* argument)
+{
+    IOLog("VoodooI2CMultitouchHIDEventDriver::message: type=%x, provider=%p, argument=%p, argument=%04x\n", type, provider, argument, *static_cast<UInt64*>(argument));
+
+    switch (type)
+    {
+        case kKeyboardGetStatus:
+        {
+            IOLog("%s::getEnabledStatus = %s\n", getName(), ignoreall ? "false" : "true");
+            bool* pResult = (bool*)argument;
+            *pResult = !ignoreall;
+            break;
+        }
+        case kKeyboardSetStatus:
+        {
+            bool enable = *((bool*)argument);
+
+            IOLog("%s::setEnabledStatus = %s\n", getName(), enable ? "true" : "false");
+
+            // ignoreall is true when trackpad has been disabled
+            if (enable == ignoreall)
+            {
+                // save state, and update LED
+                ignoreall = !enable;
+            }
+            break;
+        }
+        case kKeyboardKeyEvent:
+        {
+            //  Remember last time key was pressed
+            keytime = *((uint64_t*)argument);
+            
+            IOLog("%s::keyPressed = %llu\n", getName(), keytime);
+            break;
+        }
+    }
+
+    return kIOReturnSuccess;
 }
