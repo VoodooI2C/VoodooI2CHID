@@ -40,9 +40,14 @@
 
 #define kHIDUsage_Dig_Confidence kHIDUsage_Dig_TouchValid
 
-#define kKeyboardGetStatus iokit_vendor_specific_msg(1)
-#define kKeyboardSetStatus iokit_vendor_specific_msg(2)
-#define kKeyboardKeyEvent iokit_vendor_specific_msg(3)
+// Message types defined by ApplePS2Keyboard
+enum
+{
+    // from keyboard to mouse/touchpad
+    kKeyboardSetTouchStatus = iokit_vendor_specific_msg(100),   // set disable/enable touchpad (data is bool*)
+    kKeyboardGetTouchStatus = iokit_vendor_specific_msg(101),   // get disable/enable touchpad (data is bool*)
+    kKeyboardKeyPressTime = iokit_vendor_specific_msg(110)      // notify of timestamp a non-modifier key was pressed (data is uint64_t*)
+};
 
 /* Implements an HID Event Driver for HID devices that expose a digitiser usage page.
  *
@@ -221,6 +226,14 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
 
     bool start(IOService* provider);
     
+    /*
+     * Called by ApplePS2Controller to notify of keyboard interactions
+     * @type Custom message type in iokit_vendor_specific_msg range
+     * @provider Calling IOService
+     * @argument Optional argument as defined by message type
+     *
+     * @return kIOSuccess if the message is processed
+     */
     virtual IOReturn message(UInt32 type, IOService* provider, void* argument);
  protected:
     const char* name;

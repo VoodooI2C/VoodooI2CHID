@@ -36,8 +36,6 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::handleInterruptReport(AbsoluteTim
 }
 
 bool VoodooI2CPrecisionTouchpadHIDEventDriver::handleStart(IOService* provider) {
-    this->setProperty("receiveKeyboardNotifications", true);
-
     if (!super::handleStart(provider))
         return false;
 

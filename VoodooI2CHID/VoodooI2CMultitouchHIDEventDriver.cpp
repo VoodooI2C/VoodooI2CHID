@@ -725,6 +725,12 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::setPowerState(unsigned long whichSta
 bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     if (!super::start(provider))
         return false;
+    
+    // Read QuietTimeAfterTyping configuration value (if available)
+    OSNumber* quietTimeAfterTyping = OSDynamicCast(OSNumber, getProperty("QuietTimeAfterTyping"));
+    
+    if (quietTimeAfterTyping != NULL)
+        maxaftertyping = quietTimeAfterTyping->unsigned64BitValue();
 
     setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
 
@@ -733,23 +739,23 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
 
 IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* provider, void* argument)
 {
-    IOLog("VoodooI2CMultitouchHIDEventDriver::message: type=%x, provider=%p, argument=%p, argument=%04x\n", type, provider, argument, *static_cast<UInt64*>(argument));
-
     switch (type)
     {
-        case kKeyboardGetStatus:
+        case kKeyboardGetTouchStatus:
         {
+#if DEBUG
             IOLog("%s::getEnabledStatus = %s\n", getName(), ignoreall ? "false" : "true");
+#endif
             bool* pResult = (bool*)argument;
             *pResult = !ignoreall;
             break;
         }
-        case kKeyboardSetStatus:
+        case kKeyboardSetTouchStatus:
         {
             bool enable = *((bool*)argument);
-
+#if DEBUG
             IOLog("%s::setEnabledStatus = %s\n", getName(), enable ? "true" : "false");
-
+#endif
             // ignoreall is true when trackpad has been disabled
             if (enable == ignoreall)
             {
@@ -758,12 +764,13 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* prov
             }
             break;
         }
-        case kKeyboardKeyEvent:
+        case kKeyboardKeyPressTime:
         {
             //  Remember last time key was pressed
             keytime = *((uint64_t*)argument);
-            
+#if DEBUG
             IOLog("%s::keyPressed = %llu\n", getName(), keytime);
+#endif
             break;
         }
     }
