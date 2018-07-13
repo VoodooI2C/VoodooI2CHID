@@ -103,7 +103,7 @@
 			<key>RM,deliverNotifications</key>
 			<true/>
 			<key>QuietTimeAfterTyping</key>
-			<integer>500000000</integer>
+			<integer>500</integer>
 		</dict>
 		<key>VoodooI2CHIDDevice Multitouch HID Event Driver</key>
 		<dict>
