@@ -730,7 +730,7 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     OSNumber* quietTimeAfterTyping = OSDynamicCast(OSNumber, getProperty("QuietTimeAfterTyping"));
     
     if (quietTimeAfterTyping != NULL)
-        maxaftertyping = quietTimeAfterTyping->unsigned64BitValue();
+        maxaftertyping = quietTimeAfterTyping->unsigned64BitValue() * 1000000;
 
     setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
 
