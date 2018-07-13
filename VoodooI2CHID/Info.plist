@@ -100,6 +100,10 @@
 			<string>VoodooI2CPrecisionTouchpadHIDEventDriver</string>
 			<key>IOProviderClass</key>
 			<string>IOHIDInterface</string>
+			<key>RM,deliverNotifications</key>
+			<true/>
+			<key>QuietTimeAfterTyping</key>
+			<integer>500000000</integer>
 		</dict>
 		<key>VoodooI2CHIDDevice Multitouch HID Event Driver</key>
 		<dict>
