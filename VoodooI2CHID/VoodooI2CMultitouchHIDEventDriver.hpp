@@ -232,17 +232,9 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      * @provider Calling IOService
      * @argument Optional argument as defined by message type
      *
-     * @return kIOReturnSuccess if the message is processed
+     * @return kIOSuccess if the message is processed
      */
     virtual IOReturn message(UInt32 type, IOService* provider, void* argument);
-    
-    /*
-     * Used to pass user preferences from user mode to the driver
-     * @properties OSDictionary of configured properties
-     *
-     * @return kIOReturnSuccess if the properties are received successfully, otherwise kIOUnsupported
-     */
-    virtual IOReturn setProperties(OSObject * properties);
  protected:
     const char* name;
     bool awake = true;
@@ -256,38 +248,9 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     SInt32 absolute_axis_removal_percentage = 15;
     OSArray* supported_elements;
     
-    bool ignore_all;
-    bool ignore_mouse = false;
-
-    uint64_t max_after_typing = 500000000;
-    uint64_t key_time = 0;
-    
-    OSSet* attachedHIDPointerDevices;
-    
-    IONotifier* usb_hid_publish_notify;     // Notification when an USB mouse HID device is connected
-    IONotifier* usb_hid_terminate_notify; // Notification when an USB mouse HID device is disconnected
-    
-    IONotifier* bluetooth_hid_publish_notify; // Notification when a bluetooth HID device is connected
-    IONotifier* bluetooth_hid_terminate_notify; // Notification when a bluetooth HID device is disconnected
-
-    /*
-     * Register for notifications of attached HID pointer devices (both USB and bluetooth)
-     */
-    void registerHIDPointerNotifications();
-    
-    /*
-     * Unregister for notifications of attached HID pointer devices (both USB and bluetooth)
-     */
-    void unregisterHIDPointerNotifications();
-    
-    /*
-     * IOServiceMatchingNotificationHandler to receive notification of addMatchingNotification registrations
-     * @target target set when registering
-     * @refCon reference set when registering
-     * @newService IOService object matching the criteria for the addMatchingNotification registration
-     * @notifier IONotifier object for the notification registration
-     */
-    bool notificationHIDAttachedHandler(void * refCon, IOService * newService, IONotifier * notifier);
+    bool ignoreall;
+    uint64_t maxaftertyping = 500000000;
+    uint64_t keytime = 0;
 };
 
 

@@ -104,10 +104,6 @@
 			<true/>
 			<key>QuietTimeAfterTyping</key>
 			<integer>500</integer>
-			<key>ProcessUSBMouseStopsTrackpad</key>
-			<true/>
-			<key>ProcessBluetoothMouseStopsTrackpad</key>
-			<true/>
 		</dict>
 		<key>VoodooI2CHIDDevice Multitouch HID Event Driver</key>
 		<dict>
