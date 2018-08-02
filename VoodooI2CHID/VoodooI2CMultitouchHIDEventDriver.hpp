@@ -262,7 +262,10 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     uint64_t max_after_typing = 500000000;
     uint64_t key_time = 0;
     
-    OSSet* attachedHIDPointerDevices;
+    IOWorkLoop* work_loop;
+    IOCommandGate* command_gate;
+    
+    OSSet* attached_hid_pointer_devices;
     
     IONotifier* usb_hid_publish_notify;     // Notification when an USB mouse HID device is connected
     IONotifier* usb_hid_terminate_notify; // Notification when an USB mouse HID device is disconnected
@@ -281,8 +284,14 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     void unregisterHIDPointerNotifications();
     
     /*
+     * IOServiceMatchingNotificationHandler (gated) to receive notification of addMatchingNotification registrations
+     * @newService IOService object matching the criteria for the addMatchingNotification registration
+     * @notifier IONotifier object for the notification registration
+     */
+    void notificationHIDAttachedHandlerGated(IOService * newService, IONotifier * notifier);
+    
+    /*
      * IOServiceMatchingNotificationHandler to receive notification of addMatchingNotification registrations
-     * @target target set when registering
      * @refCon reference set when registering
      * @newService IOService object matching the criteria for the addMatchingNotification registration
      * @notifier IONotifier object for the notification registration

@@ -7,6 +7,7 @@
 //
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
+#include <IOKit/IOCommandGate.h>
 #include <IOKit/hid/IOHIDInterface.h>
 #include <IOKit/usb/USBSpec.h>
 #include <IOKit/bluetooth/BluetoothAssignedNumbers.h>
@@ -438,12 +439,15 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
      */
     
     unregisterHIDPointerNotifications();
-    OSSafeReleaseNULL(attachedHIDPointerDevices);
+    OSSafeReleaseNULL(attached_hid_pointer_devices);
 
     if (multitouch_interface) {
         multitouch_interface->stop(this);
         OSSafeReleaseNULL(multitouch_interface);
     }
+    
+    work_loop->removeEventSource(command_gate);
+    OSSafeReleaseNULL(command_gate);
 
     PMstop();
 }
@@ -730,7 +734,18 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     if (!super::start(provider))
         return false;
     
-    attachedHIDPointerDevices = OSSet::withCapacity(1);
+    work_loop = this->getWorkLoop();
+    
+    if (!work_loop)
+        return false;
+    
+    command_gate = IOCommandGate::commandGate(this);
+    if (!command_gate) {
+        return false;
+    }
+    work_loop->addEventSource(command_gate);
+
+    attached_hid_pointer_devices = OSSet::withCapacity(1);
     registerHIDPointerNotifications();
 
     // Read QuietTimeAfterTyping configuration value (if available)
@@ -808,7 +823,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::setProperties(OSObject * properties)
                         ignore_mouse = (value->unsigned32BitValue() > 0);
                         
                         // If there are devices connected and automatically switch the current ignore status on/off
-                        if (attachedHIDPointerDevices->getCount() > 0) {
+                        if (attached_hid_pointer_devices->getCount() > 0) {
                             ignore_all = ignore_mouse;
                         }
                     }
@@ -881,35 +896,34 @@ void VoodooI2CMultitouchHIDEventDriver::unregisterHIDPointerNotifications()
         OSSafeReleaseNULL(bluetooth_hid_terminate_notify);
     }
 
-    attachedHIDPointerDevices->flushCollection();
+    attached_hid_pointer_devices->flushCollection();
 }
 
-bool VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandler(void * refCon,
-                                             IOService * newService,
-                                             IONotifier * notifier)
+void VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated(IOService * newService,
+                                                                            IONotifier * notifier)
 {
     char path[256];
     int len = 255;
     memset(path, 0, len);
     newService->getPath(path, &len, gIOServicePlane);
-
+    
     if (notifier == usb_hid_publish_notify) {
-        attachedHIDPointerDevices->setObject(newService);
-        IOLog("%s: USB pointer HID device published: %s, # devices: %d\n", getName(), path, attachedHIDPointerDevices->getCount());
+        attached_hid_pointer_devices->setObject(newService);
+        IOLog("%s: USB pointer HID device published: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
     }
-
+    
     if (notifier == usb_hid_terminate_notify) {
-        attachedHIDPointerDevices->removeObject(newService);
-        IOLog("%s: USB pointer HID device terminated: %s, # devices: %d\n", getName(), path, attachedHIDPointerDevices->getCount());
+        attached_hid_pointer_devices->removeObject(newService);
+        IOLog("%s: USB pointer HID device terminated: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
     }
-
+    
     if (notifier == bluetooth_hid_publish_notify) {
-
+        
         // Filter on specific CoD (Class of Device) bluetooth devices only
         OSNumber* propDeviceClass = OSDynamicCast(OSNumber, newService->getProperty("ClassOfDevice"));
-
+        
         if (propDeviceClass != NULL) {
-
+            
             long classOfDevice = propDeviceClass->unsigned32BitValue();
             
             long deviceClassMajor = (classOfDevice & 0x1F00) >> 8;
@@ -927,33 +941,43 @@ bool VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandler(void * re
                         deviceClassMinor2 == kBluetoothDeviceClassMinorPeripheral2DigitizerTablet || // Magic Touchpad
                         deviceClassMinor2 == kBluetoothDeviceClassMinorPeripheral2DigitalPen) // Wacom Tablet
                     {
-
-                        attachedHIDPointerDevices->setObject(newService);
-                        IOLog("%s: Bluetooth pointer HID device published: %s, # devices: %d\n", getName(), path, attachedHIDPointerDevices->getCount());
+                        
+                        attached_hid_pointer_devices->setObject(newService);
+                        IOLog("%s: Bluetooth pointer HID device published: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
                     }
                 }
             }
         }
     }
-
+    
     if (notifier == bluetooth_hid_terminate_notify) {
-        attachedHIDPointerDevices->removeObject(newService);
-        IOLog("%s: Bluetooth pointer HID device terminated: %s, # devices: %d\n", getName(), path, attachedHIDPointerDevices->getCount());
+        attached_hid_pointer_devices->removeObject(newService);
+        IOLog("%s: Bluetooth pointer HID device terminated: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
     }
-
+    
     if (notifier == usb_hid_publish_notify || notifier == bluetooth_hid_publish_notify) {
-        if (ignore_mouse && attachedHIDPointerDevices->getCount() > 0) {
+        if (ignore_mouse && attached_hid_pointer_devices->getCount() > 0) {
             // One or more USB or Bluetooth pointer devices attached, disable trackpad
             ignore_all = true;
         }
     }
-
+    
     if (notifier == usb_hid_terminate_notify || notifier == bluetooth_hid_terminate_notify) {
-        if (ignore_mouse && attachedHIDPointerDevices->getCount() == 0) {
+        if (ignore_mouse && attached_hid_pointer_devices->getCount() == 0) {
             // No USB or bluetooth pointer devices attached, re-enable trackpad
             ignore_all = false;
         }
     }
+}
+
+bool VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandler(void * refCon,
+                                             IOService * newService,
+                                             IONotifier * notifier)
+{
+    command_gate->runAction((IOCommandGate::Action)OSMemberFunctionCast(
+                            IOCommandGate::Action, this,
+                            &VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated),
+                            newService, notifier);
 
     return true;
 }
