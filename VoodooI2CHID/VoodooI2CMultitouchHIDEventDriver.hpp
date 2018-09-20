@@ -40,6 +40,15 @@
 
 #define kHIDUsage_Dig_Confidence kHIDUsage_Dig_TouchValid
 
+// Message types defined by ApplePS2Keyboard
+enum
+{
+    // from keyboard to mouse/touchpad
+    kKeyboardSetTouchStatus = iokit_vendor_specific_msg(100),   // set disable/enable touchpad (data is bool*)
+    kKeyboardGetTouchStatus = iokit_vendor_specific_msg(101),   // get disable/enable touchpad (data is bool*)
+    kKeyboardKeyPressTime = iokit_vendor_specific_msg(110)      // notify of timestamp a non-modifier key was pressed (data is uint64_t*)
+};
+
 /* Implements an HID Event Driver for HID devices that expose a digitiser usage page.
  *
  * The members of this class are responsible for parsing, processing and interpreting digitiser-related HID objects.
@@ -216,6 +225,24 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      */
 
     bool start(IOService* provider);
+    
+    /*
+     * Called by ApplePS2Controller to notify of keyboard interactions
+     * @type Custom message type in iokit_vendor_specific_msg range
+     * @provider Calling IOService
+     * @argument Optional argument as defined by message type
+     *
+     * @return kIOReturnSuccess if the message is processed
+     */
+    virtual IOReturn message(UInt32 type, IOService* provider, void* argument);
+    
+    /*
+     * Used to pass user preferences from user mode to the driver
+     * @properties OSDictionary of configured properties
+     *
+     * @return kIOReturnSuccess if the properties are received successfully, otherwise kIOUnsupported
+     */
+    virtual IOReturn setProperties(OSObject * properties);
  protected:
     const char* name;
     bool awake = true;
@@ -228,6 +255,48 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
  private:
     SInt32 absolute_axis_removal_percentage = 15;
     OSArray* supported_elements;
+    
+    bool ignore_all;
+    bool ignore_mouse = false;
+
+    uint64_t max_after_typing = 500000000;
+    uint64_t key_time = 0;
+    
+    IOWorkLoop* work_loop;
+    IOCommandGate* command_gate;
+    
+    OSSet* attached_hid_pointer_devices;
+    
+    IONotifier* usb_hid_publish_notify;     // Notification when an USB mouse HID device is connected
+    IONotifier* usb_hid_terminate_notify; // Notification when an USB mouse HID device is disconnected
+    
+    IONotifier* bluetooth_hid_publish_notify; // Notification when a bluetooth HID device is connected
+    IONotifier* bluetooth_hid_terminate_notify; // Notification when a bluetooth HID device is disconnected
+
+    /*
+     * Register for notifications of attached HID pointer devices (both USB and bluetooth)
+     */
+    void registerHIDPointerNotifications();
+    
+    /*
+     * Unregister for notifications of attached HID pointer devices (both USB and bluetooth)
+     */
+    void unregisterHIDPointerNotifications();
+    
+    /*
+     * IOServiceMatchingNotificationHandler (gated) to receive notification of addMatchingNotification registrations
+     * @newService IOService object matching the criteria for the addMatchingNotification registration
+     * @notifier IONotifier object for the notification registration
+     */
+    void notificationHIDAttachedHandlerGated(IOService * newService, IONotifier * notifier);
+    
+    /*
+     * IOServiceMatchingNotificationHandler to receive notification of addMatchingNotification registrations
+     * @refCon reference set when registering
+     * @newService IOService object matching the criteria for the addMatchingNotification registration
+     * @notifier IONotifier object for the notification registration
+     */
+    bool notificationHIDAttachedHandler(void * refCon, IOService * newService, IONotifier * notifier);
 };
 
 
