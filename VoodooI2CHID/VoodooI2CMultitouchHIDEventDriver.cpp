@@ -690,8 +690,8 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
 exit:
     if (multitouch_interface) {
         multitouch_interface->stop(this);
-        multitouch_interface->release();
-        multitouch_interface = NULL;
+        // multitouch_interface->release();
+        // multitouch_interface = NULL;
     }
     
     return kIOReturnError;
