@@ -237,8 +237,6 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     IOInterruptEventSource* interrupt_source;
     bool ready_for_input;
     bool* reset_event;
-    
-    void getInputReportGated();
 
     /* Queries the I2C-HID device for an input report
      *
