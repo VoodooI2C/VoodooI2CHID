@@ -435,7 +435,21 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
     } else {
         if (!awake){
             awake = true;
-            resetHIDDevice();
+            
+            read_in_progress = true;
+            setHIDPowerState(kVoodooI2CStateOn);
+            
+            IOSleep(1);
+            
+            VoodooI2CHIDDeviceCommand command;
+            command.c.reg = hid_descriptor->wCommandRegister;
+            command.c.opcode = 0x01;
+            command.c.report_type_id = 0;
+            
+            api->writeI2C(command.data, 4);
+
+            read_in_progress = false;
+            
             IOLog("%s::%s Woke up\n", getName(), name);
         }
     }
