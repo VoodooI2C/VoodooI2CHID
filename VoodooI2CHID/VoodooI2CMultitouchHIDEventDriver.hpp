@@ -232,17 +232,9 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      * @provider Calling IOService
      * @argument Optional argument as defined by message type
      *
-     * @return kIOReturnSuccess if the message is processed
+     * @return kIOSuccess if the message is processed
      */
     virtual IOReturn message(UInt32 type, IOService* provider, void* argument);
-    
-    /*
-     * Used to pass user preferences from user mode to the driver
-     * @properties OSDictionary of configured properties
-     *
-     * @return kIOReturnSuccess if the properties are received successfully, otherwise kIOUnsupported
-     */
-    virtual IOReturn setProperties(OSObject * properties);
  protected:
     const char* name;
     bool awake = true;

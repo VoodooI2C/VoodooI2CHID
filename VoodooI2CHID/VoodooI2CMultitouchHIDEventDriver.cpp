@@ -9,8 +9,6 @@
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
 #include <IOKit/IOCommandGate.h>
 #include <IOKit/hid/IOHIDInterface.h>
-#include <IOKit/usb/USBSpec.h>
-#include <IOKit/bluetooth/BluetoothAssignedNumbers.h>
 
 #define GetReportType( type )                                               \
 ((type <= kIOHIDElementTypeInput_ScanCodes) ? kIOHIDReportTypeInput :   \
@@ -88,7 +86,7 @@ const char* VoodooI2CMultitouchHIDEventDriver::getProductName() {
 void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id) {
     
     // Touchpad is disabled through ApplePS2Keyboard request
-    if (ignore_all)
+    if (ignoreall)
         return;
     
     uint64_t now_abs;
@@ -97,7 +95,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
     absolutetime_to_nanoseconds(now_abs, &now_ns);
     
     // Ignore touchpad interaction(s) shortly after typing
-    if (now_ns - key_time < max_after_typing)
+    if (now_ns - keytime < maxaftertyping)
         return;
     
     if (!readyForReports() || report_type != kIOHIDReportTypeInput)
@@ -735,6 +733,7 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     if (!super::start(provider))
         return false;
     
+
     work_loop = this->getWorkLoop();
     
     if (!work_loop)
@@ -753,7 +752,7 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     OSNumber* quietTimeAfterTyping = OSDynamicCast(OSNumber, getProperty("QuietTimeAfterTyping"));
     
     if (quietTimeAfterTyping != NULL)
-        max_after_typing = quietTimeAfterTyping->unsigned64BitValue() * 1000000;
+        maxaftertyping = quietTimeAfterTyping->unsigned64BitValue() * 1000000;
 
     setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
 
@@ -770,7 +769,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* prov
             IOLog("%s::getEnabledStatus = %s\n", getName(), ignoreall ? "false" : "true");
 #endif
             bool* pResult = (bool*)argument;
-            *pResult = !ignore_all;
+            *pResult = !ignoreall;
             break;
         }
         case kKeyboardSetTouchStatus:
@@ -780,17 +779,17 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* prov
             IOLog("%s::setEnabledStatus = %s\n", getName(), enable ? "true" : "false");
 #endif
             // ignoreall is true when trackpad has been disabled
-            if (enable == ignore_all)
+            if (enable == ignoreall)
             {
                 // save state, and update LED
-                ignore_all = !enable;
+                ignoreall = !enable;
             }
             break;
         }
         case kKeyboardKeyPressTime:
         {
             //  Remember last time key was pressed
-            key_time = *((uint64_t*)argument);
+            keytime = *((uint64_t*)argument);
 #if DEBUG
             IOLog("%s::keyPressed = %llu\n", getName(), keytime);
 #endif
@@ -982,5 +981,3 @@ bool VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandler(void * re
 
     return true;
 }
-
-
