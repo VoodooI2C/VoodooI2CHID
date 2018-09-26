@@ -157,8 +157,8 @@ void VoodooI2CHIDDevice::getInputReport() {
     IOFree(report, hid_descriptor->wMaxInputLength);
 
 exit:
-    thread_terminate(current_thread());
     read_in_progress = false;
+    thread_terminate(current_thread());
 }
 
 IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) {
