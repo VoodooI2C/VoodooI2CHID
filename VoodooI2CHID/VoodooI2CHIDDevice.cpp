@@ -428,7 +428,6 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         return kIOReturnInvalid;
     if (whichState == 0){
         if (awake){
-            awake = false;
             while (read_in_progress){
                 IOSleep(10);
             }
@@ -436,12 +435,12 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
             setHIDPowerState(kVoodooI2CStateOff);
             
             IOLog("%s::%s Going to sleep\n", getName(), name);
+            awake = false;
         }
     } else {
         if (!awake){
-            resetHIDDevice();
-            
             awake = true;
+            resetHIDDevice();
             IOLog("%s::%s Woke up\n", getName(), name);
         }
     }
