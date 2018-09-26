@@ -189,6 +189,8 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     bool awake;
     bool read_in_progress;
     IOWorkLoop* work_loop;
+    
+    IOReturn resetHIDDeviceGated();
 
     /* Issues an I2C-HID reset command.
      *
@@ -235,6 +237,8 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     IOInterruptEventSource* interrupt_source;
     bool ready_for_input;
     bool* reset_event;
+    
+    void getInputReportGated();
 
     /* Queries the I2C-HID device for an input report
      *
