@@ -122,11 +122,6 @@ IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
     return kIOReturnSuccess;
 }
 
-void VoodooI2CHIDDevice::getInputReportGated() {
-    command_gate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &VoodooI2CHIDDevice::getInputReport));
-    thread_terminate(current_thread());
-}
-
 void VoodooI2CHIDDevice::getInputReport() {
     IOBufferMemoryDescriptor* buffer;
     IOReturn ret;
@@ -147,7 +142,6 @@ void VoodooI2CHIDDevice::getInputReport() {
 
     if (return_size > hid_descriptor->wMaxInputLength) {
         // IOLog("%s: Incomplete report %d/%d\n", getName(), hid_descriptor->wMaxInputLength, return_size);
-        read_in_progress = false;
         goto exit;
     }
 
@@ -163,6 +157,7 @@ void VoodooI2CHIDDevice::getInputReport() {
     IOFree(report, hid_descriptor->wMaxInputLength);
 
 exit:
+    thread_terminate(current_thread());
     read_in_progress = false;
 }
 
@@ -222,7 +217,7 @@ void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSourc
     read_in_progress = true;
     
     thread_t new_thread;
-    kern_return_t ret = kernel_thread_start(OSMemberFunctionCast(thread_continue_t, this, &VoodooI2CHIDDevice::getInputReportGated), this, &new_thread);
+    kern_return_t ret = kernel_thread_start(OSMemberFunctionCast(thread_continue_t, this, &VoodooI2CHIDDevice::getInputReport), this, &new_thread);
     if (ret != KERN_SUCCESS){
         read_in_progress = false;
         IOLog("%s::%s Thread error while attempting to get input report\n", getName(), name);
