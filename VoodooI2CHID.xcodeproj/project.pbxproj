@@ -338,7 +338,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.alexandred.VoodooI2CHID;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.11;
+				SDKROOT = macosx;
 				WRAPPER_EXTENSION = kext;
 			};
 			name = Debug;
@@ -363,7 +363,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.alexandred.VoodooI2CHID;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.11;
+				SDKROOT = macosx;
 				WRAPPER_EXTENSION = kext;
 			};
 			name = Release;

@@ -161,6 +161,26 @@ exit:
     thread_terminate(current_thread());
 }
 
+IOWorkLoop* VoodooI2CHIDDevice::getWorkLoop() {
+    // Do we have a work loop already?, if so return it NOW.
+    if ((vm_address_t) work_loop >> 1)
+        return work_loop;
+    
+    if (OSCompareAndSwap(0, 1, reinterpret_cast<IOWorkLoop*>(&work_loop))) {
+        // Construct the workloop and set the cntrlSync variable
+        // to whatever the result is and return
+        work_loop = IOWorkLoop::workLoop();
+    } else {
+        while (reinterpret_cast<IOWorkLoop*>(work_loop) == reinterpret_cast<IOWorkLoop*>(1)) {
+            // Spin around the cntrlSync variable until the
+            // initialization finishes.
+            thread_block(0);
+        }
+    }
+    
+    return work_loop;
+}
+
 IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) {
     if (reportType != kIOHIDReportTypeFeature && reportType != kIOHIDReportTypeInput)
         return kIOReturnBadArgument;
@@ -215,7 +235,7 @@ void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSourc
         return;
     
     read_in_progress = true;
-    
+
     thread_t new_thread;
     kern_return_t ret = kernel_thread_start(OSMemberFunctionCast(thread_continue_t, this, &VoodooI2CHIDDevice::getInputReport), this, &new_thread);
     if (ret != KERN_SUCCESS){
@@ -283,7 +303,7 @@ void VoodooI2CHIDDevice::releaseResources() {
         interrupt_source->release();
         interrupt_source = NULL;
     }
-    
+
     if (work_loop) {
         work_loop->release();
         work_loop = NULL;

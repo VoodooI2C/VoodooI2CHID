@@ -244,6 +244,8 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     void getInputReport();
+    
+    IOWorkLoop* getWorkLoop();
 
     /*
     * This function is called when the I2C-HID device asserts its interrupt line.
