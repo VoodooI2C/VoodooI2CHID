@@ -768,7 +768,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* prov
         case kKeyboardGetTouchStatus:
         {
 #if DEBUG
-            IOLog("%s::getEnabledStatus = %s\n", getName(), ignoreall ? "false" : "true");
+            IOLog("%s::getEnabledStatus = %s\n", getName(), ignore_all ? "false" : "true");
 #endif
             bool* pResult = (bool*)argument;
             *pResult = !ignore_all;
@@ -780,7 +780,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* prov
 #if DEBUG
             IOLog("%s::setEnabledStatus = %s\n", getName(), enable ? "true" : "false");
 #endif
-            // ignoreall is true when trackpad has been disabled
+            // ignore_all is true when trackpad has been disabled
             if (enable == ignore_all)
             {
                 // save state, and update LED
@@ -793,7 +793,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* prov
             //  Remember last time key was pressed
             key_time = *((uint64_t*)argument);
 #if DEBUG
-            IOLog("%s::keyPressed = %llu\n", getName(), keytime);
+            IOLog("%s::keyPressed = %llu\n", getName(), key_time);
 #endif
             break;
         }
