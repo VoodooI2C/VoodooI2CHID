@@ -92,12 +92,12 @@ void VoodooI2CAccelerometerSensor::rotateDevice(IOOptionBits rotation_state) {
 IOReturn VoodooI2CAccelerometerSensor::setPowerState(unsigned long whichState, IOService* whatDevice) {
     if (whatDevice != this)
         return kIOReturnInvalid;
-    if (whichState == 0){
-        if (awake){
+    if (whichState == 0) {
+        if (awake) {
             awake = false;
         }
     } else {
-        if (!awake){
+        if (!awake) {
             setElementValue(change_sensitivity, 3);
             
             awake = true;

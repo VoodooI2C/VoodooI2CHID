@@ -41,8 +41,7 @@
 #define kHIDUsage_Dig_Confidence kHIDUsage_Dig_TouchValid
 
 // Message types defined by ApplePS2Keyboard
-enum
-{
+enum {
     // from keyboard to mouse/touchpad
     kKeyboardSetTouchStatus = iokit_vendor_specific_msg(100),   // set disable/enable touchpad (data is bool*)
     kKeyboardGetTouchStatus = iokit_vendor_specific_msg(101),   // get disable/enable touchpad (data is bool*)
