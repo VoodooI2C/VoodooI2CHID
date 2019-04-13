@@ -364,8 +364,11 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     if (!hid_interface)
         return false;
 
-    if (hid_interface->getTransport()->getCStringNoCopy() != kIOHIDTransportUSBValue)
-        hid_interface->setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+    if (hid_interface->getTransport()->getCStringNoCopy() != kIOHIDTransportUSBValue) {
+        OSBoolean* supported = OSBoolean::withBoolean(true);
+        hid_interface->setProperty("VoodooI2CServices Supported", supported);
+        supported->release();
+    }
 
     if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
         return false;
@@ -456,8 +459,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
 }
 
 IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* digitiser_element) {
-    OSArray* children = OSArray::withCapacity(1);
-    children = digitiser_element->getChildElements();
+    OSArray* children = digitiser_element->getChildElements();
     
     if (!children)
         return kIOReturnNotFound;
@@ -665,36 +667,27 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
 
 IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
     multitouch_interface = new VoodooI2CMultitouchInterface;
-    
-    if (!multitouch_interface || !multitouch_interface->init(NULL)) {
-        goto exit;
-    }
-    
-    if (!multitouch_interface->attach(this)) {
-        goto exit;
-    }
-    
-    if (!multitouch_interface->start(this)) {
-        goto exit;
+
+    if (!multitouch_interface || !multitouch_interface->init(NULL) || !multitouch_interface->attach(this) || !multitouch_interface->start(this)) {
+        if (multitouch_interface) {
+            multitouch_interface->stop(this);
+            // multitouch_interface->release();
+            // multitouch_interface = NULL;
+        }
+
+        return kIOReturnError;
     }
 
     multitouch_interface->setProperty(kIOHIDVendorIDKey, getVendorID(), 32);
     multitouch_interface->setProperty(kIOHIDProductIDKey, getProductID(), 32);
-    
-    multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, OSBoolean::withBoolean(false));
+
+    OSBoolean* display_integrated = OSBoolean::withBoolean(false);
+    multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, display_integrated);
+    display_integrated->release();
 
     multitouch_interface->registerService();
-    
+
     return kIOReturnSuccess;
-    
-exit:
-    if (multitouch_interface) {
-        multitouch_interface->stop(this);
-        // multitouch_interface->release();
-        // multitouch_interface = NULL;
-    }
-    
-    return kIOReturnError;
 }
 
 inline void VoodooI2CMultitouchHIDEventDriver::setButtonState(DigitiserTransducerButtonState* state, UInt32 bit, UInt32 value, AbsoluteTime timestamp) {
@@ -755,7 +748,9 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     if (quietTimeAfterTyping != NULL)
         max_after_typing = quietTimeAfterTyping->unsigned64BitValue() * 1000000;
 
-    setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+    OSBoolean* supported = OSBoolean::withBoolean(true);
+    setProperty("VoodooI2CServices Supported", supported);
+    supported->release();
 
     return true;
 }

@@ -18,12 +18,13 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
     VoodooI2CPrecisionTouchpadFeatureReport buffer;
     buffer.value = INPUT_MODE_TOUCHPAD;
     buffer.reserved = 0x00;
-    
+
     IOBufferMemoryDescriptor* report = IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task, 0, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
     report->writeBytes(0, &buffer, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
-    
+
     hid_interface->setReport(report, kIOHIDReportTypeFeature, digitiser.input_mode->getReportID());
-    
+    report->release();
+
     ready = true;
 }
 

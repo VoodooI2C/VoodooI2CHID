@@ -33,7 +33,9 @@ IOFramebuffer* VoodooI2CAccelerometerSensor::getFramebuffer() {
         
         iterator->release();
     }
-    
+
+    OSSafeReleaseNULL(match);
+
     return framebuffer;
 }
 

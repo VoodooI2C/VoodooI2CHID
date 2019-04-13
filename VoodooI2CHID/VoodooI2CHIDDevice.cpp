@@ -540,7 +540,9 @@ bool VoodooI2CHIDDevice::start(IOService* provider) {
 
     ready_for_input = true;
 
-    setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+    OSBoolean* supported = OSBoolean::withBoolean(true);
+    setProperty("VoodooI2CServices Supported", supported);
+    supported->release();
 
     return true;
 }

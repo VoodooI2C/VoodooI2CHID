@@ -58,14 +58,14 @@ void VoodooI2CSensor::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDesc
 }
 
 void VoodooI2CSensor::setElementValue(IOHIDElement* updated_element, UInt32 value) {
+    if (!element)
+        return;
+
     OSData* buffer = OSData::withCapacity(1);
     bool manufacturer_already_done = false;
     bool model_already_done = false;
     
     buffer->appendByte(updated_element->getReportID(), 1);
-    
-    if (!element)
-        return;
     
     OSArray* children = element->getChildElements();
 
