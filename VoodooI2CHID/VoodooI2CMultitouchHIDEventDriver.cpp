@@ -364,7 +364,11 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     if (!hid_interface)
         return false;
 
-    if (hid_interface->getTransport()->getCStringNoCopy() != kIOHIDTransportUSBValue) {
+    OSString* transport = hid_interface->getTransport();
+    if (!transport)
+        return false;
+
+    if (transport->getCStringNoCopy() != kIOHIDTransportUSBValue) {
         OSBoolean* supported = OSBoolean::withBoolean(true);
         hid_interface->setProperty("VoodooI2CServices Supported", supported);
         supported->release();
