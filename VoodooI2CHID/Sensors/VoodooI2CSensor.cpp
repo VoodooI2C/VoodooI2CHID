@@ -198,7 +198,6 @@ IOReturn VoodooI2CSensor::setPowerState(unsigned long whichState, IOService* wha
             }
             
             current_reporting_state = kHIDUsage_Snsr_Property_ReportingState_NoEvents;
-
         }
     } else {
         if (!awake) {

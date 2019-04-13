@@ -28,7 +28,6 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
 }
 
 void VoodooI2CPrecisionTouchpadHIDEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) {
-
     if (!ready)
         return;
 

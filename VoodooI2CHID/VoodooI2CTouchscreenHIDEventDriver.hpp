@@ -53,6 +53,7 @@ class VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDEventDri
      */
 
     bool checkStylus(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
+
  private:
     IOWorkLoop *work_loop;
     IOTimerEventSource *timer_source;

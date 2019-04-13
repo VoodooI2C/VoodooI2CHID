@@ -16,8 +16,8 @@
 #include <IOKit/IOInterruptEventSource.h>
 #include <IOKit/IOTimerEventSource.h>
 #include <IOKit/hid/IOHIDDevice.h>
-#include "../../../Dependencies/helpers.hpp"
 #include <IOKit/hid/IOHIDElement.h>
+#include "../../../Dependencies/helpers.hpp"
 
 #define INTERRUPT_SIMULATOR_TIMEOUT 5
 
@@ -227,6 +227,7 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     IOReturn setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options);
+
  private:
     IOACPIPlatformDevice* acpi_device;
     VoodooI2CDeviceNub* api;

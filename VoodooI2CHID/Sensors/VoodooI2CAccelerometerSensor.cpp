@@ -23,7 +23,6 @@ IOFramebuffer* VoodooI2CAccelerometerSensor::getFramebuffer() {
         display = OSDynamicCast(IODisplay, iterator->getNextObject());
         
         if (display) {
-            
             IOLog("%s::Got active display\n", getName());
             
             framebuffer = OSDynamicCast(IOFramebuffer, display->getParentEntry(gIOServicePlane)->getParentEntry(gIOServicePlane));
@@ -74,7 +73,6 @@ void VoodooI2CAccelerometerSensor::handleInterruptReport(AbsoluteTime timestamp,
     
     if (current_rotation != rotation_state)
         rotateDevice(rotation_state);
-
 }
 
 void VoodooI2CAccelerometerSensor::rotateDevice(IOOptionBits rotation_state) {

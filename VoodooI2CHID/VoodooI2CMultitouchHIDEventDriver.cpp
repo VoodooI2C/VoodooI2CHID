@@ -12,7 +12,7 @@
 #include <IOKit/usb/USBSpec.h>
 #include <IOKit/bluetooth/BluetoothAssignedNumbers.h>
 
-#define GetReportType( type )                                               \
+#define GetReportType(type)                                             \
 ((type <= kIOHIDElementTypeInput_ScanCodes) ? kIOHIDReportTypeInput :   \
 (type <= kIOHIDElementTypeOutput) ? kIOHIDReportTypeOutput :            \
 (type <= kIOHIDElementTypeFeature) ? kIOHIDReportTypeFeature : -1)
@@ -212,7 +212,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
             continue;
         
         element_timestamp = element->getTimeStamp();
-        element_is_current = (element->getReportID() == report_id) && (CMP_ABSOLUTETIME(&timestamp, &element_timestamp)==0);
+        element_is_current = (element->getReportID() == report_id) && (CMP_ABSOLUTETIME(&timestamp, &element_timestamp) == 0);
         
         transducer->id = report_id;
         transducer->timestamp = element_timestamp;
@@ -229,20 +229,22 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         transducer->coordinates.x.update(element->getValue(), timestamp);
                         transducer->logical_max_x = element->getLogicalMax();
                         handled    |= element_is_current;
-                    }
                         break;
+                    }
                     case kHIDUsage_GD_Y:
                     {
                         transducer->coordinates.y.update(element->getValue(), timestamp);
                         transducer->logical_max_y = element->getLogicalMax();
                         handled    |= element_is_current;
+                        break;
                     }
-                        break;
                     case kHIDUsage_GD_Z:
-                    {transducer->coordinates.z.update(element->getValue(), timestamp);
+                    {
+                        transducer->coordinates.z.update(element->getValue(), timestamp);
                         transducer->logical_max_z = element->getLogicalMax();
-                        handled    |= element_is_current;}
+                        handled    |= element_is_current;
                         break;
+                    }
                 }
                 break;
             case kHIDPage_Button:
@@ -267,10 +269,12 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         break;
                     case kHIDUsage_Dig_TipPressure:
                     case kHIDUsage_Dig_SecondaryTipSwitch:
-                    {transducer->tip_pressure.update(element->getValue(), timestamp);
+                    {
+                        transducer->tip_pressure.update(element->getValue(), timestamp);
                         transducer->pressure_physical_max = element->getPhysicalMax();
-                        handled    |= element_is_current;}
+                        handled    |= element_is_current;
                         break;
+                    }
                     case kHIDUsage_Dig_XTilt:
                         transducer->tilt_orientation.x_tilt.update(element->getScaledFixedValue(kIOHIDValueScaleTypePhysical), timestamp);
                         handled    |= element_is_current;
@@ -513,7 +517,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                         
                         UInt32 physical_max_x = raw_physical_max_x;
                         
-                        physical_max_x *= pow(10,(unit_exponent - -2));
+                        physical_max_x *= pow(10, (unit_exponent - -2));
                         
                         if (sub_element->getUnit() == 0x13) {
                             physical_max_x *= 2.54;
@@ -535,7 +539,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                         
                         UInt32 physical_max_y = raw_physical_max_y;
                         
-                        physical_max_y *= pow(10,(unit_exponent - -2));
+                        physical_max_y *= pow(10, (unit_exponent - -2));
                         
                         if (sub_element->getUnit() == 0x13) {
                             physical_max_y *= 2.54;
