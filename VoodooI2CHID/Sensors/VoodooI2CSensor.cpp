@@ -58,14 +58,14 @@ void VoodooI2CSensor::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDesc
 }
 
 void VoodooI2CSensor::setElementValue(IOHIDElement* updated_element, UInt32 value) {
+    if (!element)
+        return;
+
     OSData* buffer = OSData::withCapacity(1);
     bool manufacturer_already_done = false;
     bool model_already_done = false;
     
     buffer->appendByte(updated_element->getReportID(), 1);
-    
-    if (!element)
-        return;
     
     OSArray* children = element->getChildElements();
 
@@ -181,8 +181,8 @@ void VoodooI2CSensor::stop(IOService* provider) {
 IOReturn VoodooI2CSensor::setPowerState(unsigned long whichState, IOService* whatDevice) {
     if (whatDevice != this)
         return kIOReturnInvalid;
-    if (whichState == 0){
-        if (awake){
+    if (whichState == 0) {
+        if (awake) {
             awake = false;
             
             if (changeState(power_state, kHIDUsage_Snsr_Property_PowerState_D4_PowerOff) != kIOReturnSuccess) {
@@ -198,10 +198,9 @@ IOReturn VoodooI2CSensor::setPowerState(unsigned long whichState, IOService* wha
             }
             
             current_reporting_state = kHIDUsage_Snsr_Property_ReportingState_NoEvents;
-
         }
     } else {
-        if (!awake){
+        if (!awake) {
             if (changeState(power_state, kHIDUsage_Snsr_Property_PowerState_D0_FullPower) != kIOReturnSuccess) {
                 IOLog("%s Could not change power state to D0\n", getName());
                 return false;

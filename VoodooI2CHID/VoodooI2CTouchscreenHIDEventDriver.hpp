@@ -30,7 +30,7 @@
 class VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDEventDriver {
     OSDeclareDefaultStructors(VoodooI2CTouchscreenHIDEventDriver);
     
-public:
+ public:
     /* Checks the event contact count and if finger touches >= 2 are detected, the event is immediately dispatched
      * to the multitouch engine interface.  The 'else' convention used vs 'elseif' is intentional and results in
      * smoother gesture recognition and execution.  If single touch is detected, first the transducer is checked for stylus operation
@@ -43,7 +43,7 @@ public:
     /* @inherit */
     bool handleStart(IOService* provider);
     
-protected:
+ protected:
     /* The transducer is checked for stylus operation and pointer event dispatched.  x,y,z & pressure information is
      * obtained in a logical format and converted to IOFixed variables.
      *
@@ -53,7 +53,8 @@ protected:
      */
 
     bool checkStylus(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
-private:
+
+ private:
     IOWorkLoop *work_loop;
     IOTimerEventSource *timer_source;
     
@@ -116,6 +117,5 @@ private:
      */
     
     void scrollPosition(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
-    
 };
 #endif /* VoodooI2CTouchscreenHIDEventDriver_hpp */

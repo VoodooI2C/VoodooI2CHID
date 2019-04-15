@@ -12,7 +12,7 @@
 #include <IOKit/usb/USBSpec.h>
 #include <IOKit/bluetooth/BluetoothAssignedNumbers.h>
 
-#define GetReportType( type )                                               \
+#define GetReportType(type)                                             \
 ((type <= kIOHIDElementTypeInput_ScanCodes) ? kIOHIDReportTypeInput :   \
 (type <= kIOHIDElementTypeOutput) ? kIOHIDReportTypeOutput :            \
 (type <= kIOHIDElementTypeFeature) ? kIOHIDReportTypeFeature : -1)
@@ -22,7 +22,7 @@ OSDefineMetaClassAndStructors(VoodooI2CMultitouchHIDEventDriver, IOHIDEventServi
 
 static int pow(int x, int y) {
     int ret = 1;
-    while (y > 0){
+    while (y > 0) {
         ret *= x;
         y--;
     }
@@ -86,7 +86,6 @@ const char* VoodooI2CMultitouchHIDEventDriver::getProductName() {
 }
 
 void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id) {
-    
     // Touchpad is disabled through ApplePS2Keyboard request
     if (ignore_all)
         return;
@@ -115,7 +114,6 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
     handleDigitizerReport(timestamp, report_id);
 
     if (digitiser.current_report == digitiser.report_count) {
-         
         VoodooI2CMultitouchEvent event;
         event.contact_count = digitiser.current_contact_count;
         event.transducers = digitiser.transducers;
@@ -158,7 +156,6 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
             if (!wrapper)
                 return;
         }
-
     }
 
     for (int i = 0; i < wrapper->transducers->getCount(); i++) {
@@ -215,7 +212,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
             continue;
         
         element_timestamp = element->getTimeStamp();
-        element_is_current = (element->getReportID() == report_id) && (CMP_ABSOLUTETIME(&timestamp, &element_timestamp)==0);
+        element_is_current = (element->getReportID() == report_id) && (CMP_ABSOLUTETIME(&timestamp, &element_timestamp) == 0);
         
         transducer->id = report_id;
         transducer->timestamp = element_timestamp;
@@ -232,20 +229,22 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         transducer->coordinates.x.update(element->getValue(), timestamp);
                         transducer->logical_max_x = element->getLogicalMax();
                         handled    |= element_is_current;
-                    }
                         break;
+                    }
                     case kHIDUsage_GD_Y:
                     {
                         transducer->coordinates.y.update(element->getValue(), timestamp);
                         transducer->logical_max_y = element->getLogicalMax();
                         handled    |= element_is_current;
+                        break;
                     }
-                        break;
                     case kHIDUsage_GD_Z:
-                    {transducer->coordinates.z.update(element->getValue(), timestamp);
+                    {
+                        transducer->coordinates.z.update(element->getValue(), timestamp);
                         transducer->logical_max_z = element->getLogicalMax();
-                        handled    |= element_is_current;}
+                        handled    |= element_is_current;
                         break;
+                    }
                 }
                 break;
             case kHIDPage_Button:
@@ -270,10 +269,12 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         break;
                     case kHIDUsage_Dig_TipPressure:
                     case kHIDUsage_Dig_SecondaryTipSwitch:
-                    {transducer->tip_pressure.update(element->getValue(), timestamp);
+                    {
+                        transducer->tip_pressure.update(element->getValue(), timestamp);
                         transducer->pressure_physical_max = element->getPhysicalMax();
-                        handled    |= element_is_current;}
+                        handled    |= element_is_current;
                         break;
+                    }
                     case kHIDUsage_Dig_XTilt:
                         transducer->tilt_orientation.x_tilt.update(element->getScaledFixedValue(kIOHIDValueScaleTypePhysical), timestamp);
                         handled    |= element_is_current;
@@ -332,7 +333,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         break;
                     case kHIDUsage_Dig_Eraser:
                         if (stylus) {
-                            setButtonState (&stylus->eraser, 2, value, timestamp);
+                            setButtonState(&stylus->eraser, 2, value, timestamp);
                             stylus->invert = value != 0;
                             handled    |= element_is_current;
                         }
@@ -367,8 +368,11 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     if (!transport)
         return false;
 
-    if (transport->getCStringNoCopy() != kIOHIDTransportUSBValue)
-        hid_interface->setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+    if (transport->getCStringNoCopy() != kIOHIDTransportUSBValue) {
+        OSBoolean* supported = OSBoolean::withBoolean(true);
+        hid_interface->setProperty("VoodooI2CServices Supported", supported);
+        supported->release();
+    }
 
     if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
         return false;
@@ -459,8 +463,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
 }
 
 IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* digitiser_element) {
-    OSArray* children = OSArray::withCapacity(1);
-    children = digitiser_element->getChildElements();
+    OSArray* children = digitiser_element->getChildElements();
     
     if (!children)
         return kIOReturnNotFound;
@@ -513,16 +516,16 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                         UInt32 raw_physical_max_x = sub_element->getPhysicalMax();
                         
                         UInt8 raw_unit_exponent = sub_element->getUnitExponent();
-                        if (raw_unit_exponent >> 3){
-                            raw_unit_exponent = raw_unit_exponent | 0xf0; //Raise the 4-bit int to an 8-bit int
+                        if (raw_unit_exponent >> 3) {
+                            raw_unit_exponent = raw_unit_exponent | 0xf0; // Raise the 4-bit int to an 8-bit int
                         }
                         SInt8 unit_exponent = *(SInt8 *)&raw_unit_exponent;
                         
                         UInt32 physical_max_x = raw_physical_max_x;
                         
-                        physical_max_x *= pow(10,(unit_exponent - -2));
+                        physical_max_x *= pow(10, (unit_exponent - -2));
                         
-                        if (sub_element->getUnit() == 0x13){
+                        if (sub_element->getUnit() == 0x13) {
                             physical_max_x *= 2.54;
                         }
 
@@ -535,16 +538,16 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                         UInt32 raw_physical_max_y = sub_element->getPhysicalMax();
                         
                         UInt8 raw_unit_exponent = sub_element->getUnitExponent();
-                        if (raw_unit_exponent >> 3){
-                            raw_unit_exponent = raw_unit_exponent | 0xf0; //Raise the 4-bit int to an 8-bit int
+                        if (raw_unit_exponent >> 3) {
+                            raw_unit_exponent = raw_unit_exponent | 0xf0; // Raise the 4-bit int to an 8-bit int
                         }
                         SInt8 unit_exponent = *(SInt8 *)&raw_unit_exponent;
                         
                         UInt32 physical_max_y = raw_physical_max_y;
                         
-                        physical_max_y *= pow(10,(unit_exponent - -2));
+                        physical_max_y *= pow(10, (unit_exponent - -2));
                         
-                        if (sub_element->getUnit() == 0x13){
+                        if (sub_element->getUnit() == 0x13) {
                             physical_max_y *= 2.54;
                         }
                         
@@ -615,7 +618,6 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
     digitiser.wrappers = OSArray::withCapacity(1);
     
     if (digitiser.contact_count_maximum) {
-
         UInt8 contact_count_maximum = getElementValue(digitiser.contact_count_maximum);
 
         float wrapper_count = (1.0f*contact_count_maximum)/(1.0f*digitiser.fingers->getCount());
@@ -648,7 +650,6 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
                 if (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_ContactIdentifier))
                     wrapper->first_identifier = element;
             }
-        
         }
     }
     
@@ -670,36 +671,27 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
 
 IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
     multitouch_interface = new VoodooI2CMultitouchInterface;
-    
-    if (!multitouch_interface || !multitouch_interface->init(NULL)) {
-        goto exit;
-    }
-    
-    if (!multitouch_interface->attach(this)) {
-        goto exit;
-    }
-    
-    if (!multitouch_interface->start(this)) {
-        goto exit;
+
+    if (!multitouch_interface || !multitouch_interface->init(NULL) || !multitouch_interface->attach(this) || !multitouch_interface->start(this)) {
+        if (multitouch_interface) {
+            multitouch_interface->stop(this);
+            // multitouch_interface->release();
+            // multitouch_interface = NULL;
+        }
+
+        return kIOReturnError;
     }
 
     multitouch_interface->setProperty(kIOHIDVendorIDKey, getVendorID(), 32);
     multitouch_interface->setProperty(kIOHIDProductIDKey, getProductID(), 32);
-    
-    multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, OSBoolean::withBoolean(false));
+
+    OSBoolean* display_integrated = OSBoolean::withBoolean(false);
+    multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, display_integrated);
+    display_integrated->release();
 
     multitouch_interface->registerService();
-    
+
     return kIOReturnSuccess;
-    
-exit:
-    if (multitouch_interface) {
-        multitouch_interface->stop(this);
-        // multitouch_interface->release();
-        // multitouch_interface = NULL;
-    }
-    
-    return kIOReturnError;
 }
 
 inline void VoodooI2CMultitouchHIDEventDriver::setButtonState(DigitiserTransducerButtonState* state, UInt32 bit, UInt32 value, AbsoluteTime timestamp) {
@@ -760,15 +752,15 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     if (quietTimeAfterTyping != NULL)
         max_after_typing = quietTimeAfterTyping->unsigned64BitValue() * 1000000;
 
-    setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+    OSBoolean* supported = OSBoolean::withBoolean(true);
+    setProperty("VoodooI2CServices Supported", supported);
+    supported->release();
 
     return true;
 }
 
-IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* provider, void* argument)
-{
-    switch (type)
-    {
+IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* provider, void* argument) {
+    switch (type) {
         case kKeyboardGetTouchStatus:
         {
 #if DEBUG
@@ -785,8 +777,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* prov
             IOLog("%s::setEnabledStatus = %s\n", getName(), enable ? "true" : "false");
 #endif
             // ignore_all is true when trackpad has been disabled
-            if (enable == ignore_all)
-            {
+            if (enable == ignore_all) {
                 // save state, and update LED
                 ignore_all = !enable;
             }
@@ -806,18 +797,13 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::message(UInt32 type, IOService* prov
     return kIOReturnSuccess;
 }
 
-IOReturn VoodooI2CMultitouchHIDEventDriver::setProperties(OSObject * properties)
-{
+IOReturn VoodooI2CMultitouchHIDEventDriver::setProperties(OSObject * properties) {
     // Listen for property changes we are interested in (instead of reading these during frequent IO events)
     OSDictionary* dict = OSDynamicCast(OSDictionary, properties);
     
     if (dict != NULL) {
-
-        if (OSCollectionIterator* i = OSCollectionIterator::withCollection(dict))
-        {
-
-            while (OSSymbol* key = OSDynamicCast(OSSymbol, i->getNextObject()))
-            {
+        if (OSCollectionIterator* i = OSCollectionIterator::withCollection(dict)) {
+            while (OSSymbol* key = OSDynamicCast(OSSymbol, i->getNextObject())) {
                 // System -> Preferences -> Accessibility -> Mouse & Trackpad -> Ignore built-in trackpad when mouse or wireless trackpad is present
                 // USBMouseStopsTrackpad
                 if (key->isEqualTo("USBMouseStopsTrackpad")) {
@@ -843,8 +829,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::setProperties(OSObject * properties)
     return super::setProperties(properties);
 }
 
-void VoodooI2CMultitouchHIDEventDriver::registerHIDPointerNotifications()
-{
+void VoodooI2CMultitouchHIDEventDriver::registerHIDPointerNotifications() {
     IOServiceMatchingNotificationHandler notificationHandler = OSMemberFunctionCast(IOServiceMatchingNotificationHandler, this, &VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandler);
     
     // Determine if we should listen for USB mouse attach events as per configuration
@@ -879,8 +864,7 @@ void VoodooI2CMultitouchHIDEventDriver::registerHIDPointerNotifications()
     }
 }
 
-void VoodooI2CMultitouchHIDEventDriver::unregisterHIDPointerNotifications()
-{
+void VoodooI2CMultitouchHIDEventDriver::unregisterHIDPointerNotifications() {
     // Free device matching notifiers
     if (usb_hid_publish_notify) {
         usb_hid_publish_notify->remove();
@@ -905,9 +889,7 @@ void VoodooI2CMultitouchHIDEventDriver::unregisterHIDPointerNotifications()
     attached_hid_pointer_devices->flushCollection();
 }
 
-void VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated(IOService * newService,
-                                                                            IONotifier * notifier)
-{
+void VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated(IOService * newService, IONotifier * notifier) {
     char path[256];
     int len = 255;
     memset(path, 0, len);
@@ -924,19 +906,16 @@ void VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated(IOSe
     }
     
     if (notifier == bluetooth_hid_publish_notify) {
-        
         // Filter on specific CoD (Class of Device) bluetooth devices only
         OSNumber* propDeviceClass = OSDynamicCast(OSNumber, newService->getProperty("ClassOfDevice"));
         
         if (propDeviceClass != NULL) {
-            
             long classOfDevice = propDeviceClass->unsigned32BitValue();
             
             long deviceClassMajor = (classOfDevice & 0x1F00) >> 8;
             long deviceClassMinor = (classOfDevice & 0xFF) >> 2;
             
             if (deviceClassMajor == kBluetoothDeviceClassMajorPeripheral) { // Bluetooth peripheral devices
-                
                 long deviceClassMinor1 = (deviceClassMinor) & 0x30;
                 long deviceClassMinor2 = (deviceClassMinor) & 0x0F;
                 
@@ -947,7 +926,6 @@ void VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated(IOSe
                         deviceClassMinor2 == kBluetoothDeviceClassMinorPeripheral2DigitizerTablet || // Magic Touchpad
                         deviceClassMinor2 == kBluetoothDeviceClassMinorPeripheral2DigitalPen) // Wacom Tablet
                     {
-                        
                         attached_hid_pointer_devices->setObject(newService);
                         IOLog("%s: Bluetooth pointer HID device published: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
                     }
@@ -976,10 +954,7 @@ void VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated(IOSe
     }
 }
 
-bool VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandler(void * refCon,
-                                             IOService * newService,
-                                             IONotifier * notifier)
-{
+bool VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandler(void * refCon, IOService * newService, IONotifier * notifier) {
     command_gate->runAction((IOCommandGate::Action)OSMemberFunctionCast(
                             IOCommandGate::Action, this,
                             &VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated),
@@ -987,5 +962,3 @@ bool VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandler(void * re
 
     return true;
 }
-
-
