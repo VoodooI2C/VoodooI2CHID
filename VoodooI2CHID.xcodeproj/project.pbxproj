@@ -184,10 +184,11 @@
 			};
 			buildConfigurationList = AC0DE5D91F4FFB4B006149C8 /* Build configuration list for PBXProject "VoodooI2CHID" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = AC0DE5D51F4FFB4B006149C8;
 			productRefGroup = AC0DE5E01F4FFB4B006149C8 /* Products */;
