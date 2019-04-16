@@ -23,7 +23,6 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
     report->writeBytes(0, &buffer, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
 
     hid_interface->setReport(report, kIOHIDReportTypeFeature, digitiser.input_mode->getReportID());
-    report->release();
 
     ready = true;
 }

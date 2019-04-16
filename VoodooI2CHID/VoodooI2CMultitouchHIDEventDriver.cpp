@@ -368,11 +368,8 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     if (!transport)
         return false;
 
-    if (transport->getCStringNoCopy() != kIOHIDTransportUSBValue) {
-        OSBoolean* supported = OSBoolean::withBoolean(true);
-        hid_interface->setProperty("VoodooI2CServices Supported", supported);
-        supported->release();
-    }
+    if (transport->getCStringNoCopy() != kIOHIDTransportUSBValue)
+        hid_interface->setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
 
     if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
         return false;
@@ -685,9 +682,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
     multitouch_interface->setProperty(kIOHIDVendorIDKey, getVendorID(), 32);
     multitouch_interface->setProperty(kIOHIDProductIDKey, getProductID(), 32);
 
-    OSBoolean* display_integrated = OSBoolean::withBoolean(false);
-    multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, display_integrated);
-    display_integrated->release();
+    multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, OSBoolean::withBoolean(false));
 
     multitouch_interface->registerService();
 
@@ -752,9 +747,7 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     if (quietTimeAfterTyping != NULL)
         max_after_typing = quietTimeAfterTyping->unsigned64BitValue() * 1000000;
 
-    OSBoolean* supported = OSBoolean::withBoolean(true);
-    setProperty("VoodooI2CServices Supported", supported);
-    supported->release();
+    setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
 
     return true;
 }

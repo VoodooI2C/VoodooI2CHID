@@ -197,8 +197,6 @@ IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
         iterator->release();
     }
 
-    OSSafeReleaseNULL(match);
-
     return framebuffer;
 }
 
@@ -209,11 +207,7 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
     if (active_framebuffer) {
         OSNumber* number = OSDynamicCast(OSNumber, active_framebuffer->getProperty(kIOFBTransformKey));
         current_rotation = number->unsigned8BitValue() / 0x10;
-        number->release();
-
-        number = OSNumber::withNumber(current_rotation, 8);
-        multitouch_interface->setProperty(kIOFBTransformKey, number);
-        number->release();
+        multitouch_interface->setProperty(kIOFBTransformKey, OSNumber::withNumber(current_rotation, 8));
     }
     
     if (event.contact_count) {
