@@ -58,11 +58,11 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
 
  public:
     struct {
-        OSArray*           fingers;
-        OSArray*           styluses;
+        OSArray*           fingers = NULL;
+        OSArray*           styluses = NULL;
         
-        OSArray*           wrappers;
-        OSArray*           transducers;
+        OSArray*           wrappers = NULL;
+        OSArray*           transducers= NULL;
         
         // report level elements
         
@@ -255,7 +255,6 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
 
  private:
     SInt32 absolute_axis_removal_percentage = 15;
-    OSArray* supported_elements;
     
     bool ignore_all;
     bool ignore_mouse = false;

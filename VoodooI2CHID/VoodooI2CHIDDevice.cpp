@@ -372,12 +372,6 @@ IOReturn VoodooI2CHIDDevice::setHIDPowerState(VoodooI2CState state) {
 IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) {
     if (reportType != kIOHIDReportTypeFeature && reportType != kIOHIDReportTypeOutput)
         return kIOReturnBadArgument;
-
-    
-    char* buff = (char*)IOMalloc(report->getLength());
-    report->readBytes(0, buff, report->getLength());
-    
-    IOFree(buff, report->getLength());
     
     UInt16 data_register = hid_descriptor->wDataRegister;
     UInt8 raw_report_type = (reportType == kIOHIDReportTypeFeature) ? 0x03 : 0x02;

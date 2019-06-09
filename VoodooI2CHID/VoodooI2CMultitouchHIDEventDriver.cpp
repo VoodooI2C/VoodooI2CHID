@@ -424,37 +424,23 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
 }
 
 void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
-    //if (digitiser.transducers) {
-    //    OSSafeReleaseNULL(digitiser.transducers);
-    //}
-    
-    if (digitiser.wrappers) {
-        OSSafeReleaseNULL(digitiser.wrappers);
-    }
-    /*
-    if (digitiser.styluses) {
-        OSSafeReleaseNULL(digitiser.styluses);
-    }
-    
-    if (digitiser.fingers) {
-        OSSafeReleaseNULL(digitiser.fingers);
-    }
-    
-    if (supported_elements)
-        OSSafeReleaseNULL(supported_elements);
-     */
+    OSSafeReleaseNULL(digitiser.transducers);
+    OSSafeReleaseNULL(digitiser.wrappers);
+    OSSafeReleaseNULL(digitiser.styluses);
+    OSSafeReleaseNULL(digitiser.fingers);
     
     unregisterHIDPointerNotifications();
     OSSafeReleaseNULL(attached_hid_pointer_devices);
 
     if (multitouch_interface) {
         multitouch_interface->stop(this);
-        // multitouch_interface->release();
-        // multitouch_interface = NULL;
+       // multitouch_interface->release();
+        //multitouch_interface = NULL;
     }
     
     work_loop->removeEventSource(command_gate);
     OSSafeReleaseNULL(command_gate);
+    OSSafeReleaseNULL(work_loop);
 
     PMstop();
 }
@@ -582,7 +568,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
 IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
     int index, count;
 
-    supported_elements = OSDynamicCast(OSArray, hid_device->getProperty(kIOHIDElementKey));
+    OSArray* supported_elements = OSDynamicCast(OSArray, hid_device->getProperty(kIOHIDElementKey));
 
     if (!supported_elements)
         return kIOReturnNotFound;
@@ -625,7 +611,10 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
     
         for (int i = 0; i < static_cast<int>(wrapper_count); i++) {
             VoodooI2CHIDTransducerWrapper* wrapper = VoodooI2CHIDTransducerWrapper::wrapper();
-            digitiser.wrappers->setObject(wrapper);
+            if(!digitiser.wrappers->setObject(wrapper)) {
+                IOLog("%s::%s Failed to add Transducer Wrapper to transducer array\n", getName(), name);
+                return kIOReturnNoResources;
+            }
         
             for (int j = 0; j < digitiser.fingers->getCount(); j++) {
                 IOHIDElement* finger = OSDynamicCast(IOHIDElement, digitiser.fingers->getObject(j));
