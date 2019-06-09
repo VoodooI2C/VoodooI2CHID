@@ -636,6 +636,8 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
                 if (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_ContactIdentifier))
                     wrapper->first_identifier = element;
             }
+            
+            wrapper->release();
         }
     }
     

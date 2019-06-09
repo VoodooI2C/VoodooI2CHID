@@ -196,6 +196,8 @@ IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
         
         iterator->release();
     }
+    
+    OSSafeReleaseNULL(match);
 
     return framebuffer;
 }
