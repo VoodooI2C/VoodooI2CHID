@@ -11,6 +11,7 @@
 #include <IOKit/hid/IOHIDInterface.h>
 #include <IOKit/usb/USBSpec.h>
 #include <IOKit/bluetooth/BluetoothAssignedNumbers.h>
+#include <IOKit/IOLib.h>
 
 #define GetReportType(type)                                             \
 ((type <= kIOHIDElementTypeInput_ScanCodes) ? kIOHIDReportTypeInput :   \
@@ -434,8 +435,8 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
 
     if (multitouch_interface) {
         multitouch_interface->stop(this);
-       // multitouch_interface->release();
-        //multitouch_interface = NULL;
+        multitouch_interface->detach(this);
+        OSSafeReleaseNULL(multitouch_interface);
     }
     
     work_loop->removeEventSource(command_gate);
@@ -622,6 +623,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
                 VoodooI2CDigitiserTransducer* transducer = VoodooI2CDigitiserTransducer::transducer(kDigitiserTransducerFinger, finger);
             
                 wrapper->transducers->setObject(transducer);
+                transducer->release();
                 digitiser.transducers->setObject(transducer);
             }
         
@@ -651,6 +653,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
         VoodooI2CDigitiserStylus* transducer = VoodooI2CDigitiserStylus::stylus(kDigitiserTransducerStylus, stylus);
         
         stylus_wrapper->transducers->setObject(transducer);
+        transducer->release();
         digitiser.transducers->setObject(0, transducer);
     }
 
@@ -658,18 +661,20 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
 }
 
 IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
-    multitouch_interface = new VoodooI2CMultitouchInterface;
+    multitouch_interface = OSTypeAlloc(VoodooI2CMultitouchInterface);
 
     if (!multitouch_interface || !multitouch_interface->init(NULL) || !multitouch_interface->attach(this) || !multitouch_interface->start(this)) {
         if (multitouch_interface) {
             multitouch_interface->stop(this);
-            // multitouch_interface->release();
-            // multitouch_interface = NULL;
+            multitouch_interface->detach(this);
+            //multitouch_interface->release();
+           // multitouch_interface = NULL;
         }
 
         return kIOReturnError;
     }
 
+    multitouch_interface->retain();
     multitouch_interface->setProperty(kIOHIDVendorIDKey, getVendorID(), 32);
     multitouch_interface->setProperty(kIOHIDProductIDKey, getProductID(), 32);
 
