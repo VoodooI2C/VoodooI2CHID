@@ -360,6 +360,10 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
 }
 
 bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
+    if(!super::handleStart(provider)) {
+        return false;
+    }
+    
     hid_interface = OSDynamicCast(IOHIDInterface, provider);
 
     if (!hid_interface)
@@ -444,6 +448,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
     OSSafeReleaseNULL(work_loop);
 
     PMstop();
+    super::handleStop(provider);
 }
 
 IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* digitiser_element) {

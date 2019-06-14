@@ -12,8 +12,6 @@
 OSDefineMetaClassAndStructors(VoodooI2CHIDTransducerWrapper, OSObject);
 
 void VoodooI2CHIDTransducerWrapper::free() {
-    if (transducers)
-        transducers->flushCollection();
     OSSafeReleaseNULL(transducers);
 
     super::free();
