@@ -655,6 +655,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
         stylus_wrapper->transducers->setObject(transducer);
         transducer->release();
         digitiser.transducers->setObject(0, transducer);
+        stylus_wrapper->release();
     }
 
     return kIOReturnSuccess;
