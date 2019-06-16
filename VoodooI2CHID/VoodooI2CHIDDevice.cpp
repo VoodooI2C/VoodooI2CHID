@@ -253,6 +253,7 @@ VoodooI2CHIDDevice* VoodooI2CHIDDevice::probe(IOService* provider, SInt32* score
     name = getMatchedName(provider);
     
     acpi_device = OSDynamicCast(IOACPIPlatformDevice, provider->getProperty("acpi-device"));
+    //acpi_device->retain();
     
     if (!acpi_device) {
         IOLog("%s::%s Could not get ACPI device\n", getName(), name);
@@ -264,6 +265,7 @@ VoodooI2CHIDDevice* VoodooI2CHIDDevice::probe(IOService* provider, SInt32* score
     acpi_device->evaluateObject("_PS0");
 
     api = OSDynamicCast(VoodooI2CDeviceNub, provider);
+    //api->retain();
     
     if (!api) {
         IOLog("%s::%s Could not get VoodooI2C API access\n", getName(), name);
@@ -471,6 +473,10 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
 }
 
 bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
+    if (!IOHIDDevice::handleStart(provider)) {
+        return false;
+    }
+
     work_loop = getWorkLoop();
     
     if (!work_loop) {

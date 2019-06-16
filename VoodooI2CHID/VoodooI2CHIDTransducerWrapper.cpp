@@ -20,7 +20,7 @@ void VoodooI2CHIDTransducerWrapper::free() {
 VoodooI2CHIDTransducerWrapper* VoodooI2CHIDTransducerWrapper::wrapper() {
     VoodooI2CHIDTransducerWrapper* wrapper = NULL;
     
-    wrapper = new VoodooI2CHIDTransducerWrapper;
+    wrapper = OSTypeAlloc(VoodooI2CHIDTransducerWrapper);
     
     if (!wrapper)
         goto exit;
