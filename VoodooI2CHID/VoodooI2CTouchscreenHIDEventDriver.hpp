@@ -43,6 +43,9 @@ class VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDEventDri
     /* @inherit */
     bool handleStart(IOService* provider);
     
+    /* @inherit */
+    void handleStop(IOService* provider);
+    
  protected:
     /* The transducer is checked for stylus operation and pointer event dispatched.  x,y,z & pressure information is
      * obtained in a logical format and converted to IOFixed variables.

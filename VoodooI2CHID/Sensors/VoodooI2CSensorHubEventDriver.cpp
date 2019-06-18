@@ -45,11 +45,6 @@ bool VoodooI2CSensorHubEventDriver::handleStart(IOService* provider) {
     
     if (!hid_interface)
         return false;
-
-    hid_interface->setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
-    
-    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CSensorHubEventDriver::handleInterruptReport), NULL))
-        return false;
     
     hid_device = OSDynamicCast(IOHIDDevice, hid_interface->getParentEntry(gIOServicePlane));
     
@@ -63,6 +58,11 @@ bool VoodooI2CSensorHubEventDriver::handleStart(IOService* provider) {
     supported_elements = OSDynamicCast(OSArray, hid_device->getProperty(kIOHIDElementKey));
     
     if (!supported_elements)
+        return false;
+    
+    hid_interface->setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+    
+    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CSensorHubEventDriver::handleInterruptReport), NULL))
         return false;
     
     sensors = OSArray::withCapacity(1);
@@ -94,7 +94,29 @@ bool VoodooI2CSensorHubEventDriver::handleStart(IOService* provider) {
 }
 
 void VoodooI2CSensorHubEventDriver::handleStop(IOService* provider) {
+    if (sensors) {
+        while (sensors->getCount() > 0) {
+            VoodooI2CSensor *sensor = OSDynamicCast(VoodooI2CSensor, sensors->getLastObject());
+            sensor->stop(this);
+            sensor->detach(this);
+            sensors->removeObject(sensors->getCount() - 1);
+        }
+    }
+    
+    OSSafeReleaseNULL(sensors);
+    
+    
     PMstop();
+    
+    super::handleStop(provider);
+}
+
+bool VoodooI2CSensorHubEventDriver::didTerminate(IOService* provider, IOOptionBits options, bool* defer) {
+    if (hid_interface)
+        hid_interface->close(this);
+    hid_interface = NULL;
+    
+    return super::didTerminate(provider, options, defer);
 }
 
 IOReturn VoodooI2CSensorHubEventDriver::parseSensorParent(IOHIDElement* parent) {

@@ -265,6 +265,16 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     return true;
 }
 
+void VoodooI2CTouchscreenHIDEventDriver::handleStop(IOService* provider) {
+    if (timer_source) {
+        work_loop->removeEventSource(timer_source);
+        OSSafeReleaseNULL(timer_source);
+    }
+    
+    OSSafeReleaseNULL(work_loop);
+    
+    super::handleStop(provider);
+}
 
 void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
     if (start_scroll) {

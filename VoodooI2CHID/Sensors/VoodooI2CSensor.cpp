@@ -237,6 +237,8 @@ VoodooI2CSensor* VoodooI2CSensor::withElement(IOHIDElement* sensor_element, IOSe
         
         return NULL;
     }
+    
+    dictionary->release();
 
     return sensor;
 }

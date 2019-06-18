@@ -67,5 +67,7 @@ VoodooI2CSensor* VoodooI2CDeviceOrientationSensor::withElement(IOHIDElement* sen
         return NULL;
     }
     
+    dictionary->release();
+    
     return sensor;
 }
