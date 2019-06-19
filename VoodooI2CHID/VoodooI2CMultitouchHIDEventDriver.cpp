@@ -440,7 +440,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
     if (multitouch_interface) {
         multitouch_interface->stop(this);
         multitouch_interface->detach(this);
-        OSSafeReleaseNULL(multitouch_interface);
+        multitouch_interface = NULL;
     }
     
     work_loop->removeEventSource(command_gate);
@@ -680,7 +680,6 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
         return kIOReturnError;
     }
 
-    multitouch_interface->retain();
     multitouch_interface->setProperty(kIOHIDVendorIDKey, getVendorID(), 32);
     multitouch_interface->setProperty(kIOHIDProductIDKey, getProductID(), 32);
 
