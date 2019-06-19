@@ -233,7 +233,7 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     VoodooI2CDeviceNub* api;
     IOCommandGate* command_gate;
     UInt16 hid_descriptor_register;
-    VoodooI2CHIDDeviceHIDDescriptor* hid_descriptor;
+    VoodooI2CHIDDeviceHIDDescriptor hid_descriptor;
     IOTimerEventSource* interrupt_simulator;
     IOInterruptEventSource* interrupt_source;
     bool ready_for_input;

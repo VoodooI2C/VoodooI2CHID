@@ -443,8 +443,11 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
         multitouch_interface = NULL;
     }
     
-    work_loop->removeEventSource(command_gate);
-    OSSafeReleaseNULL(command_gate);
+    if (command_gate) {
+        work_loop->removeEventSource(command_gate);
+        OSSafeReleaseNULL(command_gate);
+    }
+
     OSSafeReleaseNULL(work_loop);
 
     PMstop();
@@ -732,6 +735,8 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     
     if (!work_loop)
         return false;
+    
+    work_loop->retain();
     
     command_gate = IOCommandGate::commandGate(this);
     if (!command_gate) {
