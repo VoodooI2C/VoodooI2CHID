@@ -26,7 +26,7 @@ VoodooI2CHIDTransducerWrapper* VoodooI2CHIDTransducerWrapper::wrapper() {
         goto exit;
     
     if (!wrapper->init()) {
-        wrapper = NULL;
+        OSSafeReleaseNULL(wrapper);
         goto exit;
     }
     wrapper->transducers = OSArray::withCapacity(4);
