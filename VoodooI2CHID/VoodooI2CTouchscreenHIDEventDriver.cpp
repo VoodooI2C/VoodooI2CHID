@@ -254,11 +254,14 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
         return false;
     }
     
-    this->work_loop->retain();
+    work_loop->retain();
     
-    this->timer_source = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CTouchscreenHIDEventDriver::fingerLift));
+    timer_source = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CTouchscreenHIDEventDriver::fingerLift));
     
-    this->work_loop->addEventSource(this->timer_source);
+    if (!timer_source || work_loop->addEventSource(timer_source) != kIOReturnSuccess) {
+        IOLog("%s::Could not add timer source to work loop\n", getName());
+        return false;
+    }
     
     active_framebuffer = getFramebuffer();
     

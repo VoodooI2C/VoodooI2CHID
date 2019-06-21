@@ -162,9 +162,8 @@ VoodooI2CSensor* VoodooI2CAccelerometerSensor::withElement(IOHIDElement* sensor_
     if (!sensor->init(dictionary) ||
         !sensor->attach(event_driver) ||
         !sensor->start(event_driver)) {
-        
+        dictionary->release();
         OSSafeReleaseNULL(sensor);
-        return NULL;
     }
     
     dictionary->release();

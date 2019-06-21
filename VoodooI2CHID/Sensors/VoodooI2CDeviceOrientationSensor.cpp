@@ -63,8 +63,6 @@ VoodooI2CSensor* VoodooI2CDeviceOrientationSensor::withElement(IOHIDElement* sen
         !sensor->attach(event_driver) ||
         !sensor->start(event_driver)) {
         OSSafeReleaseNULL(sensor);
-        
-        return NULL;
     }
     
     dictionary->release();
