@@ -526,11 +526,10 @@ exit:
 bool VoodooI2CHIDDevice::start(IOService* provider) {
     if (!super::start(provider))
         return false;
-    
-     IOLog("Kishor VoodooI2CHID::lockInit\n");
+
     client_lock = IOLockAlloc();
     stop_lock = IOLockAlloc();
-    IOLog("Kishor VoodooI2CHID::lockInit end\n");
+
     clients = OSArray::withCapacity(1);
     
     if (!client_lock || !stop_lock || !clients) {
