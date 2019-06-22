@@ -24,6 +24,15 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     bool temp = false;
     reset_event = &temp;
     memset(&hid_descriptor, 0, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
+    
+    client_lock = IOLockAlloc();
+    stop_lock = IOLockAlloc();
+    
+    clients = OSArray::withCapacity(1);
+    
+    if (!client_lock || !stop_lock || !clients) {
+        return false;
+    }
 
     return true;
 }
@@ -526,15 +535,6 @@ exit:
 bool VoodooI2CHIDDevice::start(IOService* provider) {
     if (!super::start(provider))
         return false;
-
-    client_lock = IOLockAlloc();
-    stop_lock = IOLockAlloc();
-
-    clients = OSArray::withCapacity(1);
-    
-    if (!client_lock || !stop_lock || !clients) {
-        return false;
-    }
 
     ready_for_input = true;
     
