@@ -374,7 +374,7 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
         return false;
 
     if (transport->getCStringNoCopy() != kIOHIDTransportUSBValue)
-        hid_interface->setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+        hid_interface->setProperty("VoodooI2CServices Supported", kOSBooleanTrue);
 
     if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
         return false;
@@ -600,7 +600,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
             parseDigitizerElement(element);
         
         if (multitouch_interface && element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchScreen))
-            multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, OSBoolean::withBoolean(true));
+            multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, kOSBooleanTrue);
         }
     
 
@@ -622,6 +622,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
             VoodooI2CHIDTransducerWrapper* wrapper = VoodooI2CHIDTransducerWrapper::wrapper();
             if(!digitiser.wrappers->setObject(wrapper)) {
                 IOLog("%s::%s Failed to add Transducer Wrapper to transducer array\n", getName(), name);
+                OSSafeReleaseNULL(wrapper);
                 return kIOReturnNoResources;
             }
         
@@ -686,7 +687,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
     multitouch_interface->setProperty(kIOHIDVendorIDKey, getVendorID(), 32);
     multitouch_interface->setProperty(kIOHIDProductIDKey, getProductID(), 32);
 
-    multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, OSBoolean::withBoolean(false));
+    multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, kOSBooleanFalse);
 
     multitouch_interface->registerService();
 
@@ -696,7 +697,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
 inline void VoodooI2CMultitouchHIDEventDriver::setButtonState(DigitiserTransducerButtonState* state, UInt32 bit, UInt32 value, AbsoluteTime timestamp) {
     UInt32 buttonMask = (1 << bit);
     
-    if ( value != 0 )
+    if (value != 0)
         state->update(state->current.value |= buttonMask, timestamp);
     else
         state->update(state->current.value &= ~buttonMask, timestamp);
@@ -709,7 +710,7 @@ void VoodooI2CMultitouchHIDEventDriver::setDigitizerProperties() {
         return;
 
     if (!digitiser.transducers)
-        return;
+        goto exit;
 
     properties->setObject("Contact Count Element", digitiser.contact_count);
     properties->setObject("Input Mode Element", digitiser.input_mode);
@@ -753,7 +754,7 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     if (quietTimeAfterTyping != NULL)
         max_after_typing = quietTimeAfterTyping->unsigned64BitValue() * 1000000;
 
-    setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+    setProperty("VoodooI2CServices Supported", kOSBooleanTrue);
 
     return true;
 }
