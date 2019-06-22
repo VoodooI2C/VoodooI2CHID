@@ -184,11 +184,18 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     OSString* newManufacturerString() const override;
+    
+    bool open(IOService *forClient, IOOptionBits options = 0, void *arg = 0) override;
+    void close(IOService *forClient, IOOptionBits options) override;
 
  protected:
     bool awake;
     bool read_in_progress;
     IOWorkLoop* work_loop;
+    
+    IOLock* client_lock;
+    IOLock* stop_lock;
+    OSArray* clients;
     
     IOReturn resetHIDDeviceGated();
 

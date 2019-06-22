@@ -7,6 +7,9 @@
 //
 
 #include <IOKit/hid/IOHIDDevice.h>
+#include <kern/locks.h>
+#include <sys/proc.h>
+#include <sys/time.h>
 #include "VoodooI2CHIDDevice.hpp"
 #include "../../../VoodooI2C/VoodooI2C/VoodooI2CDevice/VoodooI2CDeviceNub.hpp"
 
@@ -21,10 +24,17 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     bool temp = false;
     reset_event = &temp;
     memset(&hid_descriptor, 0, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
+
     return true;
 }
 
 void VoodooI2CHIDDevice::free() {
+    if (client_lock)
+        IOLockFree(client_lock);
+    
+    if (stop_lock)
+        IOLockFree(stop_lock);
+
     super::free();
 }
 
@@ -516,16 +526,40 @@ exit:
 bool VoodooI2CHIDDevice::start(IOService* provider) {
     if (!super::start(provider))
         return false;
+    
+     IOLog("Kishor VoodooI2CHID::lockInit\n");
+    client_lock = IOLockAlloc();
+    stop_lock = IOLockAlloc();
+    IOLog("Kishor VoodooI2CHID::lockInit end\n");
+    clients = OSArray::withCapacity(1);
+    
+    if (!client_lock || !stop_lock || !clients) {
+        return false;
+    }
 
     ready_for_input = true;
-
+    
+    registerService();
     setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
 
     return true;
 }
 
 void VoodooI2CHIDDevice::stop(IOService* provider) {
+    IOLockLock(stop_lock);
+    for(;;) {
+        if (!clients->getCount()) {
+            break;
+        }
+        
+        IOLockSleep(stop_lock, &stop_lock, THREAD_UNINT);
+        IOSleep(100);
+    }
+    
+    IOLockUnlock(stop_lock);
+    
     releaseResources();
+    OSSafeReleaseNULL(clients);
     PMstop();
     super::stop(provider);
 }
@@ -586,4 +620,32 @@ OSString* VoodooI2CHIDDevice::newManufacturerString() const {
 void VoodooI2CHIDDevice::simulateInterrupt(OSObject* owner, IOTimerEventSource* timer) {
     interruptOccured(owner, NULL, NULL);
     interrupt_simulator->setTimeoutMS(INTERRUPT_SIMULATOR_TIMEOUT);
+}
+
+bool VoodooI2CHIDDevice::open(IOService *forClient, IOOptionBits options, void *arg) {
+    IOLockLock(client_lock);
+    clients->setObject(forClient);
+    IOUnlock(client_lock);
+    
+    return super::open(forClient, options, arg);
+}
+
+void VoodooI2CHIDDevice::close(IOService *forClient, IOOptionBits options) {
+    IOLockLock(client_lock);
+    
+    for(int i = 0; i < clients->getCount(); i++) {
+        OSObject* service = clients->getObject(i);
+        
+        if (service == forClient) {
+            clients->removeObject(i);
+            break;
+        }
+    }
+    
+    IOUnlock(client_lock);
+    
+    
+    IOLockWakeup(stop_lock, &stop_lock, true);
+    
+    super::close(forClient, options);
 }
