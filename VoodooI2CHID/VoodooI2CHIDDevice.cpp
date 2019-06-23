@@ -8,8 +8,6 @@
 
 #include <IOKit/hid/IOHIDDevice.h>
 #include <kern/locks.h>
-#include <sys/proc.h>
-#include <sys/time.h>
 #include "VoodooI2CHIDDevice.hpp"
 #include "../../../VoodooI2C/VoodooI2C/VoodooI2CDevice/VoodooI2CDeviceNub.hpp"
 
@@ -28,8 +26,9 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     client_lock = IOLockAlloc();
     
     clients = OSArray::withCapacity(1);
-    
+
     if (!client_lock || !clients) {
+        OSSafeReleaseNULL(clients);
         return false;
     }
 
