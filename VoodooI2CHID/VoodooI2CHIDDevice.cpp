@@ -26,11 +26,10 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     memset(&hid_descriptor, 0, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
     
     client_lock = IOLockAlloc();
-    stop_lock = IOLockAlloc();
     
     clients = OSArray::withCapacity(1);
     
-    if (!client_lock || !stop_lock || !clients) {
+    if (!client_lock || !clients) {
         return false;
     }
 
@@ -40,9 +39,6 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
 void VoodooI2CHIDDevice::free() {
     if (client_lock)
         IOLockFree(client_lock);
-    
-    if (stop_lock)
-        IOLockFree(stop_lock);
 
     super::free();
 }
@@ -545,17 +541,15 @@ bool VoodooI2CHIDDevice::start(IOService* provider) {
 }
 
 void VoodooI2CHIDDevice::stop(IOService* provider) {
-    IOLockLock(stop_lock);
+    IOLockLock(client_lock);
     for(;;) {
         if (!clients->getCount()) {
             break;
         }
         
-        IOLockSleep(stop_lock, &stop_lock, THREAD_UNINT);
-        IOSleep(100);
+        IOLockSleep(client_lock, &client_lock, THREAD_UNINT);
     }
-    
-    IOLockUnlock(stop_lock);
+    IOLockUnlock(client_lock);
     
     releaseResources();
     OSSafeReleaseNULL(clients);
@@ -642,9 +636,8 @@ void VoodooI2CHIDDevice::close(IOService *forClient, IOOptionBits options) {
     }
     
     IOUnlock(client_lock);
-    
-    
-    IOLockWakeup(stop_lock, &stop_lock, true);
+
+    IOLockWakeup(client_lock, &client_lock, true);
     
     super::close(forClient, options);
 }

@@ -194,7 +194,6 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     IOWorkLoop* work_loop;
     
     IOLock* client_lock;
-    IOLock* stop_lock;
     OSArray* clients;
     
     IOReturn resetHIDDeviceGated();
