@@ -22,10 +22,7 @@ VoodooI2CHIDTransducerWrapper* VoodooI2CHIDTransducerWrapper::wrapper() {
     
     wrapper = OSTypeAlloc(VoodooI2CHIDTransducerWrapper);
     
-    if (!wrapper)
-        goto exit;
-    
-    if (!wrapper->init()) {
+    if (!wrapper || !wrapper->init()) {
         OSSafeReleaseNULL(wrapper);
         goto exit;
     }

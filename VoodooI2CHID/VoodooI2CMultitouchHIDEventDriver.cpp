@@ -440,7 +440,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
     if (multitouch_interface) {
         multitouch_interface->stop(this);
         multitouch_interface->detach(this);
-        multitouch_interface = NULL;
+        OSSafeReleaseNULL(multitouch_interface);
     }
     
     if (command_gate) {
