@@ -673,15 +673,14 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
 IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
     multitouch_interface = OSTypeAlloc(VoodooI2CMultitouchInterface);
 
-    if (!multitouch_interface || !multitouch_interface->init(NULL) || !multitouch_interface->attach(this) || !multitouch_interface->start(this)) {
-        if (multitouch_interface) {
-            multitouch_interface->stop(this);
-            multitouch_interface->detach(this);
-            multitouch_interface->release();
-            multitouch_interface = NULL;
-        }
+    if (!multitouch_interface ||
+        !multitouch_interface->init(NULL) ||
+        !multitouch_interface->attach(this))
+        goto exit;
 
-        return kIOReturnError;
+    if (!multitouch_interface->start(this)) {
+        multitouch_interface->detach(this);
+        goto exit;
     }
 
     multitouch_interface->setProperty(kIOHIDVendorIDKey, getVendorID(), 32);
@@ -692,6 +691,10 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
     multitouch_interface->registerService();
 
     return kIOReturnSuccess;
+
+exit:
+    OSSafeReleaseNULL(multitouch_interface);
+    return kIOReturnError;
 }
 
 inline void VoodooI2CMultitouchHIDEventDriver::setButtonState(DigitiserTransducerButtonState* state, UInt32 bit, UInt32 value, AbsoluteTime timestamp) {
