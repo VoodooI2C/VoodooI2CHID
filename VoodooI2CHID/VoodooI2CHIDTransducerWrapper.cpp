@@ -11,6 +11,17 @@
 #define super OSObject
 OSDefineMetaClassAndStructors(VoodooI2CHIDTransducerWrapper, OSObject);
 
+bool VoodooI2CHIDTransducerWrapper::init() {
+    if (!super::init())
+        return false;
+
+    transducers = OSArray::withCapacity(4);
+    if (!transducers)
+        return false;
+
+    return true;
+}
+
 void VoodooI2CHIDTransducerWrapper::free() {
     OSSafeReleaseNULL(transducers);
 
@@ -18,16 +29,10 @@ void VoodooI2CHIDTransducerWrapper::free() {
 }
 
 VoodooI2CHIDTransducerWrapper* VoodooI2CHIDTransducerWrapper::wrapper() {
-    VoodooI2CHIDTransducerWrapper* wrapper = NULL;
-    
-    wrapper = OSTypeAlloc(VoodooI2CHIDTransducerWrapper);
-    
-    if (!wrapper || !wrapper->init()) {
+    VoodooI2CHIDTransducerWrapper* wrapper = OSTypeAlloc(VoodooI2CHIDTransducerWrapper);
+
+    if (!wrapper || !wrapper->init())
         OSSafeReleaseNULL(wrapper);
-        goto exit;
-    }
-    wrapper->transducers = OSArray::withCapacity(4);
-    
-exit:
+
     return wrapper;
 }
