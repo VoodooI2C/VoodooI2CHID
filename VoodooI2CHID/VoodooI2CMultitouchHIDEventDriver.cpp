@@ -889,7 +889,7 @@ void VoodooI2CMultitouchHIDEventDriver::unregisterHIDPointerNotifications() {
         OSSafeReleaseNULL(bluetooth_hid_terminate_notify);
     }
 
-    attached_hid_pointer_devices->flushCollection();
+    OSSafeReleaseNULL(attached_hid_pointer_devices);
 }
 
 void VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated(IOService * newService, IONotifier * notifier) {
