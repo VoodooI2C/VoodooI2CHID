@@ -53,7 +53,7 @@ enum {
  * The members of this class are responsible for parsing, processing and interpreting digitiser-related HID objects.
  */
 
-class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
+class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
   OSDeclareDefaultStructors(VoodooI2CMultitouchHIDEventDriver);
 
  public:

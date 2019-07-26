@@ -22,7 +22,7 @@ class VoodooI2CSensor;
 class VoodooI2CDeviceOrientationSensor;
 class VoodooI2CAccelerometerSensor;
 
-class VoodooI2CSensorHubEventDriver : public IOHIDEventService {
+class EXPORT VoodooI2CSensorHubEventDriver : public IOHIDEventService {
   OSDeclareDefaultStructors(VoodooI2CSensorHubEventDriver);
 
  public:

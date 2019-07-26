@@ -24,6 +24,8 @@
 #define I2C_HID_PWR_ON  0x00
 #define I2C_HID_PWR_SLEEP 0x01
 
+#define EXPORT __attribute__((visibility("default")))
+
 typedef union {
     UInt8 data[4];
     struct __attribute__((__packed__)) cmd {
@@ -58,7 +60,7 @@ class VoodooI2CDeviceNub;
  */
 
 
-class VoodooI2CHIDDevice : public IOHIDDevice {
+class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
   OSDeclareDefaultStructors(VoodooI2CHIDDevice);
 
  public:
