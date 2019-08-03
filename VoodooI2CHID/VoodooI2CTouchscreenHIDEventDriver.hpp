@@ -27,7 +27,7 @@
 /* Implements an HID Event Driver for touchscreen devices as well as stylus input.
  */
 
-class VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDEventDriver {
+class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDEventDriver {
     OSDeclareDefaultStructors(VoodooI2CTouchscreenHIDEventDriver);
     
  public:

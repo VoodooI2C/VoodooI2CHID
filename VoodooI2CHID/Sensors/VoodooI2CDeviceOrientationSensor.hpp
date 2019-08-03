@@ -22,7 +22,7 @@ typedef struct {
     SInt16 w;
 } VoodooI2CQuaternion;
 
-class VoodooI2CDeviceOrientationSensor : public VoodooI2CSensor {
+class EXPORT VoodooI2CDeviceOrientationSensor : public VoodooI2CSensor {
   OSDeclareDefaultStructors(VoodooI2CDeviceOrientationSensor);
 
  public:

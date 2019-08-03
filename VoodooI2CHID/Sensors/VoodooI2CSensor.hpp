@@ -20,6 +20,10 @@
 
 #include "VoodooI2CSensorsConstants.h"
 
+#ifndef EXPORT
+#define EXPORT __attribute__((visibility("default")))
+#endif
+
 typedef struct __attribute__((__packed__)) {
     UInt8 value;
     UInt8 reserved;
@@ -27,7 +31,7 @@ typedef struct __attribute__((__packed__)) {
 
 class VoodooI2CSensorHubEventDriver;
 
-class VoodooI2CSensor : public IOService {
+class EXPORT VoodooI2CSensor : public IOService {
   OSDeclareDefaultStructors(VoodooI2CSensor);
 
  public:

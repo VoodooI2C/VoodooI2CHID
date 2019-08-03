@@ -33,7 +33,7 @@ typedef struct __attribute__((__packed__)) {
  * The members of this class are responsible for instructing a Precision Touchpad device to enter Touchpad mode.
  */
 
-class VoodooI2CPrecisionTouchpadHIDEventDriver : public VoodooI2CMultitouchHIDEventDriver {
+class EXPORT VoodooI2CPrecisionTouchpadHIDEventDriver : public VoodooI2CMultitouchHIDEventDriver {
   OSDeclareDefaultStructors(VoodooI2CPrecisionTouchpadHIDEventDriver);
 
  public:

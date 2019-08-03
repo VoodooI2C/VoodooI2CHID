@@ -15,7 +15,7 @@
 
 #include "VoodooI2CTouchscreenHIDEventDriver.hpp"
 
-class VoodooI2CStylusHIDEventDriver : public VoodooI2CTouchscreenHIDEventDriver {
+class EXPORT VoodooI2CStylusHIDEventDriver : public VoodooI2CTouchscreenHIDEventDriver {
   OSDeclareDefaultStructors(VoodooI2CStylusHIDEventDriver);
 
  public:

@@ -17,7 +17,7 @@
 
 #include "../../../Multitouch Support/VoodooI2CDigitiserTransducer.hpp"
 
-class VoodooI2CHIDTransducerWrapper : public OSObject {
+class EXPORT VoodooI2CHIDTransducerWrapper : public OSObject {
   OSDeclareDefaultStructors(VoodooI2CHIDTransducerWrapper);
 
  public:

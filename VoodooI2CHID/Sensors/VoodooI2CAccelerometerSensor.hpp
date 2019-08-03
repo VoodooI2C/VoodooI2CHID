@@ -29,7 +29,7 @@ enum {
     kIOScaleRotateFlat = 0x00000070
 };
 
-class VoodooI2CAccelerometerSensor : public VoodooI2CSensor {
+class EXPORT VoodooI2CAccelerometerSensor : public VoodooI2CSensor {
   OSDeclareDefaultStructors(VoodooI2CAccelerometerSensor);
 
  public:
