@@ -39,6 +39,7 @@ class VoodooI2CSensor : public IOService {
     
     virtual void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id);
     static VoodooI2CSensor* withElement(IOHIDElement* element, IOService* event_driver);
+
  protected:
     bool awake;
     IOReturn changeState(IOHIDElement* state_element, UInt16 state_usage);
@@ -54,7 +55,6 @@ class VoodooI2CSensor : public IOService {
     static UInt8 findPropertyIndex(IOHIDElement* element, UInt16 usage);
     UInt32 getElementValue(IOHIDElement* element);
     void setElementValue(IOHIDElement* element, UInt32 value);
- private:
 };
 
 

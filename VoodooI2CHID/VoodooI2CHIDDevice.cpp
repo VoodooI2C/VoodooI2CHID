@@ -105,7 +105,7 @@ IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
     }
     
     OSNumber* number = OSDynamicCast(OSNumber, result);
-    if (number){
+    if (number) {
         setProperty("HIDDescriptorAddress", number);
         hid_descriptor_register = number->unsigned16BitValue();
     }
@@ -242,7 +242,7 @@ void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSourc
 
     thread_t new_thread;
     kern_return_t ret = kernel_thread_start(OSMemberFunctionCast(thread_continue_t, this, &VoodooI2CHIDDevice::getInputReport), this, &new_thread);
-    if (ret != KERN_SUCCESS){
+    if (ret != KERN_SUCCESS) {
         read_in_progress = false;
         IOLog("%s::%s Thread error while attempting to get input report\n", getName(), name);
     } else {
@@ -378,7 +378,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
         return kIOReturnBadArgument;
 
     
-    char* buff= (char*)IOMalloc(report->getLength());
+    char* buff = (char*)IOMalloc(report->getLength());
     report->readBytes(0, buff, report->getLength());
     
     IOFree(buff, report->getLength());
@@ -445,9 +445,9 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
 IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* whatDevice) {
     if (whatDevice != this)
         return kIOReturnInvalid;
-    if (whichState == 0){
-        if (awake){
-            while (read_in_progress){
+    if (whichState == 0) {
+        if (awake) {
+            while (read_in_progress) {
                 IOSleep(10);
             }
 
@@ -457,7 +457,7 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
             awake = false;
         }
     } else {
-        if (!awake){
+        if (!awake) {
             awake = true;
             
             read_in_progress = true;
@@ -598,7 +598,7 @@ OSNumber* VoodooI2CHIDDevice::newProductIDNumber() const {
 
 OSNumber* VoodooI2CHIDDevice::newVersionNumber() const {
     return OSNumber::withNumber(hid_descriptor->wVersionID, 16);
-};
+}
 
 OSString* VoodooI2CHIDDevice::newTransportString() const {
     return OSString::withCString("I2C");

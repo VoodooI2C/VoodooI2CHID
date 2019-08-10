@@ -41,8 +41,7 @@
 #define kHIDUsage_Dig_Confidence kHIDUsage_Dig_TouchValid
 
 // Message types defined by ApplePS2Keyboard
-enum
-{
+enum {
     // from keyboard to mouse/touchpad
     kKeyboardSetTouchStatus = iokit_vendor_specific_msg(100),   // set disable/enable touchpad (data is bool*)
     kKeyboardGetTouchStatus = iokit_vendor_specific_msg(101),   // get disable/enable touchpad (data is bool*)
@@ -243,6 +242,7 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      * @return kIOReturnSuccess if the properties are received successfully, otherwise kIOUnsupported
      */
     virtual IOReturn setProperties(OSObject * properties);
+
  protected:
     const char* name;
     bool awake = true;
@@ -252,6 +252,7 @@ class VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     bool should_have_interface = true;
 
     virtual void forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp);
+
  private:
     SInt32 absolute_axis_removal_percentage = 15;
     OSArray* supported_elements;

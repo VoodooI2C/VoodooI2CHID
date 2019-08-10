@@ -23,7 +23,6 @@ IOFramebuffer* VoodooI2CAccelerometerSensor::getFramebuffer() {
         display = OSDynamicCast(IODisplay, iterator->getNextObject());
         
         if (display) {
-            
             IOLog("%s::Got active display\n", getName());
             
             framebuffer = OSDynamicCast(IOFramebuffer, display->getParentEntry(gIOServicePlane)->getParentEntry(gIOServicePlane));
@@ -34,7 +33,7 @@ IOFramebuffer* VoodooI2CAccelerometerSensor::getFramebuffer() {
         
         iterator->release();
     }
-    
+
     return framebuffer;
 }
 
@@ -74,7 +73,6 @@ void VoodooI2CAccelerometerSensor::handleInterruptReport(AbsoluteTime timestamp,
     
     if (current_rotation != rotation_state)
         rotateDevice(rotation_state);
-
 }
 
 void VoodooI2CAccelerometerSensor::rotateDevice(IOOptionBits rotation_state) {
@@ -92,12 +90,12 @@ void VoodooI2CAccelerometerSensor::rotateDevice(IOOptionBits rotation_state) {
 IOReturn VoodooI2CAccelerometerSensor::setPowerState(unsigned long whichState, IOService* whatDevice) {
     if (whatDevice != this)
         return kIOReturnInvalid;
-    if (whichState == 0){
-        if (awake){
+    if (whichState == 0) {
+        if (awake) {
             awake = false;
         }
     } else {
-        if (!awake){
+        if (!awake) {
             setElementValue(change_sensitivity, 3);
             
             awake = true;
