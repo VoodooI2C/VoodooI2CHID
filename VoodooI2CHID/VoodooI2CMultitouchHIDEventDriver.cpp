@@ -910,8 +910,23 @@ void VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated(IOSe
     newService->getPath(path, &len, gIOServicePlane);
     
     if (notifier == usb_hid_publish_notify) {
-        attached_hid_pointer_devices->setObject(newService);
-        IOLog("%s: USB pointer HID device published: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
+        IORegistryEntry* hid_child = OSDynamicCast(IORegistryEntry, newService->getChildEntry(gIOServicePlane));
+        
+        if (!hid_child)
+            return;
+
+        OSNumber* primary_usage_page = OSDynamicCast(OSNumber, hid_child->getProperty(kIOHIDPrimaryUsagePageKey));
+        OSNumber* primary_usage= OSDynamicCast(OSNumber, hid_child->getProperty(kIOHIDPrimaryUsageKey));
+        
+        if (!primary_usage_page || !primary_usage)
+            return;
+        
+        // ignore touchscreens
+
+        if (primary_usage_page->unsigned8BitValue() != kHIDPage_Digitizer && primary_usage->unsigned8BitValue() != kHIDUsage_Dig_TouchScreen) {
+            attached_hid_pointer_devices->setObject(newService);
+            IOLog("%s: USB pointer HID device published: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
+        }
     }
     
     if (notifier == usb_hid_terminate_notify) {

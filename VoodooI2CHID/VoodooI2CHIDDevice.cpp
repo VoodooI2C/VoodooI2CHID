@@ -38,7 +38,11 @@ IOReturn VoodooI2CHIDDevice::getHIDDescriptor() {
         IOLog("%s::%s Request for HID descriptor failed\n", getName(), name);
         return kIOReturnIOError;
     }
+    
+    return kIOReturnSuccess;
+}
 
+IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
     if (hid_descriptor->bcdVersion != 0x0100) {
         IOLog("%s::%s Incorrect BCD version %d\n", getName(), name, hid_descriptor->bcdVersion);
         return kIOReturnInvalid;
