@@ -336,6 +336,22 @@
 			<key>IOProviderClass</key>
 			<string>IOHIDInterface</string>
 		</dict>
+		<key>VoodooI2CHIDSYNA3602Device</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>IOClass</key>
+			<string>VoodooI2CHIDSYNA3602Device</string>
+			<key>IOPropertyMatch</key>
+			<dict>
+				<key>name</key>
+				<string>SYNA3602</string>
+			</dict>
+			<key>IOProbeScore</key>
+			<integer>200</integer>
+			<key>IOProviderClass</key>
+			<string>VoodooI2CDeviceNub</string>
+		</dict>
 	</dict>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2017 Alexandre Daoud. All rights reserved.</string>
@@ -356,7 +372,7 @@
 		<key>com.apple.kpi.mach</key>
 		<string>13.0</string>
 	</dict>
-    <key>OSBundleRequired</key>
-    <string>Safe Boot</string>
+	<key>OSBundleRequired</key>
+	<string>Safe Boot</string>
 </dict>
 </plist>

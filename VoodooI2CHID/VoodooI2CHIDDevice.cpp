@@ -20,13 +20,12 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     read_in_progress = false;
     bool temp = false;
     reset_event = &temp;
-    hid_descriptor = reinterpret_cast<VoodooI2CHIDDeviceHIDDescriptor*>(IOMalloc(sizeof(VoodooI2CHIDDeviceHIDDescriptor)));
+    memset(&hid_descriptor, 0, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
+
     return true;
 }
 
 void VoodooI2CHIDDevice::free() {
-    IOFree(hid_descriptor, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
-
     super::free();
 }
 
@@ -39,7 +38,7 @@ IOReturn VoodooI2CHIDDevice::getHIDDescriptor() {
         return kIOReturnIOError;
     }
     
-    return kIOReturnSuccess;
+    return parseHIDDescriptor();
 }
 
 IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
