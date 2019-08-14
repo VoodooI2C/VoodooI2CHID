@@ -13,7 +13,7 @@ OSDefineMetaClassAndStructors(VoodooI2CHIDDeviceOverride, VoodooI2CHIDDevice);
 
 IOReturn VoodooI2CHIDDeviceOverride::getHIDDescriptor() {
     IOLog("%s::%s Overriding HID descriptor\n", getName(), name);
-    hid_descriptor = &hid_descriptor_override;
+    memcpy(hid_descriptor, &hid_descriptor_override, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
 
     return parseHIDDescriptor();
 }
