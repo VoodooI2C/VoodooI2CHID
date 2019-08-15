@@ -33,7 +33,7 @@ IOReturn VoodooI2CHIDDeviceOverride::newReportDescriptor(IOMemoryDescriptor** de
         return kIOReturnNoResources;
     }
 
-    report_descriptor->writeBytes(0, (UInt8*)(&report_descriptor_override), hid_descriptor->wReportDescLength);
+    report_descriptor->writeBytes(0, report_descriptor_override, hid_descriptor->wReportDescLength);
     *descriptor = report_descriptor;
 
     return kIOReturnSuccess;
