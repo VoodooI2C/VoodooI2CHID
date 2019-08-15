@@ -617,13 +617,20 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
     if (digitiser.contact_count_maximum) {
         UInt8 contact_count_maximum = getElementValue(digitiser.contact_count_maximum);
 
-        float wrapper_count = (1.0f*contact_count_maximum)/(1.0f*digitiser.fingers->getCount());
-
-        if (static_cast<float>(static_cast<int>(wrapper_count)) != wrapper_count) {
+        // Check if maximum contact count divides by digitiser finger count
+        if (contact_count_maximum % digitiser.fingers->getCount() != 0) {
             IOLog("%s::%s Unknown digitiser type: got %d finger collections and a %d maximum contact count, ignoring extra fingers\n", getName(), name, digitiser.fingers->getCount(), contact_count_maximum);
+
+            // Remove extra fingers from digitiser's finger array if necessary
+            if (contact_count_maximum < digitiser.fingers->getCount()) {
+                while (contact_count_maximum % digitiser.fingers->getCount() != 0)
+                    digitiser.fingers->removeObject(digitiser.fingers->getCount() - 1);
+            }
         }
-    
-        for (int i = 0; i < static_cast<int>(wrapper_count); i++) {
+
+        int wrapper_count = static_cast<int>((1.0f * contact_count_maximum) / ( 1.0f * digitiser.fingers->getCount()));
+
+        for (int i = 0; i < wrapper_count; i++) {
             VoodooI2CHIDTransducerWrapper* wrapper = VoodooI2CHIDTransducerWrapper::wrapper();
             digitiser.wrappers->setObject(wrapper);
         
