@@ -20,10 +20,11 @@ const char* VoodooI2CSensorHubEventDriver::getProductName() {
     
     if (i2c_hid_device)
         return i2c_hid_device->name;
-    
-    OSString* name = getProduct();
-    
-    return name->getCStringNoCopy();
+
+    if (OSString* name = getProduct())
+        return name->getCStringNoCopy();
+
+    return "HID Sensor";
 }
 
 void VoodooI2CSensorHubEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id) {

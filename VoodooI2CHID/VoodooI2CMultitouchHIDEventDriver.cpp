@@ -80,10 +80,11 @@ const char* VoodooI2CMultitouchHIDEventDriver::getProductName() {
 
     if (i2c_hid_device)
         return i2c_hid_device->name;
-    
-    OSString* name = getProduct();
 
-    return name->getCStringNoCopy();
+    if (OSString* name = getProduct())
+        return name->getCStringNoCopy();
+
+    return "Multitouch HID Device";
 }
 
 void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id) {
