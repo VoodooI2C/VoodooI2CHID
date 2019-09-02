@@ -35,9 +35,11 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             got_transducer = true;
             // Convert logical coordinates to IOFixed and Scaled;
             
-            IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
-            IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
-            
+            // IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
+            // IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
+            IOFixed x = ((IOFixed)transducer->coordinates.x.value() * 0x10000) / transducer->logical_max_x;
+            IOFixed y = ((IOFixed)transducer->coordinates.y.value() * 0x10000) / transducer->logical_max_y;
+
             checkRotation(&x, &y);
             
             // Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
@@ -121,10 +123,14 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkStylus(AbsoluteTime timestamp, Voo
 
         if (transducer->type == kDigitiserTransducerStylus && transducer->in_range) {
             VoodooI2CDigitiserStylus* stylus = (VoodooI2CDigitiserStylus*)transducer;
-            IOFixed x = ((stylus->coordinates.x.value() * 1.0f) / stylus->logical_max_x) * 65535;
-            IOFixed y = ((stylus->coordinates.y.value() * 1.0f) / stylus->logical_max_y) * 65535;
-            IOFixed z = ((stylus->coordinates.z.value() * 1.0f) / stylus->logical_max_z) * 65535;
-            IOFixed stylus_pressure = ((stylus->tip_pressure.value() * 1.0f) /stylus->pressure_physical_max) * 65535;
+            // IOFixed x = ((stylus->coordinates.x.value() * 1.0f) / stylus->logical_max_x) * 65535;
+            // IOFixed y = ((stylus->coordinates.y.value() * 1.0f) / stylus->logical_max_y) * 65535;
+            // IOFixed z = ((stylus->coordinates.z.value() * 1.0f) / stylus->logical_max_z) * 65535;
+            // IOFixed stylus_pressure = ((stylus->tip_pressure.value() * 1.0f) /stylus->pressure_physical_max) * 65535;
+            IOFixed x = ((IOFixed)stylus->coordinates.x.value() * 0x10000) / stylus->logical_max_x;
+            IOFixed y = ((IOFixed)stylus->coordinates.y.value() * 0x10000) / stylus->logical_max_y;
+            IOFixed z = ((IOFixed)stylus->coordinates.z.value() * 0x10000) / stylus->logical_max_z;
+            IOFixed stylus_pressure = ((IOFixed)stylus->tip_pressure.value() * 0x10000) /stylus->pressure_physical_max;
             
             checkRotation(&x, &y);
             
@@ -273,15 +279,19 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
             transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
         }
         
-        IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
-        IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
-        
+        // IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
+        // IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
+        IOFixed x = ((IOFixed)transducer->coordinates.x.value() * 0x10000) / transducer->logical_max_x;
+        IOFixed y = ((IOFixed)transducer->coordinates.y.value() * 0x10000) / transducer->logical_max_y;
+
         index++;
         transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
         
-        IOFixed x2 = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
-        IOFixed y2 = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
-        
+        // IOFixed x2 = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
+        // IOFixed y2 = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
+        IOFixed x2 = ((IOFixed)transducer->coordinates.x.value() * 0x10000) / transducer->logical_max_x;
+        IOFixed y2 = ((IOFixed)transducer->coordinates.y.value() * 0x10000) / transducer->logical_max_y;
+
         IOFixed cursor_x = (x+x2)/2;
         IOFixed cursor_y = (y+y2)/2;
         

@@ -90,6 +90,8 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
     virtual IOReturn getHIDDescriptor();
 
+    IOWorkLoop* getWorkLoop(void) const override;
+
     /*
      * Gets the HID descriptor address by evaluating the device's '_DSM' method in the ACPI tables
      *
@@ -191,7 +193,6 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     bool awake;
     VoodooI2CHIDDeviceHIDDescriptor* hid_descriptor;
     bool read_in_progress;
-    IOWorkLoop* work_loop;
     
     IOReturn resetHIDDeviceGated();
 
@@ -240,6 +241,8 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     IOInterruptEventSource* interrupt_source;
     bool ready_for_input;
     bool* reset_event;
+    IOWorkLoop* work_loop;
+    IOLock* read_in_progress_mutex = NULL;
 
     /* Queries the I2C-HID device for an input report
      *
@@ -247,8 +250,7 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     void getInputReport();
-    
-    IOWorkLoop* getWorkLoop();
+    void getInputReportDirect();
 
     /*
     * This function is called when the I2C-HID device asserts its interrupt line.

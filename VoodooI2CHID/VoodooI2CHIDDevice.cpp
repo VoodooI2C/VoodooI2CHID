@@ -18,6 +18,8 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
         return false;
     awake = true;
     read_in_progress = false;
+    read_in_progress_mutex = IOLockAlloc();
+    ready_for_input = false;
     bool temp = false;
     reset_event = &temp;
     hid_descriptor = reinterpret_cast<VoodooI2CHIDDeviceHIDDescriptor*>(IOMalloc(sizeof(VoodooI2CHIDDeviceHIDDescriptor)));
@@ -133,8 +135,10 @@ void VoodooI2CHIDDevice::getInputReport() {
     IOReturn ret;
     unsigned char* report = (unsigned char *)IOMalloc(hid_descriptor->wMaxInputLength);
 
+    IOLockTryLock(read_in_progress_mutex);  // verify if it's rally locked one more time.
     api->readI2C(report, hid_descriptor->wMaxInputLength);
-    
+    IOLockUnlock(read_in_progress_mutex);
+
     int return_size = report[0] | report[1] << 8;
 
     if (!return_size) {
@@ -163,28 +167,29 @@ void VoodooI2CHIDDevice::getInputReport() {
     IOFree(report, hid_descriptor->wMaxInputLength);
 
 exit:
-    read_in_progress = false;
     thread_terminate(current_thread());
 }
 
-IOWorkLoop* VoodooI2CHIDDevice::getWorkLoop() {
+IOWorkLoop* VoodooI2CHIDDevice::getWorkLoop(void) const {
+    static IOWorkLoop* __work_loop = NULL;
+
     // Do we have a work loop already?, if so return it NOW.
-    if ((vm_address_t) work_loop >> 1)
-        return work_loop;
+    if ((vm_address_t) __work_loop >> 1)
+        return __work_loop;
     
-    if (OSCompareAndSwap(0, 1, reinterpret_cast<IOWorkLoop*>(&work_loop))) {
+    if (OSCompareAndSwap(0, 1, reinterpret_cast<IOWorkLoop*>(&__work_loop))) {
         // Construct the workloop and set the cntrlSync variable
         // to whatever the result is and return
-        work_loop = IOWorkLoop::workLoop();
+        __work_loop = IOWorkLoop::workLoop();
     } else {
-        while (reinterpret_cast<IOWorkLoop*>(work_loop) == reinterpret_cast<IOWorkLoop*>(1)) {
+        while (reinterpret_cast<IOWorkLoop*>(__work_loop) == reinterpret_cast<IOWorkLoop*>(1)) {
             // Spin around the cntrlSync variable until the
             // initialization finishes.
             thread_block(0);
         }
     }
     
-    return work_loop;
+    return __work_loop;
 }
 
 IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) {
@@ -211,7 +216,7 @@ IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportTy
     
     UInt8 length = 4;
     
-    read_in_progress = true;
+    IOLockLock(read_in_progress_mutex);
     
     VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*)IOMalloc(4 + args_len);
     memset(command, 0, 4+args_len);
@@ -229,23 +234,21 @@ IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportTy
     
     IOFree(command, 4+args_len);
     
-    read_in_progress = false;
+    IOLockUnlock(read_in_progress_mutex);
 
     return ret;
 }
 
 void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSource* src, int intCount) {
-    if (read_in_progress)
-        return;
     if (!awake)
         return;
-    
-    read_in_progress = true;
+    if (IOLockTryLock(read_in_progress_mutex) == false)
+        return;
 
     thread_t new_thread;
     kern_return_t ret = kernel_thread_start(OSMemberFunctionCast(thread_continue_t, this, &VoodooI2CHIDDevice::getInputReport), this, &new_thread);
     if (ret != KERN_SUCCESS) {
-        read_in_progress = false;
+        IOLockUnlock(read_in_progress_mutex);
         IOLog("%s::%s Thread error while attempting to get input report\n", getName(), name);
     } else {
         thread_deallocate(new_thread);
@@ -309,6 +312,11 @@ void VoodooI2CHIDDevice::releaseResources() {
         interrupt_source->release();
         interrupt_source = NULL;
     }
+    
+    if (read_in_progress_mutex) {
+        IOLockFree(read_in_progress_mutex);
+        read_in_progress_mutex = NULL;
+    }
 
     if (work_loop) {
         work_loop->release();
@@ -333,10 +341,10 @@ IOReturn VoodooI2CHIDDevice::resetHIDDevice() {
 }
 
 IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
-    read_in_progress = true;
     setHIDPowerState(kVoodooI2CStateOn);
-    
     IOSleep(1);
+
+    IOLockLock(read_in_progress_mutex);
 
     VoodooI2CHIDDeviceCommand command;
     command.c.reg = hid_descriptor->wCommandRegister;
@@ -351,7 +359,7 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
 
     nanoseconds_to_absolutetime(5000000000, &absolute_time);
 
-    read_in_progress = false;
+    IOLockUnlock(read_in_progress_mutex);
 
     IOReturn sleep = command_gate->commandSleep(&reset_event, absolute_time);
 
@@ -364,14 +372,14 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
 }
 
 IOReturn VoodooI2CHIDDevice::setHIDPowerState(VoodooI2CState state) {
-    read_in_progress = true;
+    IOLockLock(read_in_progress_mutex);
     VoodooI2CHIDDeviceCommand command;
     command.c.reg = hid_descriptor->wCommandRegister;
     command.c.opcode = 0x08;
     command.c.report_type_id = state ? I2C_HID_PWR_ON : I2C_HID_PWR_SLEEP;
 
     IOReturn ret = api->writeI2C(command.data, 4);
-    read_in_progress = false;
+    IOLockUnlock(read_in_progress_mutex);
     return ret;
 }
 
@@ -423,7 +431,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     
     UInt8 length = 4;
 
-    read_in_progress = true;
+    IOLockLock(read_in_progress_mutex);
 
     VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*)IOMalloc(4 + arguments_length);
     memset(command, 0, 4+arguments_length);
@@ -440,7 +448,8 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     IOFree(command, 4+arguments_length);
     IOFree(arguments, arguments_length);
 
-    read_in_progress = false;
+    IOLockUnlock(read_in_progress_mutex);
+
     return ret;
 }
 
@@ -449,10 +458,6 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         return kIOReturnInvalid;
     if (whichState == 0) {
         if (awake) {
-            while (read_in_progress) {
-                IOSleep(10);
-            }
-
             setHIDPowerState(kVoodooI2CStateOff);
             
             IOLog("%s::%s Going to sleep\n", getName(), name);
@@ -462,10 +467,11 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         if (!awake) {
             awake = true;
             
-            read_in_progress = true;
             setHIDPowerState(kVoodooI2CStateOn);
             
             IOSleep(1);
+
+            IOLockLock(read_in_progress_mutex);
             
             VoodooI2CHIDDeviceCommand command;
             command.c.reg = hid_descriptor->wCommandRegister;
@@ -474,7 +480,7 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
             
             api->writeI2C(command.data, 4);
 
-            read_in_progress = false;
+            IOLockUnlock(read_in_progress_mutex);
             
             IOLog("%s::%s Woke up\n", getName(), name);
         }
@@ -506,6 +512,14 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
         goto exit;
     }
     
+    if( !read_in_progress_mutex ) {
+        read_in_progress_mutex = IOLockAlloc();
+        if (!read_in_progress_mutex) {
+            IOLog("%s::%s Error creating a mutex read_in_progress_mutex\n", getName(), name);
+            goto exit;
+        }
+    }
+
     interrupt_source = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &VoodooI2CHIDDevice::interruptOccured), api, 0);
     if (!interrupt_source) {
         IOLog("%s::%s Warning: Could not get interrupt event source, using polling instead\n", getName(), name);

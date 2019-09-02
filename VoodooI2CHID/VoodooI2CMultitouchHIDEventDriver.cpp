@@ -628,7 +628,8 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
             }
         }
 
-        int wrapper_count = static_cast<int>((1.0f * contact_count_maximum) / ( 1.0f * digitiser.fingers->getCount()));
+        // int wrapper_count = static_cast<int>((1.0f * contact_count_maximum) / ( 1.0f * digitiser.fingers->getCount()));
+        int wrapper_count = contact_count_maximum / digitiser.fingers->getCount();
 
         for (int i = 0; i < wrapper_count; i++) {
             VoodooI2CHIDTransducerWrapper* wrapper = VoodooI2CHIDTransducerWrapper::wrapper();
