@@ -30,6 +30,10 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
 
 void VoodooI2CHIDDevice::free() {
     IOFree(hid_descriptor, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
+    if (read_in_progress_mutex) {
+        IOLockFree(read_in_progress_mutex);
+        read_in_progress_mutex = NULL;
+    }
 
     super::free();
 }
@@ -181,12 +185,12 @@ IOWorkLoop* VoodooI2CHIDDevice::getWorkLoop(void) const {
         return __work_loop;
     
     if (OSCompareAndSwap(0, 1, reinterpret_cast<IOWorkLoop*>(&__work_loop))) {
-        // Construct the workloop and set the cntrlSync variable
+        // Construct the workloop and set the __work_loop variable
         // to whatever the result is and return
         __work_loop = IOWorkLoop::workLoop();
     } else {
         while (reinterpret_cast<IOWorkLoop*>(__work_loop) == reinterpret_cast<IOWorkLoop*>(1)) {
-            // Spin around the cntrlSync variable until the
+            // Spin around the __work_loop variable until the
             // initialization finishes.
             thread_block(0);
         }
@@ -312,11 +316,6 @@ void VoodooI2CHIDDevice::releaseResources() {
         work_loop->removeEventSource(interrupt_source);
         interrupt_source->release();
         interrupt_source = NULL;
-    }
-    
-    if (read_in_progress_mutex) {
-        IOLockFree(read_in_progress_mutex);
-        read_in_progress_mutex = NULL;
     }
 
     if (work_loop) {
@@ -507,14 +506,6 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
         goto exit;
     }
     
-    if( !read_in_progress_mutex ) {
-        read_in_progress_mutex = IOLockAlloc();
-        if (!read_in_progress_mutex) {
-            IOLog("%s::%s Error creating a mutex read_in_progress_mutex\n", getName(), name);
-            goto exit;
-        }
-    }
-
     interrupt_source = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &VoodooI2CHIDDevice::interruptOccured), api, 0);
     if (!interrupt_source) {
         IOLog("%s::%s Warning: Could not get interrupt event source, using polling instead\n", getName(), name);
