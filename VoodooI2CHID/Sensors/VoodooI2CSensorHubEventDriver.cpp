@@ -21,9 +21,10 @@ const char* VoodooI2CSensorHubEventDriver::getProductName() {
     if (i2c_hid_device)
         return i2c_hid_device->name;
     
-    OSString* name = getProduct();
-    
-    return name->getCStringNoCopy();
+    if (OSString* name = getProduct())
+        return name->getCStringNoCopy();
+
+    return "HID Sensor";
 }
 
 void VoodooI2CSensorHubEventDriver::handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id) {
@@ -46,11 +47,6 @@ bool VoodooI2CSensorHubEventDriver::handleStart(IOService* provider) {
     if (!hid_interface)
         return false;
 
-    hid_interface->setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
-    
-    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CSensorHubEventDriver::handleInterruptReport), NULL))
-        return false;
-    
     hid_device = OSDynamicCast(IOHIDDevice, hid_interface->getParentEntry(gIOServicePlane));
     
     if (!hid_device)
@@ -68,6 +64,11 @@ bool VoodooI2CSensorHubEventDriver::handleStart(IOService* provider) {
     sensors = OSArray::withCapacity(1);
     
     if (!sensors)
+        return false;
+    
+    hid_interface->setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+    
+    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CSensorHubEventDriver::handleInterruptReport), NULL))
         return false;
     
     for (int index=0, count = supported_elements->getCount(); index < count; index++) {
