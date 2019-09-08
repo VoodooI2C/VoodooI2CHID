@@ -192,7 +192,6 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
  protected:
     bool awake;
     VoodooI2CHIDDeviceHIDDescriptor* hid_descriptor;
-    bool read_in_progress;
     
     IOReturn resetHIDDeviceGated();
 
@@ -242,6 +241,7 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     bool ready_for_input;
     bool* reset_event;
     IOWorkLoop* work_loop;
+    bool read_in_progress;
     IOLock* read_in_progress_mutex = NULL;
 
     /* Queries the I2C-HID device for an input report
@@ -250,7 +250,7 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     void getInputReport();
-    
+
     /*
     * This function is called when the I2C-HID device asserts its interrupt line.
     */
