@@ -24,6 +24,8 @@
 #define I2C_HID_PWR_ON  0x00
 #define I2C_HID_PWR_SLEEP 0x01
 
+#define I2C_MAX_BUF_SIZE            0x400
+
 typedef union {
     UInt8 data[4];
     struct __attribute__((__packed__)) cmd {
@@ -239,10 +241,21 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
     IOTimerEventSource* interrupt_simulator;
     IOInterruptEventSource* interrupt_source;
     bool ready_for_input;
-    bool* reset_event;
+    bool reset_event;
     IOWorkLoop* work_loop;
     bool read_in_progress;
     IOLock* read_in_progress_mutex = NULL;
+    
+    /* Buffers for <api->readI2C>, <api->writeI2C>, <api->writeReadI2C>
+     *
+     * Since the functions may use the buffers even after the end of calls,
+     * the buffers need to be kept after calls.
+     */
+    
+    UInt16 buf_i2c_cnt_intr, buf_i2c_cnt;
+    UInt8* buf_i2c_pool_intr, *buf_i2c_pool;
+    UInt8* getMallocI2CIntr(UInt16 size);
+    UInt8* getMallocI2C(UInt16 size);
 
     /* Queries the I2C-HID device for an input report
      *
