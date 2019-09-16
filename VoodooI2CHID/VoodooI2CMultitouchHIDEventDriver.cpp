@@ -613,13 +613,20 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
     if (digitiser.contact_count_maximum) {
         UInt8 contact_count_maximum = getElementValue(digitiser.contact_count_maximum);
 
-        float wrapper_count = (1.0f*contact_count_maximum)/(1.0f*digitiser.fingers->getCount());
-
-        if (static_cast<float>(static_cast<int>(wrapper_count)) != wrapper_count) {
+        // Check if maximum contact count divides by digitiser finger count
+        if (contact_count_maximum % digitiser.fingers->getCount() != 0) {
             IOLog("%s::%s Unknown digitiser type: got %d finger collections and a %d maximum contact count, ignoring extra fingers\n", getName(), name, digitiser.fingers->getCount(), contact_count_maximum);
+
+            // Remove extra fingers from digitiser's finger array if necessary
+            if (contact_count_maximum < digitiser.fingers->getCount()) {
+                while (contact_count_maximum % digitiser.fingers->getCount() != 0)
+                    digitiser.fingers->removeObject(digitiser.fingers->getCount() - 1);
+            }
         }
-    
-        for (int i = 0; i < static_cast<int>(wrapper_count); i++) {
+
+        int wrapper_count = static_cast<int>((1.0f * contact_count_maximum) / ( 1.0f * digitiser.fingers->getCount()));
+
+        for (int i = 0; i < wrapper_count; i++) {
             VoodooI2CHIDTransducerWrapper* wrapper = VoodooI2CHIDTransducerWrapper::wrapper();
             if(!digitiser.wrappers->setObject(wrapper)) {
                 IOLog("%s::%s Failed to add Transducer Wrapper to transducer array\n", getName(), name);
@@ -900,8 +907,23 @@ void VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandlerGated(IOSe
     newService->getPath(path, &len, gIOServicePlane);
     
     if (notifier == usb_hid_publish_notify) {
-        attached_hid_pointer_devices->setObject(newService);
-        IOLog("%s: USB pointer HID device published: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
+        IORegistryEntry* hid_child = OSDynamicCast(IORegistryEntry, newService->getChildEntry(gIOServicePlane));
+        
+        if (!hid_child)
+            return;
+
+        OSNumber* primary_usage_page = OSDynamicCast(OSNumber, hid_child->getProperty(kIOHIDPrimaryUsagePageKey));
+        OSNumber* primary_usage= OSDynamicCast(OSNumber, hid_child->getProperty(kIOHIDPrimaryUsageKey));
+        
+        if (!primary_usage_page || !primary_usage)
+            return;
+        
+        // ignore touchscreens
+
+        if (primary_usage_page->unsigned8BitValue() != kHIDPage_Digitizer && primary_usage->unsigned8BitValue() != kHIDUsage_Dig_TouchScreen) {
+            attached_hid_pointer_devices->setObject(newService);
+            IOLog("%s: USB pointer HID device published: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
+        }
     }
     
     if (notifier == usb_hid_terminate_notify) {

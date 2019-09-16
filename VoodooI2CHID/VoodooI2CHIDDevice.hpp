@@ -90,7 +90,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      *
      * @return *kIOReturnSuccess* on sucessfully getting the HID descriptor, *kIOReturnIOError* if the request failed, *kIOReturnInvalid* if the descriptor is invalid
      */
-    IOReturn getHIDDescriptor();
+    virtual IOReturn getHIDDescriptor();
 
     /*
      * Gets the HID descriptor address by evaluating the device's '_DSM' method in the ACPI tables
@@ -101,6 +101,8 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
     IOReturn getHIDDescriptorAddress();
     
     IOReturn getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options);
+    
+    IOReturn parseHIDDescriptor();
 
     /* Probes the candidate I2C-HID device to see if this driver can indeed drive it
      * @provider The provider which we have matched against
