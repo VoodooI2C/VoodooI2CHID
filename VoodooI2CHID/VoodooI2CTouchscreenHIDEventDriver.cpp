@@ -196,6 +196,8 @@ IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
         
         iterator->release();
     }
+    
+    OSSafeReleaseNULL(match);
 
     return framebuffer;
 }
@@ -207,7 +209,7 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
     if (active_framebuffer) {
         OSNumber* number = OSDynamicCast(OSNumber, active_framebuffer->getProperty(kIOFBTransformKey));
         current_rotation = number->unsigned8BitValue() / 0x10;
-        multitouch_interface->setProperty(kIOFBTransformKey, OSNumber::withNumber(current_rotation, 8));
+        multitouch_interface->setProperty(kIOFBTransformKey, current_rotation, 8);
     }
     
     if (event.contact_count) {
@@ -252,17 +254,30 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
         return false;
     }
     
-    this->work_loop->retain();
+    work_loop->retain();
     
-    this->timer_source = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CTouchscreenHIDEventDriver::fingerLift));
+    timer_source = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CTouchscreenHIDEventDriver::fingerLift));
     
-    this->work_loop->addEventSource(this->timer_source);
+    if (!timer_source || work_loop->addEventSource(timer_source) != kIOReturnSuccess) {
+        IOLog("%s::Could not add timer source to work loop\n", getName());
+        return false;
+    }
     
     active_framebuffer = getFramebuffer();
     
     return true;
 }
 
+void VoodooI2CTouchscreenHIDEventDriver::handleStop(IOService* provider) {
+    if (timer_source) {
+        work_loop->removeEventSource(timer_source);
+        OSSafeReleaseNULL(timer_source);
+    }
+    
+    OSSafeReleaseNULL(work_loop);
+    
+    super::handleStop(provider);
+}
 
 void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
     if (start_scroll) {

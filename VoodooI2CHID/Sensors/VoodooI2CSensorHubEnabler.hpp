@@ -17,7 +17,7 @@
 
 #include "../../../../Dependencies/helpers.hpp"
 
-class VoodooI2CSensorHubEnabler : public IOService {
+class EXPORT VoodooI2CSensorHubEnabler : public IOService {
   OSDeclareDefaultStructors(VoodooI2CSensorHubEnabler);
 
  public:

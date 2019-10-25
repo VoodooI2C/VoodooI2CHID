@@ -24,6 +24,8 @@
 #define I2C_HID_PWR_ON  0x00
 #define I2C_HID_PWR_SLEEP 0x01
 
+#define EXPORT __attribute__((visibility("default")))
+
 typedef union {
     UInt8 data[4];
     struct __attribute__((__packed__)) cmd {
@@ -58,7 +60,7 @@ class VoodooI2CDeviceNub;
  */
 
 
-class VoodooI2CHIDDevice : public IOHIDDevice {
+class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
   OSDeclareDefaultStructors(VoodooI2CHIDDevice);
 
  public:
@@ -186,13 +188,20 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     OSString* newManufacturerString() const override;
+    
+    bool open(IOService *forClient, IOOptionBits options = 0, void *arg = 0) override;
+    void close(IOService *forClient, IOOptionBits options) override;
 
  protected:
     bool awake;
-    VoodooI2CHIDDeviceHIDDescriptor* hid_descriptor;
     bool read_in_progress;
     IOWorkLoop* work_loop;
     
+    IOLock* client_lock;
+    OSArray* clients;
+
+    VoodooI2CHIDDeviceHIDDescriptor hid_descriptor;
+
     IOReturn resetHIDDeviceGated();
 
     /* Issues an I2C-HID reset command.
@@ -247,8 +256,6 @@ class VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     void getInputReport();
-    
-    IOWorkLoop* getWorkLoop();
 
     /*
     * This function is called when the I2C-HID device asserts its interrupt line.

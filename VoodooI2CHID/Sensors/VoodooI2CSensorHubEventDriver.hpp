@@ -22,7 +22,7 @@ class VoodooI2CSensor;
 class VoodooI2CDeviceOrientationSensor;
 class VoodooI2CAccelerometerSensor;
 
-class VoodooI2CSensorHubEventDriver : public IOHIDEventService {
+class EXPORT VoodooI2CSensorHubEventDriver : public IOHIDEventService {
   OSDeclareDefaultStructors(VoodooI2CSensorHubEventDriver);
 
  public:
@@ -33,6 +33,8 @@ class VoodooI2CSensorHubEventDriver : public IOHIDEventService {
     void handleStop(IOService* provider);
     IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
     IOReturn setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, UInt32 reportID);
+    
+    bool didTerminate(IOService* provider, IOOptionBits options, bool* defer);
 
  protected:
  private:

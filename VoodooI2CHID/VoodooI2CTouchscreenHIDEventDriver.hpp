@@ -27,7 +27,7 @@
 /* Implements an HID Event Driver for touchscreen devices as well as stylus input.
  */
 
-class VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDEventDriver {
+class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDEventDriver {
     OSDeclareDefaultStructors(VoodooI2CTouchscreenHIDEventDriver);
     
  public:
@@ -42,6 +42,9 @@ class VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDEventDri
     
     /* @inherit */
     bool handleStart(IOService* provider);
+    
+    /* @inherit */
+    void handleStop(IOService* provider);
     
  protected:
     /* The transducer is checked for stylus operation and pointer event dispatched.  x,y,z & pressure information is
