@@ -613,7 +613,7 @@ OSString* VoodooI2CHIDDevice::newManufacturerString() const {
 }
 
 void VoodooI2CHIDDevice::simulateInterrupt(OSObject* owner, IOTimerEventSource* timer) {
-    interruptOccured(owner, NULL, NULL);
+    interruptOccured(owner, nullptr, 0);
     interrupt_simulator->setTimeoutMS(INTERRUPT_SIMULATOR_TIMEOUT);
 }
 
