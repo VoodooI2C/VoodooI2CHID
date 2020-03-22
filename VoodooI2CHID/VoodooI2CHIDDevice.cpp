@@ -326,10 +326,8 @@ IOReturn VoodooI2CHIDDevice::resetHIDDevice() {
 }
 
 IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
-    read_in_progress = true;
     setHIDPowerState(kVoodooI2CStateOn);
-    
-    IOSleep(1);
+    read_in_progress = true;
 
     VoodooI2CHIDDeviceCommand command;
     command.c.reg = hid_descriptor.wCommandRegister;
@@ -337,12 +335,13 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
     command.c.report_type_id = 0;
     
     api->writeI2C(command.data, 4);
-    
+    IOSleep(100);
+
     AbsoluteTime absolute_time;
 
-    // Device is required to complete a host-initiated reset in at most 5 seconds.
+    // Device is required to complete a host-initiated reset in at most 6 seconds.
 
-    nanoseconds_to_absolutetime(5000000000, &absolute_time);
+    nanoseconds_to_absolutetime(6000000000, &absolute_time);
 
     read_in_progress = false;
 
@@ -359,11 +358,16 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
 IOReturn VoodooI2CHIDDevice::setHIDPowerState(VoodooI2CState state) {
     read_in_progress = true;
     VoodooI2CHIDDeviceCommand command;
-    command.c.reg = hid_descriptor.wCommandRegister;
-    command.c.opcode = 0x08;
-    command.c.report_type_id = state ? I2C_HID_PWR_ON : I2C_HID_PWR_SLEEP;
+    IOReturn ret = kIOReturnSuccess;
+    int attempts = 5;
+    do {
+        command.c.reg = hid_descriptor.wCommandRegister;
+        command.c.opcode = 0x08;
+        command.c.report_type_id = state ? I2C_HID_PWR_ON : I2C_HID_PWR_SLEEP;
 
-    IOReturn ret = api->writeI2C(command.data, 4);
+        ret = api->writeI2C(command.data, 4);
+        IOSleep(100);
+    } while (ret != kIOReturnSuccess && --attempts >= 0);
     read_in_progress = false;
     return ret;
 }
@@ -423,6 +427,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     memcpy(raw_command + length, arguments, arguments_length);
     length += arguments_length;
     IOReturn ret = api->writeI2C(raw_command, length);
+    IOSleep(10);
     
     IOFree(command, 4+arguments_length);
     IOFree(arguments, arguments_length);
@@ -437,7 +442,7 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
     if (whichState == 0) {
         if (awake) {
             while (read_in_progress) {
-                IOSleep(10);
+                IOSleep(100);
             }
 
             setHIDPowerState(kVoodooI2CStateOff);
@@ -449,10 +454,8 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         if (!awake) {
             awake = true;
             
-            read_in_progress = true;
             setHIDPowerState(kVoodooI2CStateOn);
-            
-            IOSleep(1);
+            read_in_progress = true;
             
             VoodooI2CHIDDeviceCommand command;
             command.c.reg = hid_descriptor.wCommandRegister;
@@ -460,6 +463,7 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
             command.c.report_type_id = 0;
             
             api->writeI2C(command.data, 4);
+            IOSleep(10);
 
             read_in_progress = false;
             
