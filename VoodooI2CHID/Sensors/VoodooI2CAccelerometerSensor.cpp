@@ -13,20 +13,20 @@
 OSDefineMetaClassAndStructors(VoodooI2CAccelerometerSensor, VoodooI2CSensor);
 
 IOFramebuffer* VoodooI2CAccelerometerSensor::getFramebuffer() {
-    IODisplay* display = NULL;
+    IORegistryEntry* display = NULL;
     IOFramebuffer* framebuffer = NULL;
     
     OSDictionary *match = serviceMatching("IODisplay");
     OSIterator *iterator = getMatchingServices(match);
     
     if (iterator) {
-        display = OSDynamicCast(IODisplay, iterator->getNextObject());
+        display = OSDynamicCast(IORegistryEntry, iterator->getNextObject());
         
         if (display) {
             IOLog("%s::Got active display\n", getName());
-            
-            framebuffer = OSDynamicCast(IOFramebuffer, display->getParentEntry(gIOServicePlane)->getParentEntry(gIOServicePlane));
-            
+            IORegistryEntry *entry = display->getParentEntry(gIOServicePlane)->getParentEntry(gIOServicePlane);
+            if (entry)
+                framebuffer = reinterpret_cast<IOFramebuffer*>(entry->metaCast("IOFramebuffer"));
             if (framebuffer)
                 IOLog("%s::Got active framebuffer\n", getName());
         }
