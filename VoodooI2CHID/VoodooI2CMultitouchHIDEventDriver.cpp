@@ -155,8 +155,10 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
     
         if (actual_index != digitiser.current_report - 1) {
             wrapper = OSDynamicCast(VoodooI2CHIDTransducerWrapper, digitiser.wrappers->getObject(actual_index));
-            if (!wrapper)
-                return;
+            if (!wrapper) {
+                // Fall back to the original wrapper
+                wrapper = OSDynamicCast(VoodooI2CHIDTransducerWrapper, digitiser.wrappers->getObject(digitiser.current_report - 1));
+            }
         }
     }
 
