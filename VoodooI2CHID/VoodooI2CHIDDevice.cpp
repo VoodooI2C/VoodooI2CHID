@@ -22,6 +22,14 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     bool temp = false;
     reset_event = &temp;
     memset(&hid_descriptor, 0, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
+    acpi_device = NULL;
+    api = NULL;
+    command_gate = NULL;
+    interrupt_simulator = NULL;
+    interrupt_source = NULL;
+    ready_for_input = false;
+    voodooi2c_native_engine = NULL;
+    last_native_engine_event = 0;
     
     client_lock = IOLockAlloc();
     
@@ -174,7 +182,8 @@ void VoodooI2CHIDDevice::getInputReport() {
 
 exit:
     read_in_progress = false;
-    thread_terminate(current_thread());
+    if (!interrupt_simulator)
+        thread_terminate(current_thread());
 }
 
 IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) {
@@ -617,8 +626,22 @@ OSString* VoodooI2CHIDDevice::newManufacturerString() const {
 }
 
 void VoodooI2CHIDDevice::simulateInterrupt(OSObject* owner, IOTimerEventSource* timer) {
-    interruptOccured(owner, nullptr, 0);
-    interrupt_simulator->setTimeoutMS(INTERRUPT_SIMULATOR_TIMEOUT);
+    if (!read_in_progress && awake) {
+        read_in_progress = true;
+        VoodooI2CHIDDevice::getInputReport();
+    }
+    
+    if (last_native_engine_event == 0) {
+        interrupt_simulator->setTimeoutMS(INTERRUPT_SIMULATOR_TIMEOUT);
+        return;
+    }
+        
+    uint64_t        nsecs;
+    AbsoluteTime    cur_time;
+    clock_get_uptime(&cur_time);
+    SUB_ABSOLUTETIME(&cur_time, &last_native_engine_event);
+    absolutetime_to_nanoseconds(cur_time, &nsecs);
+    interrupt_simulator->setTimeoutMS((nsecs > 1500000000) ? INTERRUPT_SIMULATOR_TIMEOUT_IDLE : INTERRUPT_SIMULATOR_TIMEOUT_BUSY);
 }
 
 bool VoodooI2CHIDDevice::open(IOService *forClient, IOOptionBits options, void *arg) {
@@ -647,3 +670,17 @@ void VoodooI2CHIDDevice::close(IOService *forClient, IOOptionBits options) {
     
     super::close(forClient, options);
 }
+
+IOReturn VoodooI2CHIDDevice::message(UInt32 type, IOService *provider, void *argument) {
+    if (type == kIOMessageVoodooNativeEngineMessage) {
+        if (!voodooi2c_native_engine && provider && !strcmp(provider->getName(), "VoodooI2CNativeEngine"))
+            voodooi2c_native_engine = provider;
+        if (voodooi2c_native_engine && voodooi2c_native_engine == provider) {
+            clock_get_uptime(&last_native_engine_event);
+            return kIOReturnSuccess;
+        }
+    }
+
+    return super::message(type, provider, argument);
+}
+

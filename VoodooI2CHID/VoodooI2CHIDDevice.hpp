@@ -20,6 +20,8 @@
 #include "../../../Dependencies/helpers.hpp"
 
 #define INTERRUPT_SIMULATOR_TIMEOUT 5
+#define INTERRUPT_SIMULATOR_TIMEOUT_BUSY 2
+#define INTERRUPT_SIMULATOR_TIMEOUT_IDLE 50
 
 #define I2C_HID_PWR_ON  0x00
 #define I2C_HID_PWR_SLEEP 0x01
@@ -191,6 +193,14 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
     
     bool open(IOService *forClient, IOOptionBits options = 0, void *arg = 0) override;
     void close(IOService *forClient, IOOptionBits options) override;
+    
+    /* Receives a generic message delivered from an attached provider.
+     * @type A type defined in IOMessage.h or defined by the provider family.
+     * @provider The provider from which the message originates.
+     * argument An argument defined by the provider family, not used by IOService.
+     */
+    
+    IOReturn message(UInt32 type, IOService *provider, void *argument) override;
 
  protected:
     bool awake;
@@ -239,7 +249,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     IOReturn setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options);
-
+    
  private:
     IOACPIPlatformDevice* acpi_device;
     VoodooI2CDeviceNub* api;
@@ -249,6 +259,8 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
     IOInterruptEventSource* interrupt_source;
     bool ready_for_input;
     bool* reset_event;
+    IOService *voodooi2c_native_engine;
+    AbsoluteTime last_native_engine_event;
 
     /* Queries the I2C-HID device for an input report
      *
