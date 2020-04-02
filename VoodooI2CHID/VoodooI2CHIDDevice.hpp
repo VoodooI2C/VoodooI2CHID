@@ -193,14 +193,6 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
     
     bool open(IOService *forClient, IOOptionBits options = 0, void *arg = 0) override;
     void close(IOService *forClient, IOOptionBits options) override;
-    
-    /* Receives a generic message delivered from an attached provider.
-     * @type A type defined in IOMessage.h or defined by the provider family.
-     * @provider The provider from which the message originates.
-     * argument An argument defined by the provider family, not used by IOService.
-     */
-    
-    IOReturn message(UInt32 type, IOService *provider, void *argument) override;
 
  protected:
     bool awake;
@@ -259,8 +251,6 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
     IOInterruptEventSource* interrupt_source;
     bool ready_for_input;
     bool* reset_event;
-    IOService *voodooi2c_native_engine;
-    AbsoluteTime last_native_engine_event;
 
     /* Queries the I2C-HID device for an input report
      *

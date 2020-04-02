@@ -21,6 +21,8 @@
 #define super IOHIDEventService
 OSDefineMetaClassAndStructors(VoodooI2CMultitouchHIDEventDriver, IOHIDEventService);
 
+AbsoluteTime last_multi_touch_event = 0;
+
 static int pow(int x, int y) {
     int ret = 1;
     while (y > 0) {
@@ -185,6 +187,8 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
             handleDigitizerTransducerReport(stylus, timestamp, report_id);
         }
     }
+    
+    clock_get_uptime(&last_multi_touch_event);
 }
 
 void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2CDigitiserTransducer* transducer, AbsoluteTime timestamp, UInt32 report_id) {
