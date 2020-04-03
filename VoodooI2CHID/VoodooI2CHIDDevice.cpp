@@ -14,7 +14,7 @@
 #define super IOHIDDevice
 OSDefineMetaClassAndStructors(VoodooI2CHIDDevice, IOHIDDevice);
 
-extern AbsoluteTime last_multi_touch_event;
+extern volatile AbsoluteTime last_multi_touch_event;
 
 bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     if (!super::init(properties))
@@ -626,6 +626,7 @@ OSString* VoodooI2CHIDDevice::newManufacturerString() const {
 }
 
 void VoodooI2CHIDDevice::simulateInterrupt(OSObject* owner, IOTimerEventSource* timer) {
+    AbsoluteTime prev_time = last_multi_touch_event;
     if (!read_in_progress && awake) {
         read_in_progress = true;
         VoodooI2CHIDDevice::getInputReport();
@@ -633,6 +634,12 @@ void VoodooI2CHIDDevice::simulateInterrupt(OSObject* owner, IOTimerEventSource* 
     
     if (last_multi_touch_event == 0) {
         interrupt_simulator->setTimeoutMS(INTERRUPT_SIMULATOR_TIMEOUT);
+        return;
+    }
+    
+    IOSleep(1);
+    if (last_multi_touch_event != prev_time) {
+        interrupt_simulator->setTimeoutMS(INTERRUPT_SIMULATOR_TIMEOUT_BUSY);
         return;
     }
         

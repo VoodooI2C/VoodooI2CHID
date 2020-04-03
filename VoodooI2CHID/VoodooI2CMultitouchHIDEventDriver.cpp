@@ -99,6 +99,9 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
     uint64_t now_ns;
     absolutetime_to_nanoseconds(now_abs, &now_ns);
     
+    if (report_type == kIOHIDReportTypeInput && readyForReports())
+        clock_get_uptime(&last_multi_touch_event);
+    
     // Ignore touchpad interaction(s) shortly after typing
     if (now_ns - key_time < max_after_typing)
         return;
@@ -187,8 +190,6 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
             handleDigitizerTransducerReport(stylus, timestamp, report_id);
         }
     }
-    
-    clock_get_uptime(&last_multi_touch_event);
 }
 
 void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2CDigitiserTransducer* transducer, AbsoluteTime timestamp, UInt32 report_id) {
