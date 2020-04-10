@@ -238,17 +238,6 @@ void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSourc
     
     read_in_progress = true;
 
-    /* A big troublemaker
-    thread_t new_thread;
-    kern_return_t ret = kernel_thread_start(OSMemberFunctionCast(thread_continue_t, this, &VoodooI2CHIDDevice::getInputReport), this, &new_thread);
-    if (ret != KERN_SUCCESS) {
-        read_in_progress = false;
-        IOLog("%s::%s Thread error while attempting to get input report\n", getName(), name);
-    } else {
-        thread_deallocate(new_thread);
-    }
-    */
-
     command_gate->attemptAction(OSMemberFunctionCast(IOCommandGate::Action, this, &VoodooI2CHIDDevice::getInputReport));
 }
 
