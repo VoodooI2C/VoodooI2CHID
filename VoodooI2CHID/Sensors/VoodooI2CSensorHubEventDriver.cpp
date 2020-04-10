@@ -136,6 +136,8 @@ IOReturn VoodooI2CSensorHubEventDriver::parseSensorParent(IOHIDElement* parent) 
         
         if (sensor)
             sensors->setObject(sensor);
+
+        OSSafeReleaseNULL(sensor);
     }
 
     return kIOReturnNoDevice;
