@@ -248,7 +248,6 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
     IOCommandGate* command_gate;
     UInt16 hid_descriptor_register;
     IOTimerEventSource* interrupt_simulator;
-    IOInterruptEventSource* interrupt_source;
     bool ready_for_input;
     bool* reset_event;
 
