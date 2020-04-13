@@ -71,6 +71,11 @@ bool VoodooI2CSensorHubEventDriver::handleStart(IOService* provider) {
     if (!sensors)
         return false;
     
+    hid_interface->setProperty("VoodooI2CServices Supported", OSBoolean::withBoolean(true));
+
+    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CSensorHubEventDriver::handleInterruptReport), NULL))
+        return false;
+    
     for (int index=0, count = supported_elements->getCount(); index < count; index++) {
         IOHIDElement* element = NULL;
         

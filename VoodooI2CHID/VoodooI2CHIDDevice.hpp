@@ -26,6 +26,11 @@
 #define I2C_HID_PWR_ON  0x00
 #define I2C_HID_PWR_SLEEP 0x01
 
+#define I2C_MAX_BUF_SIZE            0x400
+#define I2C_LOCK()                  IOLockLock(read_in_progress_mutex)
+#define I2C_UNLOCK()                IOLockUnlock(read_in_progress_mutex)
+#define I2C_TRYLOCK()               IOLockTryLock(read_in_progress_mutex)
+
 #define EXPORT __attribute__((visibility("default")))
 
 typedef union {
@@ -93,6 +98,8 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      * @return *kIOReturnSuccess* on sucessfully getting the HID descriptor, *kIOReturnIOError* if the request failed, *kIOReturnInvalid* if the descriptor is invalid
      */
     virtual IOReturn getHIDDescriptor();
+    
+    IOWorkLoop* getWorkLoop(void) const override;
 
     /*
      * Gets the HID descriptor address by evaluating the device's '_DSM' method in the ACPI tables
@@ -196,8 +203,6 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
 
  protected:
     bool awake;
-    bool read_in_progress;
-    IOWorkLoop* work_loop;
     
     IOLock* client_lock;
     OSArray* clients;
@@ -249,7 +254,21 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
     UInt16 hid_descriptor_register;
     IOTimerEventSource* interrupt_simulator;
     bool ready_for_input;
-    bool* reset_event;
+    bool reset_event;
+    IOWorkLoop* work_loop;
+    bool read_in_progress;
+    IOLock* read_in_progress_mutex;
+
+    /* Buffers for <api->readI2C>, <api->writeI2C>, <api->writeReadI2C>
+     *
+     * Since the functions may use the buffers even after the end of calls,
+     * the buffers need to be kept after calls.
+     */
+
+    UInt16 buf_i2c_cnt_intr, buf_i2c_cnt;
+    UInt8* buf_i2c_pool_intr, *buf_i2c_pool;
+    UInt8* getMallocI2CIntr(UInt16 size);
+    UInt8* getMallocI2C(UInt16 size);
 
     /* Queries the I2C-HID device for an input report
      *
