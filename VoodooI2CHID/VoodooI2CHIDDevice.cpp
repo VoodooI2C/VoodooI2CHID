@@ -20,7 +20,7 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     if (!super::init(properties))
         return false;
     awake = true;
-    read_in_progress = true;
+    read_in_progress = false;
     read_in_progress_mutex = IOLockAlloc();
     ready_for_input = false;
     reset_event = false;
@@ -82,16 +82,19 @@ UInt8* VoodooI2CHIDDevice::getMallocI2C(UInt16 size) {
 
 IOReturn VoodooI2CHIDDevice::getHIDDescriptor() {
     I2C_LOCK();
+    read_in_progress = true;
     VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*)getMallocI2C(sizeof(VoodooI2CHIDDeviceCommand));
     command->c.reg = hid_descriptor_register;
 
     if (api->writeReadI2C(command->data, 2, (UInt8*)&hid_descriptor, (UInt16)sizeof(VoodooI2CHIDDeviceHIDDescriptor)) != kIOReturnSuccess) {
-        //I2C_UNLOCK();
         IOLog("%s::%s Request for HID descriptor failed\n", getName(), name);
+        read_in_progress = false;
+        I2C_UNLOCK();
         return kIOReturnIOError;
     }
     
     IOReturn ret = parseHIDDescriptor();
+    read_in_progress = false;
     I2C_UNLOCK();
 
     return ret;
@@ -189,8 +192,11 @@ void VoodooI2CHIDDevice::getInputReport() {
     
     if (I2C_TRYLOCK() == false) {
         IOLog("%s::%s Skipping a HID read interrupt while other thread read/write I2C\n", getName(), name);
-        goto exit;
+        return;
     }
+    
+    read_in_progress = true;
+    
     report = getMallocI2CIntr(hid_descriptor.wMaxInputLength);
     report[0] = report[1] = 0;
     ret = api->readI2C(report, hid_descriptor.wMaxInputLength);
@@ -206,21 +212,17 @@ void VoodooI2CHIDDevice::getInputReport() {
      * It needs to be checked before checking ready_for_input.
      */
     if (!return_size) {
-        I2C_UNLOCK();
         command_gate->commandWakeup(&reset_event);
         goto exit;
     }
 
     if (!ready_for_input || return_size > hid_descriptor.wMaxInputLength) {
-        I2C_UNLOCK();
         goto exit;
     }
 
     buffer = IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task, 0, return_size);
     buffer->writeBytes(0, report + 2, return_size - 2);
-    
-    I2C_UNLOCK();
-    
+
     ret = handleReport(buffer, kIOHIDReportTypeInput);
 
     if (ret != kIOReturnSuccess)
@@ -230,6 +232,7 @@ void VoodooI2CHIDDevice::getInputReport() {
 
 exit:
     read_in_progress = false;
+    I2C_UNLOCK();
 }
 
 IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) {
@@ -252,6 +255,7 @@ IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportTy
     args[args_len++] = read_register >> 8;
     
     I2C_LOCK();
+    read_in_progress = true;
 
     UInt8 length = sizeof(VoodooI2CHIDDeviceCommand);
     UInt8* buffer = (UInt8*) getMallocI2C(report->getLength());
@@ -270,6 +274,7 @@ IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportTy
     
     report->writeBytes(0, buffer+2, report->getLength()-2);
     
+    read_in_progress = false;
     I2C_UNLOCK();
 
     return ret;
@@ -280,8 +285,6 @@ void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSourc
         return;
     if (!awake)
         return;
-    
-    read_in_progress = true;
 
     command_gate->attemptAction(OSMemberFunctionCast(IOCommandGate::Action, this, &VoodooI2CHIDDevice::getInputReport));
 }
@@ -321,7 +324,6 @@ VoodooI2CHIDDevice* VoodooI2CHIDDevice::probe(IOService* provider, SInt32* score
         IOLog("%s::%s Could not get HID descriptor\n", getName(), name);
         return NULL;
     }
-    read_in_progress = false;
 
     return this;
 }
@@ -369,6 +371,7 @@ IOReturn VoodooI2CHIDDevice::resetHIDDevice() {
 IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
     setHIDPowerState(kVoodooI2CStateOn);
 
+    read_in_progress = true;
     I2C_LOCK();
     VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*) getMallocI2C(sizeof(VoodooI2CHIDDeviceCommand));
     command->c.reg = hid_descriptor.wCommandRegister;
@@ -376,7 +379,6 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
     command->c.report_type_id = 0;
 
     api->writeI2C(command->data, sizeof(VoodooI2CHIDDeviceCommand));
-    I2C_UNLOCK();
     IOSleep(100);
 
     AbsoluteTime absolute_time, deadline;
@@ -390,26 +392,35 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
 
     if (sleep == THREAD_TIMED_OUT) {
         IOLog("%s::%s Timeout waiting for device to complete host initiated reset\n", getName(), name);
+        read_in_progress = false;
+        I2C_UNLOCK();
         return kIOReturnTimeout;
     }
+    
+    read_in_progress = false;
+    I2C_UNLOCK();
 
     return kIOReturnSuccess;
 }
 
 IOReturn VoodooI2CHIDDevice::setHIDPowerState(VoodooI2CState state) {
+    I2C_LOCK();
+    read_in_progress = true;
+    
     IOReturn ret = kIOReturnSuccess;
     int attempts = 5;
     do {
-        I2C_LOCK();
         VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*) getMallocI2C(sizeof(VoodooI2CHIDDeviceCommand));
         command->c.reg = hid_descriptor.wCommandRegister;
         command->c.opcode = 0x08;
         command->c.report_type_id = state ? I2C_HID_PWR_ON : I2C_HID_PWR_SLEEP;
 
         ret = api->writeI2C(command->data, sizeof(VoodooI2CHIDDeviceCommand));
-        I2C_UNLOCK();
         IOSleep(100);
     } while (ret != kIOReturnSuccess && --attempts >= 0);
+    
+    read_in_progress = false;
+    I2C_UNLOCK();
     
     return ret;
 }
@@ -455,6 +466,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     memcpy(&arguments[idx], buffer, report->getLength());
     
     I2C_LOCK();
+    read_in_progress = true;
 
     UInt8 length = sizeof(VoodooI2CHIDDeviceCommand);
     VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*) getMallocI2C(length + arguments_length);
@@ -469,6 +481,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     IOReturn ret = api->writeI2C(raw_command, length+arguments_length);
     IOSleep(10);
     
+    read_in_progress = false;
     I2C_UNLOCK();
     
     IOFree(arguments, arguments_length);
@@ -495,16 +508,20 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
             IOSleep(1);
             
             I2C_LOCK();
+            read_in_progress = true;
+            
             VoodooI2CHIDDeviceCommand *command = (VoodooI2CHIDDeviceCommand*) getMallocI2C(sizeof(VoodooI2CHIDDeviceCommand));
             command->c.reg = hid_descriptor.wCommandRegister;
             command->c.opcode = 0x01;
             command->c.report_type_id = 0;
             
             api->writeI2C(command->data, sizeof(VoodooI2CHIDDeviceCommand));
+            
+            awake = true;
+            read_in_progress = false;
             I2C_UNLOCK();
             
             IOLog("%s::%s Woke up\n", getName(), name);
-            awake = true;
         }
     }
     return kIOPMAckImplied;
@@ -662,7 +679,6 @@ OSString* VoodooI2CHIDDevice::newManufacturerString() const {
 void VoodooI2CHIDDevice::simulateInterrupt(OSObject* owner, IOTimerEventSource* timer) {
     AbsoluteTime prev_time = last_multi_touch_event;
     if (!read_in_progress && awake) {
-        read_in_progress = true;
         VoodooI2CHIDDevice::getInputReport();
     }
     
