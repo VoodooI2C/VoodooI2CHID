@@ -370,8 +370,8 @@ IOReturn VoodooI2CHIDDevice::resetHIDDevice() {
 IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
     setHIDPowerState(kVoodooI2CStateOn);
 
-    read_in_progress = true;
     I2C_LOCK();
+    read_in_progress = true;
     VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*) getMallocI2C(sizeof(VoodooI2CHIDDeviceCommand));
     command->c.reg = hid_descriptor.wCommandRegister;
     command->c.opcode = 0x01;
