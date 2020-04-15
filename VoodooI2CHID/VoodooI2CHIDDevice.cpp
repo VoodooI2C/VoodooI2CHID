@@ -201,7 +201,6 @@ void VoodooI2CHIDDevice::getInputReport() {
     report[0] = report[1] = 0;
     ret = api->readI2C(report, hid_descriptor.wMaxInputLength);
     if (ret != kIOReturnSuccess) {
-        I2C_UNLOCK();
         goto exit;
     }
 
