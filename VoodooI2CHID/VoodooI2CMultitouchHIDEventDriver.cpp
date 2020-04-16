@@ -377,9 +377,6 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     if (transport->getCStringNoCopy() != kIOHIDTransportUSBValue)
         hid_interface->setProperty("VoodooI2CServices Supported", kOSBooleanTrue);
 
-    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
-        return false;
-    
     hid_device = OSDynamicCast(IOHIDDevice, hid_interface->getParentEntry(gIOServicePlane));
     
     if (!hid_device)
@@ -420,6 +417,9 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
         return false;
     }
     
+    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
+        return false;
+
     setDigitizerProperties();
 
     PMinit();
