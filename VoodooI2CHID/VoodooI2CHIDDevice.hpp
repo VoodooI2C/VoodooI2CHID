@@ -196,7 +196,6 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
 
  protected:
     bool awake;
-    bool read_in_progress;
     IOWorkLoop* work_loop;
     
     IOLock* client_lock;
