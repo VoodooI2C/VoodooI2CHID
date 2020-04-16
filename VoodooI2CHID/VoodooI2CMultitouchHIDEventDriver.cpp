@@ -743,7 +743,7 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     if (!super::start(provider))
         return false;
     
-    work_loop = this->getWorkLoop();
+    work_loop = getWorkLoop();
     
     if (!work_loop)
         return false;
@@ -844,7 +844,7 @@ void VoodooI2CMultitouchHIDEventDriver::registerHIDPointerNotifications() {
     IOServiceMatchingNotificationHandler notificationHandler = OSMemberFunctionCast(IOServiceMatchingNotificationHandler, this, &VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandler);
     
     // Determine if we should listen for USB mouse attach events as per configuration
-    OSBoolean* isEnabled = OSDynamicCast(OSBoolean, this->getProperty("ProcessUSBMouseStopsTrackpad"));
+    OSBoolean* isEnabled = OSDynamicCast(OSBoolean, getProperty("ProcessUSBMouseStopsTrackpad"));
 
     if (isEnabled && isEnabled->isTrue()) {
         // USB mouse HID description as per USB spec: http://www.usb.org/developers/hidpage/HID1_11.pdf
@@ -861,7 +861,7 @@ void VoodooI2CMultitouchHIDEventDriver::registerHIDPointerNotifications() {
     }
 
     // Determine if we should listen for bluetooth mouse attach events as per configuration
-    isEnabled = OSDynamicCast(OSBoolean, this->getProperty("ProcessBluetoothMouseStopsTrackpad"));
+    isEnabled = OSDynamicCast(OSBoolean, getProperty("ProcessBluetoothMouseStopsTrackpad"));
     
     if (isEnabled && isEnabled->isTrue()) {
         // Bluetooth HID devices
