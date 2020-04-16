@@ -26,6 +26,10 @@
 #define I2C_HID_PWR_ON  0x00
 #define I2C_HID_PWR_SLEEP 0x01
 
+#define I2C_LOCK()     IOLockLock(read_in_progress_lock)
+#define I2C_UNLOCK()   IOLockUnlock(read_in_progress_lock)
+#define I2C_TRYLOCK()  IOLockTryLock(read_in_progress_lock)
+
 #define EXPORT __attribute__((visibility("default")))
 
 typedef union {
@@ -197,6 +201,8 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
  protected:
     bool awake;
     bool read_in_progress;
+    IOLock* read_in_progress_lock;
+
     IOWorkLoop* work_loop;
     
     IOLock* client_lock;
@@ -249,7 +255,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
     UInt16 hid_descriptor_register;
     IOTimerEventSource* interrupt_simulator;
     bool ready_for_input;
-    bool* reset_event;
+    bool reset_event;
 
     /* Queries the I2C-HID device for an input report
      *
