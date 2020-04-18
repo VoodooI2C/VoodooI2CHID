@@ -79,7 +79,8 @@ void VoodooI2CSensor::setElementValue(IOHIDElement* updated_element, UInt32 valu
         
         if (child->getChildElements() && child->getChildElements()->getCount()) {
             IOHIDElement* sub_child = OSDynamicCast(IOHIDElement, child->getChildElements()->getObject(0));
-            element_to_use = sub_child;
+            if (sub_child)
+                element_to_use = sub_child;
         }
 
         if (child->conformsTo(kHIDPage_Sensor, kHIDUsage_Snsr_Property_Manufacturer)) {

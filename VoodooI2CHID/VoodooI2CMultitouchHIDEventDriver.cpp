@@ -722,23 +722,21 @@ inline void VoodooI2CMultitouchHIDEventDriver::setButtonState(DigitiserTransduce
 }
 
 void VoodooI2CMultitouchHIDEventDriver::setDigitizerProperties() {
-    OSDictionary* properties = OSDictionary::withCapacity(4);
+    if (!digitiser.transducers)
+        return;
 
+    OSDictionary* properties = OSDictionary::withCapacity(5);
     if (!properties)
         return;
 
-    if (!digitiser.transducers)
-        goto exit;
-
-    properties->setObject("Contact Count Element", digitiser.contact_count);
-    properties->setObject("Input Mode Element", digitiser.input_mode);
-    properties->setObject("Contact Count Maximum  Element", digitiser.contact_count_maximum);
-    properties->setObject("Button Element", digitiser.button);
-    properties->setObject("Transducer Count", OSNumber::withNumber(digitiser.transducers->getCount(), 32));
+    properties->setObject("Contact Count Element",         digitiser.contact_count);
+    properties->setObject("Input Mode Element",            digitiser.input_mode);
+    properties->setObject("Contact Count Maximum Element", digitiser.contact_count_maximum);
+    properties->setObject("Button Element",                digitiser.button);
+    setOSDictionaryNumber(properties, "Transducer Count",  digitiser.transducers->getCount());
 
     setProperty("Digitizer", properties);
-    
-exit:
+
     OSSafeReleaseNULL(properties);
 }
 

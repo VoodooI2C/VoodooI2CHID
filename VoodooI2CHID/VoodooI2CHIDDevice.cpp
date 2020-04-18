@@ -73,23 +73,26 @@ IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
     }
 
     OSDictionary* property_array = OSDictionary::withCapacity(1);
-    property_array->setObject("HIDDescLength", OSNumber::withNumber(hid_descriptor.wHIDDescLength, 32));
-    property_array->setObject("BCDVersion", OSNumber::withNumber(hid_descriptor.bcdVersion, 32));
-    property_array->setObject("ReportDescLength", OSNumber::withNumber(hid_descriptor.wReportDescLength, 32));
-    property_array->setObject("ReportDescRegister", OSNumber::withNumber(hid_descriptor.wReportDescRegister, 32));
-    property_array->setObject("MaxInputLength", OSNumber::withNumber(hid_descriptor.wMaxInputLength, 32));
-    property_array->setObject("InputRegister", OSNumber::withNumber(hid_descriptor.wInputRegister, 32));
-    property_array->setObject("MaxOutputLength", OSNumber::withNumber(hid_descriptor.wMaxOutputLength, 32));
-    property_array->setObject("OutputRegister", OSNumber::withNumber(hid_descriptor.wOutputRegister, 32));
-    property_array->setObject("CommandRegister", OSNumber::withNumber(hid_descriptor.wCommandRegister, 32));
-    property_array->setObject("DataRegister", OSNumber::withNumber(hid_descriptor.wDataRegister, 32));
-    property_array->setObject("VendorID", OSNumber::withNumber(hid_descriptor.wVendorID, 32));
-    property_array->setObject("ProductID", OSNumber::withNumber(hid_descriptor.wProductID, 32));
-    property_array->setObject("VersionID", OSNumber::withNumber(hid_descriptor.wVersionID, 32));
+    if (!property_array)
+        return kIOReturnNoMemory;
+
+    setOSDictionaryNumber(property_array, "HIDDescLength",      hid_descriptor.wHIDDescLength);
+    setOSDictionaryNumber(property_array, "BCDVersion",         hid_descriptor.bcdVersion);
+    setOSDictionaryNumber(property_array, "ReportDescLength",   hid_descriptor.wReportDescLength);
+    setOSDictionaryNumber(property_array, "ReportDescRegister", hid_descriptor.wReportDescRegister);
+    setOSDictionaryNumber(property_array, "MaxInputLength",     hid_descriptor.wMaxInputLength);
+    setOSDictionaryNumber(property_array, "InputRegister",      hid_descriptor.wInputRegister);
+    setOSDictionaryNumber(property_array, "MaxOutputLength",    hid_descriptor.wMaxOutputLength);
+    setOSDictionaryNumber(property_array, "OutputRegister",     hid_descriptor.wOutputRegister);
+    setOSDictionaryNumber(property_array, "CommandRegister",    hid_descriptor.wCommandRegister);
+    setOSDictionaryNumber(property_array, "DataRegister",       hid_descriptor.wDataRegister);
+    setOSDictionaryNumber(property_array, "VendorID",           hid_descriptor.wVendorID);
+    setOSDictionaryNumber(property_array, "ProductID",          hid_descriptor.wProductID);
+    setOSDictionaryNumber(property_array, "VersionID",          hid_descriptor.wVersionID);
 
     setProperty("HIDDescriptor", property_array);
 
-    property_array->release();
+    OSSafeReleaseNULL(property_array);
 
     return kIOReturnSuccess;
 }
