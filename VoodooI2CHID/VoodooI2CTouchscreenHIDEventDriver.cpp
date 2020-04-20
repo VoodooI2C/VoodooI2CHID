@@ -91,7 +91,7 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             // know to reset the clicktick counter.
             
             
-            this->timer_source->setTimeoutMS(14);
+            timer_source->setTimeoutMS(14);
         }
     }
     return got_transducer;
@@ -229,7 +229,7 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
             if (event.contact_count == 2 && start_scroll) {
                 scrollPosition(timestamp, event);
             } else if (event.contact_count == 2 && !start_scroll) {
-                this->timer_source->setTimeoutMS(14);
+                timer_source->setTimeoutMS(14);
             }
 
             multitouch_interface->handleInterruptReport(event, timestamp);
@@ -247,8 +247,8 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     if (!super::handleStart(provider))
         return false;
     
-    this->work_loop = getWorkLoop();
-    if (!this->work_loop) {
+    work_loop = getWorkLoop();
+    if (!work_loop) {
         IOLog("%s::Unable to get workloop\n", getName());
         stop(provider);
         return false;
@@ -311,5 +311,5 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
         start_scroll = false;
     }
     
-    this->timer_source->setTimeoutMS(14);
+    timer_source->setTimeoutMS(14);
 }

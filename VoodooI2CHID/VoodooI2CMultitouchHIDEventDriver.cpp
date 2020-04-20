@@ -32,17 +32,6 @@ static int pow(int x, int y) {
     return ret;
 }
 
-static int roundUp(int numToRound, int multiple) {
-    if (multiple == 0)
-        return numToRound;
-    
-    int remainder = numToRound % multiple;
-    if (remainder == 0)
-        return numToRound;
-    
-    return numToRound + multiple - remainder;
-}
-
 void VoodooI2CMultitouchHIDEventDriver::calibrateJustifiedPreferredStateElement(IOHIDElement* element, SInt32 removal_percentage) {
     UInt32 sat_min   = element->getLogicalMin();
     UInt32 sat_max   = element->getLogicalMax();
@@ -114,7 +103,9 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
         
         UInt8 finger_count = digitiser.fingers->getCount();
         
-        digitiser.report_count = static_cast<int>(roundUp(digitiser.current_contact_count, finger_count)/finger_count);
+        // Round up the result of division by finger_count
+        // This is equivalent to ceil(1.0f * digitiser.current_contact_count / finger_count)
+        digitiser.report_count = (digitiser.current_contact_count + finger_count - 1) / finger_count;
         digitiser.current_report = 1;
     }
 
@@ -156,7 +147,9 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
     
         UInt8 first_identifier = wrapper->first_identifier->getValue() ? wrapper->first_identifier->getValue() : 0;
     
-        UInt8 actual_index = static_cast<int>(roundUp(first_identifier + 1, finger_count)/finger_count) - 1;
+        // Round up the result of division
+        // This is equivalent to ceil(1.0f * (first_identifer + 1) / finger_count) - 1
+        UInt8 actual_index = (first_identifier + finger_count) / finger_count - 1;
     
         if (actual_index != digitiser.current_report - 1) {
             wrapper = OSDynamicCast(VoodooI2CHIDTransducerWrapper, digitiser.wrappers->getObject(actual_index));
@@ -384,9 +377,6 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     if (transport->getCStringNoCopy() != kIOHIDTransportUSBValue)
         hid_interface->setProperty("VoodooI2CServices Supported", kOSBooleanTrue);
 
-    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
-        return false;
-    
     hid_device = OSDynamicCast(IOHIDDevice, hid_interface->getParentEntry(gIOServicePlane));
     
     if (!hid_device)
@@ -427,6 +417,9 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
         return false;
     }
     
+    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CMultitouchHIDEventDriver::handleInterruptReport), NULL))
+        return false;
+
     setDigitizerProperties();
 
     PMinit();
@@ -631,7 +624,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
             }
         }
 
-        int wrapper_count = static_cast<int>((1.0f * contact_count_maximum) / ( 1.0f * digitiser.fingers->getCount()));
+        int wrapper_count = contact_count_maximum / digitiser.fingers->getCount();
 
         for (int i = 0; i < wrapper_count; i++) {
             VoodooI2CHIDTransducerWrapper* wrapper = VoodooI2CHIDTransducerWrapper::wrapper();
@@ -748,7 +741,7 @@ bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
     if (!super::start(provider))
         return false;
     
-    work_loop = this->getWorkLoop();
+    work_loop = getWorkLoop();
     
     if (!work_loop)
         return false;
@@ -849,7 +842,7 @@ void VoodooI2CMultitouchHIDEventDriver::registerHIDPointerNotifications() {
     IOServiceMatchingNotificationHandler notificationHandler = OSMemberFunctionCast(IOServiceMatchingNotificationHandler, this, &VoodooI2CMultitouchHIDEventDriver::notificationHIDAttachedHandler);
     
     // Determine if we should listen for USB mouse attach events as per configuration
-    OSBoolean* isEnabled = OSDynamicCast(OSBoolean, this->getProperty("ProcessUSBMouseStopsTrackpad"));
+    OSBoolean* isEnabled = OSDynamicCast(OSBoolean, getProperty("ProcessUSBMouseStopsTrackpad"));
 
     if (isEnabled && isEnabled->isTrue()) {
         // USB mouse HID description as per USB spec: http://www.usb.org/developers/hidpage/HID1_11.pdf
@@ -866,7 +859,7 @@ void VoodooI2CMultitouchHIDEventDriver::registerHIDPointerNotifications() {
     }
 
     // Determine if we should listen for bluetooth mouse attach events as per configuration
-    isEnabled = OSDynamicCast(OSBoolean, this->getProperty("ProcessBluetoothMouseStopsTrackpad"));
+    isEnabled = OSDynamicCast(OSBoolean, getProperty("ProcessBluetoothMouseStopsTrackpad"));
     
     if (isEnabled && isEnabled->isTrue()) {
         // Bluetooth HID devices

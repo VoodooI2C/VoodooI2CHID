@@ -63,9 +63,6 @@ bool VoodooI2CSensorHubEventDriver::handleStart(IOService* provider) {
     
     hid_interface->setProperty("VoodooI2CServices Supported", kOSBooleanTrue);
     
-    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CSensorHubEventDriver::handleInterruptReport), NULL))
-        return false;
-    
     sensors = OSArray::withCapacity(1);
     
     if (!sensors)
@@ -87,6 +84,9 @@ bool VoodooI2CSensorHubEventDriver::handleStart(IOService* provider) {
     
     // setSensorHubProperties();
     
+    if (!hid_interface->open(this, 0, OSMemberFunctionCast(IOHIDInterface::InterruptReportAction, this, &VoodooI2CSensorHubEventDriver::handleInterruptReport), NULL))
+        return false;
+
     PMinit();
     hid_interface->joinPMtree(this);
     registerPowerDriver(this, VoodooI2CIOPMPowerStates, kVoodooI2CIOPMNumberPowerStates);
