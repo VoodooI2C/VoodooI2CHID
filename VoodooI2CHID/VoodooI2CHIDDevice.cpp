@@ -424,6 +424,8 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         if (awake) {
             if (interrupt_simulator) {
                 interrupt_simulator->disable();
+            } else {
+                api->disableInterrupt(0);
             }
 
             setHIDPowerState(kVoodooI2CStateOff);
@@ -444,12 +446,15 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
             
             api->writeI2C(command.data, 4);
             IOSleep(10);
-            
-            IOLog("%s::%s Woke up\n", getName(), name);
+
             if (interrupt_simulator) {
                 interrupt_simulator->setTimeoutMS(200);
                 interrupt_simulator->enable();
+            } else {
+                api->enableInterrupt(0);
             }
+
+            IOLog("%s::%s Woke up\n", getName(), name);
         }
     }
     return kIOPMAckImplied;
