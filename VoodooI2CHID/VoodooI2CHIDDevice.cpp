@@ -27,6 +27,7 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     api = NULL;
     command_gate = NULL;
     interrupt_simulator = NULL;
+    interrupt_source = NULL;
     ready_for_input = false;
     
     client_lock = IOLockAlloc();
@@ -289,8 +290,12 @@ void VoodooI2CHIDDevice::releaseResources() {
         interrupt_simulator = NULL;
     }
 
-    api->disableInterrupt(0);
-    api->unregisterInterrupt(0);
+    if (interrupt_source) {
+        interrupt_source->disable();
+        work_loop->removeEventSource(interrupt_source);
+        interrupt_source->release();
+        interrupt_source = NULL;
+    }
 
     if (work_loop) {
         work_loop->release();
@@ -424,8 +429,8 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         if (awake) {
             if (interrupt_simulator) {
                 interrupt_simulator->disable();
-            } else {
-                api->disableInterrupt(0);
+            } else if (interrupt_source) {
+                interrupt_source->disable();
             }
 
             setHIDPowerState(kVoodooI2CStateOff);
@@ -450,8 +455,8 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
             if (interrupt_simulator) {
                 interrupt_simulator->setTimeoutMS(200);
                 interrupt_simulator->enable();
-            } else {
-                api->enableInterrupt(0);
+            } else if (interrupt_source) {
+                interrupt_source->enable();
             }
 
             IOLog("%s::%s Woke up\n", getName(), name);
@@ -488,8 +493,8 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
         goto exit;
     }
     
-    /* ISR should work in VoodooGPIO's workloop to block the level interrupt, so use direct interrupt here. */
-    if (api->registerInterrupt(0, this, OSMemberFunctionCast(IOInterruptAction, this, &VoodooI2CHIDDevice::interruptOccured), 0) != kIOReturnSuccess) {
+    interrupt_source = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &VoodooI2CHIDDevice::interruptOccured), api, 0);
+    if (!interrupt_source) {
         IOLog("%s::%s Warning: Could not get interrupt event source, using polling instead\n", getName(), name);
         interrupt_simulator = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CHIDDevice::simulateInterrupt));
         
@@ -500,7 +505,8 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
         work_loop->addEventSource(interrupt_simulator);
         interrupt_simulator->setTimeoutMS(200);
     } else {
-        api->enableInterrupt(0);
+        work_loop->addEventSource(interrupt_source);
+        interrupt_source->enable();
     }
 
     resetHIDDevice();
