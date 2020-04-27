@@ -20,7 +20,6 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     if (!super::init(properties))
         return false;
     awake = true;
-    read_in_progress = false;
     bool temp = false;
     reset_event = &temp;
     memset(&hid_descriptor, 0, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
@@ -28,6 +27,7 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     api = NULL;
     command_gate = NULL;
     interrupt_simulator = NULL;
+    interrupt_source = NULL;
     ready_for_input = false;
     
     client_lock = IOLockAlloc();
@@ -183,7 +183,7 @@ void VoodooI2CHIDDevice::getInputReport() {
     IOFree(report, hid_descriptor.wMaxInputLength);
 
 exit:
-    read_in_progress = false;
+    return;
 }
 
 IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) {
@@ -210,8 +210,6 @@ IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportTy
     
     UInt8 length = 4;
     
-    read_in_progress = true;
-    
     VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*)IOMalloc(4 + args_len);
     memset(command, 0, 4+args_len);
     command->c.reg = hid_descriptor.wCommandRegister;
@@ -227,19 +225,13 @@ IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportTy
     report->writeBytes(0, buffer+2, report->getLength()-2);
     
     IOFree(command, 4+args_len);
-    
-    read_in_progress = false;
 
     return ret;
 }
 
 void VoodooI2CHIDDevice::interruptOccured(OSObject* owner, IOInterruptEventSource* src, int intCount) {
-    if (read_in_progress)
-        return;
     if (!awake)
         return;
-    
-    read_in_progress = true;
 
     command_gate->attemptAction(OSMemberFunctionCast(IOCommandGate::Action, this, &VoodooI2CHIDDevice::getInputReport));
 }
@@ -298,8 +290,12 @@ void VoodooI2CHIDDevice::releaseResources() {
         interrupt_simulator = NULL;
     }
 
-    api->disableInterrupt(0);
-    api->unregisterInterrupt(0);
+    if (interrupt_source) {
+        interrupt_source->disable();
+        work_loop->removeEventSource(interrupt_source);
+        interrupt_source->release();
+        interrupt_source = NULL;
+    }
 
     if (work_loop) {
         work_loop->release();
@@ -325,7 +321,6 @@ IOReturn VoodooI2CHIDDevice::resetHIDDevice() {
 
 IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
     setHIDPowerState(kVoodooI2CStateOn);
-    read_in_progress = true;
 
     VoodooI2CHIDDeviceCommand command;
     command.c.reg = hid_descriptor.wCommandRegister;
@@ -341,8 +336,6 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
 
     nanoseconds_to_absolutetime(6000000000, &absolute_time);
 
-    read_in_progress = false;
-
     IOReturn sleep = command_gate->commandSleep(&reset_event, absolute_time, THREAD_UNINT);
 
     if (sleep == THREAD_TIMED_OUT) {
@@ -354,7 +347,6 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
 }
 
 IOReturn VoodooI2CHIDDevice::setHIDPowerState(VoodooI2CState state) {
-    read_in_progress = true;
     VoodooI2CHIDDeviceCommand command;
     IOReturn ret = kIOReturnSuccess;
     int attempts = 5;
@@ -366,7 +358,6 @@ IOReturn VoodooI2CHIDDevice::setHIDPowerState(VoodooI2CState state) {
         ret = api->writeI2C(command.data, 4);
         IOSleep(100);
     } while (ret != kIOReturnSuccess && --attempts >= 0);
-    read_in_progress = false;
     return ret;
 }
 
@@ -412,8 +403,6 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     
     UInt8 length = 4;
 
-    read_in_progress = true;
-
     VoodooI2CHIDDeviceCommand* command = (VoodooI2CHIDDeviceCommand*)IOMalloc(4 + arguments_length);
     memset(command, 0, 4+arguments_length);
     command->c.reg = hid_descriptor.wCommandRegister;
@@ -430,7 +419,6 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     IOFree(command, 4+arguments_length);
     IOFree(arguments, arguments_length);
 
-    read_in_progress = false;
     return ret;
 }
 
@@ -439,8 +427,10 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         return kIOReturnInvalid;
     if (whichState == 0) {
         if (awake) {
-            while (read_in_progress) {
-                IOSleep(100);
+            if (interrupt_simulator) {
+                interrupt_simulator->disable();
+            } else if (interrupt_source) {
+                interrupt_source->disable();
             }
 
             setHIDPowerState(kVoodooI2CStateOff);
@@ -453,7 +443,6 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
             awake = true;
             
             setHIDPowerState(kVoodooI2CStateOn);
-            read_in_progress = true;
             
             VoodooI2CHIDDeviceCommand command;
             command.c.reg = hid_descriptor.wCommandRegister;
@@ -463,8 +452,13 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
             api->writeI2C(command.data, 4);
             IOSleep(10);
 
-            read_in_progress = false;
-            
+            if (interrupt_simulator) {
+                interrupt_simulator->setTimeoutMS(200);
+                interrupt_simulator->enable();
+            } else if (interrupt_source) {
+                interrupt_source->enable();
+            }
+
             IOLog("%s::%s Woke up\n", getName(), name);
         }
     }
@@ -499,8 +493,8 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
         goto exit;
     }
     
-    /* ISR should work in VoodooGPIO's workloop to block the level interrupt, so use direct interrupt here. */
-    if (api->registerInterrupt(0, this, OSMemberFunctionCast(IOInterruptAction, this, &VoodooI2CHIDDevice::interruptOccured), 0) != kIOReturnSuccess) {
+    interrupt_source = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &VoodooI2CHIDDevice::interruptOccured), api, 0);
+    if (!interrupt_source) {
         IOLog("%s::%s Warning: Could not get interrupt event source, using polling instead\n", getName(), name);
         interrupt_simulator = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CHIDDevice::simulateInterrupt));
         
@@ -511,7 +505,8 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
         work_loop->addEventSource(interrupt_simulator);
         interrupt_simulator->setTimeoutMS(200);
     } else {
-        api->enableInterrupt(0);
+        work_loop->addEventSource(interrupt_source);
+        interrupt_source->enable();
     }
 
     resetHIDDevice();
@@ -615,8 +610,7 @@ OSString* VoodooI2CHIDDevice::newManufacturerString() const {
 
 void VoodooI2CHIDDevice::simulateInterrupt(OSObject* owner, IOTimerEventSource* timer) {
     AbsoluteTime prev_time = last_multi_touch_event;
-    if (!read_in_progress && awake) {
-        read_in_progress = true;
+    if (awake) {
         VoodooI2CHIDDevice::getInputReport();
     }
     
