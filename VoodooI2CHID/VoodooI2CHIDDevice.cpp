@@ -282,17 +282,15 @@ void VoodooI2CHIDDevice::releaseResources() {
         command_gate->release();
         command_gate = NULL;
     }
-    
+
+    stopInterrupt();
+
     if (interrupt_simulator) {
-        interrupt_simulator->disable();
-        work_loop->removeEventSource(interrupt_simulator);
         interrupt_simulator->release();
         interrupt_simulator = NULL;
     }
 
     if (interrupt_source) {
-        interrupt_source->disable();
-        work_loop->removeEventSource(interrupt_source);
         interrupt_source->release();
         interrupt_source = NULL;
     }
@@ -427,11 +425,7 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         return kIOReturnInvalid;
     if (whichState == 0) {
         if (awake) {
-            if (interrupt_simulator) {
-                interrupt_simulator->disable();
-            } else if (interrupt_source) {
-                interrupt_source->disable();
-            }
+            stopInterrupt();
 
             setHIDPowerState(kVoodooI2CStateOff);
             
@@ -452,12 +446,7 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
             api->writeI2C(command.data, 4);
             IOSleep(10);
 
-            if (interrupt_simulator) {
-                interrupt_simulator->setTimeoutMS(200);
-                interrupt_simulator->enable();
-            } else if (interrupt_source) {
-                interrupt_source->enable();
-            }
+            startInterrupt();
 
             IOLog("%s::%s Woke up\n", getName(), name);
         }
@@ -502,12 +491,8 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
             IOLog("%s::%s Could not get timer event source\n", getName(), name);
             goto exit;
         }
-        work_loop->addEventSource(interrupt_simulator);
-        interrupt_simulator->setTimeoutMS(200);
-    } else {
-        work_loop->addEventSource(interrupt_source);
-        interrupt_source->enable();
     }
+    startInterrupt();
 
     resetHIDDevice();
 
@@ -658,4 +643,35 @@ void VoodooI2CHIDDevice::close(IOService *forClient, IOOptionBits options) {
     IOLockWakeup(client_lock, &client_lock, true);
     
     super::close(forClient, options);
+}
+
+void VoodooI2CHIDDevice::startInterrupt() {
+    if (is_interrupt_started) {
+        return;
+    }
+
+    if (interrupt_simulator) {
+        work_loop->addEventSource(interrupt_simulator);
+        interrupt_simulator->setTimeoutMS(200);
+        interrupt_simulator->enable();
+    } else if (interrupt_source) {
+        work_loop->addEventSource(interrupt_source);
+        interrupt_source->enable();
+    }
+    is_interrupt_started = true;
+}
+
+void VoodooI2CHIDDevice::stopInterrupt() {
+    if (!is_interrupt_started) {
+        return;
+    }
+
+    if (interrupt_simulator) {
+        interrupt_simulator->disable();
+        work_loop->removeEventSource(interrupt_simulator);
+    } else if (interrupt_source) {
+        interrupt_source->disable();
+        work_loop->removeEventSource(interrupt_source);
+    }
+    is_interrupt_started = false;
 }

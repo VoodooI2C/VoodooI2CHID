@@ -250,6 +250,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
     IOInterruptEventSource* interrupt_source;
     bool ready_for_input;
     bool* reset_event;
+    bool is_interrupt_started = false;
 
     /* Queries the I2C-HID device for an input report
      *
@@ -271,6 +272,10 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      */
 
     void releaseResources();
+
+    void startInterrupt();
+
+    void stopInterrupt();
 };
 
 
