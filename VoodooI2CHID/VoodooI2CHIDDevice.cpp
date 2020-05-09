@@ -149,40 +149,29 @@ IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
 }
 
 void VoodooI2CHIDDevice::getInputReport() {
-    IOBufferMemoryDescriptor* buffer;
     IOReturn ret;
-    unsigned char* report = (unsigned char *)IOMalloc(hid_descriptor.wMaxInputLength);
-
     api->readI2C(report, hid_descriptor.wMaxInputLength);
-    
     int return_size = report[0] | report[1] << 8;
-
     if (!return_size) {
         // IOLog("%s::%s Device sent a 0-length report\n", getName(), name);
         command_gate->commandWakeup(&reset_event);
-        goto exit;
+        return;
     }
 
-    if (!ready_for_input)
-        goto exit;
+    if (!ready_for_input){
+        return;
+    }
+        
 
     if (return_size > hid_descriptor.wMaxInputLength) {
         // IOLog("%s: Incomplete report %d/%d\n", getName(), hid_descriptor.wMaxInputLength, return_size);
-        goto exit;
+        return;
     }
 
-    buffer = IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task, 0, return_size);
-    buffer->writeBytes(0, report + 2, return_size - 2);
-    
-    ret = handleReport(buffer, kIOHIDReportTypeInput);
-
+    ret = handleReport(memDesc, kIOHIDReportTypeInput);
     if (ret != kIOReturnSuccess)
         IOLog("%s::%s Error handling input report: 0x%.8x\n", getName(), name, ret);
-    
-    buffer->release();
-    IOFree(report, hid_descriptor.wMaxInputLength);
 
-exit:
     return;
 }
 
@@ -225,6 +214,7 @@ IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportTy
     report->writeBytes(0, buffer+2, report->getLength()-2);
     
     IOFree(command, 4+args_len);
+    IOFree(buffer,report->getLength());
 
     return ret;
 }
@@ -276,6 +266,10 @@ VoodooI2CHIDDevice* VoodooI2CHIDDevice::probe(IOService* provider, SInt32* score
 }
 
 void VoodooI2CHIDDevice::releaseResources() {
+    memDesc->release();
+    memDesc=NULL;
+    IOFree(report, hid_descriptor.wMaxInputLength);
+    
     if (command_gate) {
         command_gate->disable();
         work_loop->removeEventSource(command_gate);
@@ -416,6 +410,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     
     IOFree(command, 4+arguments_length);
     IOFree(arguments, arguments_length);
+    IOFree(buffer,report->getLength());
 
     return ret;
 }
@@ -458,6 +453,10 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
     if (!IOHIDDevice::handleStart(provider)) {
         return false;
     }
+    report = (unsigned char *)IOMalloc(hid_descriptor.wMaxInputLength);
+    IOLog("%s::%s handleStart Allocate\n: %d", getName(), name,hid_descriptor.wMaxInputLength);
+    memDesc = IOMemoryDescriptor::withAddressRange((mach_vm_address_t)report +2 , hid_descriptor.wMaxInputLength -2, kIODirectionNone, kernel_task);
+    memDesc->prepare();
 
     work_loop = getWorkLoop();
     
@@ -555,6 +554,8 @@ IOReturn VoodooI2CHIDDevice::newReportDescriptor(IOMemoryDescriptor** descriptor
     if (api->writeReadI2C(command.data, 2, buffer, hid_descriptor.wReportDescLength) != kIOReturnSuccess) {
         IOLog("%s::%s Could not get report descriptor\n", getName(), name);
         IOFree(buffer, hid_descriptor.wReportDescLength);
+        //report_descriptor->release(); << This causes kernel panic.So commenting out
+        //report_descriptor=NULL;
         return kIOReturnIOError;
     }
 
