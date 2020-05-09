@@ -67,8 +67,9 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
 
  public:
     const char* name;
-    IOMemoryDescriptor * memDesc;
-    UInt8 * report;
+    IOMemoryDescriptor * memDesc=nullptr;
+    UInt8* report=nullptr;
+    
     /* Initialises a <VoodooI2CHIDDevice> object
      * @properties Contains the properties of the matched provider
      *
