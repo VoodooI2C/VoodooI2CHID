@@ -326,19 +326,21 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
     command.c.report_type_id = 0;
     
     api->writeI2C(command.data, 4);
-    IOSleep(100);
 
-    AbsoluteTime absolute_time;
+    AbsoluteTime absolute_time, deadline;
 
     // Device is required to complete a host-initiated reset in at most 6 seconds.
 
     nanoseconds_to_absolutetime(6000000000, &absolute_time);
+    clock_absolutetime_interval_to_deadline(absolute_time, &deadline);
 
-    IOReturn sleep = command_gate->commandSleep(&reset_event, absolute_time, THREAD_UNINT);
+    IOReturn sleep = command_gate->commandSleep(&reset_event, deadline, THREAD_UNINT);
 
     if (sleep == THREAD_TIMED_OUT) {
         IOLog("%s::%s Timeout waiting for device to complete host initiated reset\n", getName(), name);
         return kIOReturnTimeout;
+    } else if (sleep == THREAD_AWAKENED) {
+        IOLog("%s::%s Device initiated reset accomplished\n", getName(), name);
     }
 
     return kIOReturnSuccess;
