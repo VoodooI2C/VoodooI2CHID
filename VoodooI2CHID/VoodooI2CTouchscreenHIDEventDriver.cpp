@@ -221,6 +221,21 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
         if (!event.contact_count)
             return;
     
+        //# Resolve an edgecase where if a multitouch event happens then the fact that the latest event is a stylus event
+        //# is ignored until you perform some touch that resets the contact_count to 1
+        //# we check if the event is a stylus event and prioritize that over the multitouch
+        //# This edgecase is encounterd semi-frequently, I believe it's due to bad palm rejection
+        Boolean isStylus = false;
+        for (int index = 0, count = event.transducers->getCount(); index < count; index++) {
+            VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
+
+            if (transducer->type == kDigitiserTransducerStylus && transducer->in_range) {
+                isStylus = true;
+                //# ignore digitiser.contact_count and set it to 1
+                event.contact_count = 1;
+            }
+        }
+        
         if (event.contact_count > 5) {
             return;
         }
@@ -236,8 +251,9 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
         } else {
             // Process single touch data
             if (!checkStylus(timestamp, event)) {
-                if (!checkFingerTouch(timestamp, event))
+                if (!checkFingerTouch(timestamp, event)) {
                     multitouch_interface->handleInterruptReport(event, timestamp);
+                }
             }
         }
     }
