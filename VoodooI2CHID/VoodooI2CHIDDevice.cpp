@@ -98,53 +98,35 @@ IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
 }
 
 IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
-    UInt32 guid_1 = 0x3CDFF6F7;
-    UInt32 guid_2 = 0x45554267;
-    UInt32 guid_3 = 0x0AB305AD;
-    UInt32 guid_4 = 0xDE38893D;
-    
-    OSObject *result = NULL;
-    OSObject *params[4];
-    char buffer[16];
-    
-    memcpy(buffer, &guid_1, 4);
-    memcpy(buffer + 4, &guid_2, 4);
-    memcpy(buffer + 8, &guid_3, 4);
-    memcpy(buffer + 12, &guid_4, 4);
-    
-    
-    params[0] = OSData::withBytes(buffer, 16);
-    params[1] = OSNumber::withNumber(0x1, 8);
-    params[2] = OSNumber::withNumber(0x1, 8);
-    params[3] = OSNumber::withNumber((unsigned long long)0x0, 8);
-    
-    acpi_device->evaluateObject("_DSM", &result, params, 4);
-    if (!result)
-        acpi_device->evaluateObject("XDSM", &result, params, 4);
-    if (!result) {
+    uuid_t guid;
+    uuid_parse(HID_I2C_DSM_HIDG, guid);
+
+    // convert to mixed-endian
+    *(uint32_t *)guid = OSSwapInt32(*(uint32_t *)guid);
+    *((uint16_t *)guid + 2) = OSSwapInt16(*((uint16_t *)guid + 2));
+    *((uint16_t *)guid + 3) = OSSwapInt16(*((uint16_t *)guid + 3));
+
+    UInt32 result;
+    OSObject *params[4] = {
+        OSData::withBytes(guid, 16),
+        OSNumber::withNumber(0x1, 8),
+        OSNumber::withNumber(0x1, 8),
+        OSNumber::withNumber((UInt32)0x0, 8)
+    };
+
+    if (acpi_device->evaluateInteger("_DSM", &result, params, 4) != kIOReturnSuccess && acpi_device->evaluateInteger("XDSM", &result, params, 4) != kIOReturnSuccess) {
         IOLog("%s::%s Could not find suitable _DSM or XDSM method in ACPI tables\n", getName(), name);
         return kIOReturnNotFound;
     }
-    
-    OSNumber* number = OSDynamicCast(OSNumber, result);
-    if (number) {
-        setProperty("HIDDescriptorAddress", number);
-        hid_descriptor_register = number->unsigned16BitValue();
-    }
 
-    if (result)
-        result->release();
-    
+    setProperty("HIDDescriptorAddress", result, 32);
+    hid_descriptor_register = (UInt16) result;
+
     params[0]->release();
     params[1]->release();
     params[2]->release();
     params[3]->release();
-    
-    if (!number) {
-        IOLog("%s::%s HID descriptor register invalid\n", getName(), name);
-        return kIOReturnInvalid;
-    }
-    
+
     return kIOReturnSuccess;
 }
 
