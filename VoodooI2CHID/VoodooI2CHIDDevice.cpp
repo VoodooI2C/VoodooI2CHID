@@ -99,19 +99,19 @@ IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
 
 IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
     uuid_t guid;
-    uuid_parse(HID_I2C_DSM_HIDG, guid);
+    uuid_parse(I2C_DSM_HIDG, guid);
 
     // convert to mixed-endian
-    *(uint32_t *)guid = OSSwapInt32(*(uint32_t *)guid);
-    *((uint16_t *)guid + 2) = OSSwapInt16(*((uint16_t *)guid + 2));
-    *((uint16_t *)guid + 3) = OSSwapInt16(*((uint16_t *)guid + 3));
+    *(reinterpret_cast<uint32_t *>(guid)) = OSSwapInt32(*(reinterpret_cast<uint32_t *>(guid)));
+    *(reinterpret_cast<uint16_t *>(guid) + 2) = OSSwapInt16(*(reinterpret_cast<uint16_t *>(guid) + 2));
+    *(reinterpret_cast<uint16_t *>(guid) + 3) = OSSwapInt16(*(reinterpret_cast<uint16_t *>(guid) + 3));
 
     UInt32 result;
     OSObject *params[4] = {
         OSData::withBytes(guid, 16),
         OSNumber::withNumber(0x1, 8),
         OSNumber::withNumber(0x1, 8),
-        OSNumber::withNumber((UInt32)0x0, 8)
+        OSArray::withCapacity(1)
     };
 
     if (acpi_device->evaluateInteger("_DSM", &result, params, 4) != kIOReturnSuccess && acpi_device->evaluateInteger("XDSM", &result, params, 4) != kIOReturnSuccess) {
