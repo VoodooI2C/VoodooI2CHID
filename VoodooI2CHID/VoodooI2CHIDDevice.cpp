@@ -109,8 +109,8 @@ IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
     UInt32 result;
     OSObject *params[4] = {
         OSData::withBytes(guid, 16),
-        OSNumber::withNumber(0x1, 8),
-        OSNumber::withNumber(0x1, 8),
+        OSNumber::withNumber(I2C_DSM_REVISION, 8),
+        OSNumber::withNumber(HIDG_DESC_INDEX, 8),
         OSArray::withCapacity(1)
     };
 
