@@ -107,20 +107,21 @@ IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
     *(reinterpret_cast<uint16_t *>(guid) + 3) = OSSwapInt16(*(reinterpret_cast<uint16_t *>(guid) + 3));
 
     UInt32 result;
-    OSObject *params[4] = {
+    OSObject *params[] = {
         OSData::withBytes(guid, 16),
         OSNumber::withNumber(I2C_DSM_REVISION, 8),
         OSNumber::withNumber(HIDG_DESC_INDEX, 8),
-        OSArray::withCapacity(1)
+        OSArray::withCapacity(1),
     };
 
-    if (acpi_device->evaluateInteger("_DSM", &result, params, 4) != kIOReturnSuccess && acpi_device->evaluateInteger("XDSM", &result, params, 4) != kIOReturnSuccess) {
+    if (acpi_device->evaluateInteger("_DSM", &result, params, 4) != kIOReturnSuccess &&
+        acpi_device->evaluateInteger("XDSM", &result, params, 4) != kIOReturnSuccess) {
         IOLog("%s::%s Could not find suitable _DSM or XDSM method in ACPI tables\n", getName(), name);
         return kIOReturnNotFound;
     }
 
     setProperty("HIDDescriptorAddress", result, 32);
-    hid_descriptor_register = (UInt16) result;
+    hid_descriptor_register = static_cast<UInt16>(result);
 
     params[0]->release();
     params[1]->release();
