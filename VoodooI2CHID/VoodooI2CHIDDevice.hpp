@@ -26,10 +26,6 @@
 #define I2C_HID_PWR_ON  0x00
 #define I2C_HID_PWR_SLEEP 0x01
 
-#define I2C_DSM_HIDG "3cdff6f7-4267-4555-ad05-b30a3d8938de"
-#define I2C_DSM_REVISION 1
-#define HIDG_DESC_INDEX 1
-
 #define EXPORT __attribute__((visibility("default")))
 
 typedef union {

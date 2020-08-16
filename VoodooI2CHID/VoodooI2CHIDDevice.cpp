@@ -98,35 +98,24 @@ IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
 }
 
 IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
-    uuid_t guid;
-    uuid_parse(I2C_DSM_HIDG, guid);
-
-    // convert to mixed-endian
-    *(reinterpret_cast<uint32_t *>(guid)) = OSSwapInt32(*(reinterpret_cast<uint32_t *>(guid)));
-    *(reinterpret_cast<uint16_t *>(guid) + 2) = OSSwapInt16(*(reinterpret_cast<uint16_t *>(guid) + 2));
-    *(reinterpret_cast<uint16_t *>(guid) + 3) = OSSwapInt16(*(reinterpret_cast<uint16_t *>(guid) + 3));
-
-    UInt32 result;
-    OSObject *params[] = {
-        OSData::withBytes(guid, 16),
-        OSNumber::withNumber(I2C_DSM_REVISION, 8),
-        OSNumber::withNumber(HIDG_DESC_INDEX, 8),
-        OSArray::withCapacity(1),
-    };
-
-    if (acpi_device->evaluateInteger("_DSM", &result, params, 4) != kIOReturnSuccess &&
-        acpi_device->evaluateInteger("XDSM", &result, params, 4) != kIOReturnSuccess) {
-        IOLog("%s::%s Could not find suitable _DSM or XDSM method in ACPI tables\n", getName(), name);
+    OSObject* result = nullptr;
+    if (api->evaluateDSM(I2C_DSM_HIDG, HIDG_DESC_INDEX, &result) != kIOReturnSuccess) {
+        IOLog("%s::%s unable to parse HID descriptor registe\n", getName(), name);
+        result->release();
         return kIOReturnNotFound;
     }
 
-    setProperty("HIDDescriptorAddress", result, 32);
-    hid_descriptor_register = static_cast<UInt16>(result);
+    OSNumber* number = OSDynamicCast(OSNumber, result);
+    if (!number) {
+        IOLog("%s::%s HID descriptor register invalid\n", getName(), name);
+        result->release();
+        return kIOReturnInvalid;
+    }
 
-    params[0]->release();
-    params[1]->release();
-    params[2]->release();
-    params[3]->release();
+    setProperty("HIDDescriptorAddress", number);
+    hid_descriptor_register = number->unsigned16BitValue();
+
+    number->release();
 
     return kIOReturnSuccess;
 }
