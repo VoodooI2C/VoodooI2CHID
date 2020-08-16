@@ -98,26 +98,25 @@ IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
 }
 
 IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
-    OSObject* result = nullptr;
-    if (api->evaluateDSM(I2C_DSM_HIDG, HIDG_DESC_INDEX, &result) != kIOReturnSuccess) {
+    IOReturn ret;
+    OSObject* obj = nullptr;
+
+    ret = api->evaluateDSM(I2C_DSM_HIDG, HIDG_DESC_INDEX, &obj);
+    if (ret == kIOReturnSuccess) {
+        OSNumber* number;
+        if ((number = OSDynamicCast(OSNumber, obj))) {
+            hid_descriptor_register = number->unsigned16BitValue();
+            setProperty("HIDDescriptorAddress", hid_descriptor_register, 16);
+        } else {
+            IOLog("%s::%s HID descriptor address invalid\n", getName(), name);
+            ret = kIOReturnInvalid;
+        }
+    } else {
         IOLog("%s::%s unable to parse HID descriptor address\n", getName(), name);
-        result->release();
-        return kIOReturnNotFound;
+        ret = kIOReturnNotFound;
     }
-
-    OSNumber* number = OSDynamicCast(OSNumber, result);
-    if (!number) {
-        IOLog("%s::%s HID descriptor address invalid\n", getName(), name);
-        result->release();
-        return kIOReturnInvalid;
-    }
-
-    setProperty("HIDDescriptorAddress", number);
-    hid_descriptor_register = number->unsigned16BitValue();
-
-    number->release();
-
-    return kIOReturnSuccess;
+    if (obj) obj->release();
+    return ret;
 }
 
 void VoodooI2CHIDDevice::getInputReport() {
