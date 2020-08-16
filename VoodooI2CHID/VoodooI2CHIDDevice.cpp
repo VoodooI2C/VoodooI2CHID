@@ -100,14 +100,14 @@ IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
 IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
     OSObject* result = nullptr;
     if (api->evaluateDSM(I2C_DSM_HIDG, HIDG_DESC_INDEX, &result) != kIOReturnSuccess) {
-        IOLog("%s::%s unable to parse HID descriptor registe\n", getName(), name);
+        IOLog("%s::%s unable to parse HID descriptor address\n", getName(), name);
         result->release();
         return kIOReturnNotFound;
     }
 
     OSNumber* number = OSDynamicCast(OSNumber, result);
     if (!number) {
-        IOLog("%s::%s HID descriptor register invalid\n", getName(), name);
+        IOLog("%s::%s HID descriptor address invalid\n", getName(), name);
         result->release();
         return kIOReturnInvalid;
     }
