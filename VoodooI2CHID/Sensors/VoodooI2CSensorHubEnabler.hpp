@@ -17,6 +17,10 @@
 
 #include "../../../../Dependencies/helpers.hpp"
 
+#define SHAD_DSM_GUID "03c868d5-563f-42a8-9f57-9a18d949b7cb"
+#define SHAD_DSM_REVISION 1
+#define SHAD_ON_INDEX 1
+
 class EXPORT VoodooI2CSensorHubEnabler : public IOService {
   OSDeclareDefaultStructors(VoodooI2CSensorHubEnabler);
 
@@ -27,7 +31,7 @@ class EXPORT VoodooI2CSensorHubEnabler : public IOService {
     const char* name;
     IOACPIPlatformDevice* provider;
     
-    IOReturn enableHub();
+    IOReturn enableHub(UInt32 *result);
 };
 
 
