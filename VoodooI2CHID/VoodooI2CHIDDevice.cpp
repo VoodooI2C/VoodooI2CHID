@@ -99,12 +99,12 @@ IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
 
 IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
     IOReturn ret;
-    OSObject* obj = nullptr;
+    OSObject *obj = nullptr;
 
     ret = api->evaluateDSM(I2C_DSM_HIDG, HIDG_DESC_INDEX, &obj);
     if (ret == kIOReturnSuccess) {
-        OSNumber* number;
-        if ((number = OSDynamicCast(OSNumber, obj))) {
+        OSNumber *number = OSDynamicCast(OSNumber, obj);
+        if (number != nullptr) {
             hid_descriptor_register = number->unsigned16BitValue();
             setProperty("HIDDescriptorAddress", hid_descriptor_register, 16);
         } else {
