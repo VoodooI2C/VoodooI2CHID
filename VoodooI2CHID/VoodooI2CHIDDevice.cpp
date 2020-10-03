@@ -98,54 +98,25 @@ IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
 }
 
 IOReturn VoodooI2CHIDDevice::getHIDDescriptorAddress() {
-    UInt32 guid_1 = 0x3CDFF6F7;
-    UInt32 guid_2 = 0x45554267;
-    UInt32 guid_3 = 0x0AB305AD;
-    UInt32 guid_4 = 0xDE38893D;
-    
-    OSObject *result = NULL;
-    OSObject *params[4];
-    char buffer[16];
-    
-    memcpy(buffer, &guid_1, 4);
-    memcpy(buffer + 4, &guid_2, 4);
-    memcpy(buffer + 8, &guid_3, 4);
-    memcpy(buffer + 12, &guid_4, 4);
-    
-    
-    params[0] = OSData::withBytes(buffer, 16);
-    params[1] = OSNumber::withNumber(0x1, 8);
-    params[2] = OSNumber::withNumber(0x1, 8);
-    params[3] = OSNumber::withNumber((unsigned long long)0x0, 8);
-    
-    acpi_device->evaluateObject("_DSM", &result, params, 4);
-    if (!result)
-        acpi_device->evaluateObject("XDSM", &result, params, 4);
-    if (!result) {
-        IOLog("%s::%s Could not find suitable _DSM or XDSM method in ACPI tables\n", getName(), name);
-        return kIOReturnNotFound;
-    }
-    
-    OSNumber* number = OSDynamicCast(OSNumber, result);
-    if (number) {
-        setProperty("HIDDescriptorAddress", number);
-        hid_descriptor_register = number->unsigned16BitValue();
-    }
+    IOReturn ret;
+    OSObject *obj = nullptr;
 
-    if (result)
-        result->release();
-    
-    params[0]->release();
-    params[1]->release();
-    params[2]->release();
-    params[3]->release();
-    
-    if (!number) {
-        IOLog("%s::%s HID descriptor register invalid\n", getName(), name);
-        return kIOReturnInvalid;
+    ret = api->evaluateDSM(I2C_DSM_HIDG, HIDG_DESC_INDEX, &obj);
+    if (ret == kIOReturnSuccess) {
+        OSNumber *number = OSDynamicCast(OSNumber, obj);
+        if (number != nullptr) {
+            hid_descriptor_register = number->unsigned16BitValue();
+            setProperty("HIDDescriptorAddress", hid_descriptor_register, 16);
+        } else {
+            IOLog("%s::%s HID descriptor address invalid\n", getName(), name);
+            ret = kIOReturnInvalid;
+        }
+    } else {
+        IOLog("%s::%s unable to parse HID descriptor address\n", getName(), name);
+        ret = kIOReturnNotFound;
     }
-    
-    return kIOReturnSuccess;
+    if (obj) obj->release();
+    return ret;
 }
 
 void VoodooI2CHIDDevice::getInputReport() {
