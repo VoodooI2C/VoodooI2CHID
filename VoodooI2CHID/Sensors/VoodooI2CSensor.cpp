@@ -18,7 +18,13 @@ IOReturn VoodooI2CSensor::changeState(IOHIDElement* state_element, UInt16 state_
     if (!index)
         return kIOReturnError;
 
-    IOHIDElement* actual_element = OSDynamicCast(IOHIDElement, state_element->getChildElements()->getObject(0));
+    OSArray* children = state_element->getChildElements();
+    if (children->getCount() == 0)
+        return kIOReturnError;
+
+    IOHIDElement* actual_element = OSDynamicCast(IOHIDElement, children->getObject(0));
+    if (!actual_element)
+        return kIOReturnError;
 
     actual_element->setValue(index);
     

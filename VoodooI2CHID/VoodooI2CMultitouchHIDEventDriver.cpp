@@ -162,23 +162,32 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
 
     for (int i = 0; i < wrapper->transducers->getCount(); i++) {
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, wrapper->transducers->getObject(i));
-        handleDigitizerTransducerReport(transducer, timestamp, report_id);
+        if (transducer) {
+            handleDigitizerTransducerReport(transducer, timestamp, report_id);
+        }
     }
     
     // Now handle button report
     if (digitiser.button) {
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, digitiser.transducers->getObject(0));
-        setButtonState(&transducer->physical_button, 0, digitiser.button->getValue(), timestamp);
+        if (transducer) {
+            setButtonState(&transducer->physical_button, 0, digitiser.button->getValue(), timestamp);
+        }
     }
 
     if (digitiser.styluses->getCount() > 0) {
         // The stylus wrapper is the last one
         wrapper = OSDynamicCast(VoodooI2CHIDTransducerWrapper, digitiser.wrappers->getLastObject());
-        
+        if (!wrapper) {
+            return;
+        }
+
         VoodooI2CDigitiserStylus* stylus = OSDynamicCast(VoodooI2CDigitiserStylus, wrapper->transducers->getObject(0));
+        if (!stylus) {
+            return;
+        }
         
         IOHIDElement* element = OSDynamicCast(IOHIDElement, stylus->collection->getChildElements()->getObject(0));
-        
         if (element && report_id == element->getReportID()) {
             handleDigitizerTransducerReport(stylus, timestamp, report_id);
         }
@@ -373,8 +382,9 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     OSString* transport = hid_interface->getTransport();
     if (!transport)
         return false;
+  
+    if (strncmp(transport->getCStringNoCopy(), kIOHIDTransportUSBValue, sizeof(kIOHIDTransportUSBValue)) != 0)
 
-    if (strncmp(transport->getCStringNoCopy(), kIOHIDTransportUSBValue, sizeof(kIOHIDTransportUSBValue)))
         hid_interface->setProperty("VoodooI2CServices Supported", kOSBooleanTrue);
 
     hid_device = OSDynamicCast(IOHIDDevice, hid_interface->getParentEntry(gIOServicePlane));
