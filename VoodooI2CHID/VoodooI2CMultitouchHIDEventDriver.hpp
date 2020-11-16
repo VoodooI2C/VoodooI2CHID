@@ -66,13 +66,13 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
         
         // report level elements
         
-        IOHIDElement*      contact_count;
-        IOHIDElement*      input_mode;
-        IOHIDElement*      button;
+        IOHIDElement*      contact_count = NULL;
+        IOHIDElement*      input_mode = NULL;
+        IOHIDElement*      button = NULL;
         
         // collection level elements
         
-        IOHIDElement*      contact_count_maximum;
+        IOHIDElement*      contact_count_maximum = NULL;
     
         
         UInt8              current_contact_count = 1;
