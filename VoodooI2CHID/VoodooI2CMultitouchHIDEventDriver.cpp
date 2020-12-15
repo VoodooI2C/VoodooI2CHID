@@ -168,10 +168,13 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
     }
     
     // Now handle button report
-    if (digitiser.button) {
+    if (digitiser.primaryButton) { // there can't be secondary button without primary
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, digitiser.transducers->getObject(0));
         if (transducer) {
-            setButtonState(&transducer->physical_button, 0, digitiser.button->getValue(), timestamp);
+            setButtonState(&transducer->physical_button, 0, digitiser.primaryButton->getValue(), timestamp);
+            if (digitiser.secondaryButton) {
+                setButtonState(&transducer->physical_button, 1, digitiser.secondaryButton->getValue(), timestamp);
+            }
         }
     }
 
@@ -577,8 +580,23 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
             continue;
         }
         
-        if (element->conformsTo(kHIDPage_Button, kHIDUsage_Button_1)) {
-            digitiser.button = element;
+        // On Dell Latitude 7390 2-in-1 the left button has kHIDUsage_Button_2,
+        // and the right button has kHIDUsage_Button_3. So, there is no button 1.
+        if (element->conformsTo(kHIDPage_Button)) {
+            if (digitiser.primaryButton == nullptr) {
+                digitiser.primaryButton = element;
+            }
+            else if (element->getUsage() > digitiser.primaryButton->getUsage()) {
+                // Candidate for a secondary button
+                if (digitiser.secondaryButton == nullptr || element->getUsage() < digitiser.secondaryButton->getUsage()) {
+                    digitiser.secondaryButton = element;
+                }
+            }
+            else if (element->getUsage() < digitiser.primaryButton->getUsage()) {
+                // This is the new primary button. Old primary becomes secondary.
+                digitiser.secondaryButton = digitiser.primaryButton;
+                digitiser.primaryButton = element;
+            }
         }
     }
 
@@ -735,7 +753,8 @@ void VoodooI2CMultitouchHIDEventDriver::setDigitizerProperties() {
     properties->setObject("Contact Count Element",         digitiser.contact_count);
     properties->setObject("Input Mode Element",            digitiser.input_mode);
     properties->setObject("Contact Count Maximum Element", digitiser.contact_count_maximum);
-    properties->setObject("Button Element",                digitiser.button);
+    properties->setObject("Primary Button Element",        digitiser.primaryButton);
+    properties->setObject("Secondary Button Element",      digitiser.secondaryButton);
     setOSDictionaryNumber(properties, "Transducer Count",  digitiser.transducers->getCount());
 
     setProperty("Digitizer", properties);
