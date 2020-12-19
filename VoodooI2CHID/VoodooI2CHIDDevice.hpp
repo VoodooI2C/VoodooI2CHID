@@ -77,7 +77,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      * @return *true* upon successful initialisation, *false* otherwise
      */
 
-    virtual bool init(OSDictionary* properties);
+    bool init(OSDictionary* properties) override;
 
     /* Frees the <VoodooI2CHIDDevice> object
      *
@@ -85,7 +85,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      * frees the memory allocated in <init>.
      */
 
-    virtual void free();
+    void free() override;
 
     /*
      * Issues an I2C-HID command to get the HID descriptor from the device.
@@ -102,7 +102,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
 
     IOReturn getHIDDescriptorAddress();
     
-    IOReturn getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options);
+    IOReturn getReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) override;
     
     IOReturn parseHIDDescriptor();
 
@@ -116,7 +116,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      * @return A pointer to this instance of VoodooI2CHID upon succesful probe, else NULL
      */
 
-    VoodooI2CHIDDevice* probe(IOService* provider, SInt32* score);
+    VoodooI2CHIDDevice* probe(IOService* provider, SInt32* score) override;
 
     /* Run during the <IOHIDDevice::start> routine
      * @provider The provider which we have matched against
@@ -127,7 +127,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      * @return *true* upon successful start, *false* otherwise
      */
 
-    bool handleStart(IOService* provider);
+    bool handleStart(IOService* provider) override;
     
     void simulateInterrupt(OSObject* owner, IOTimerEventSource* timer);
     
@@ -137,7 +137,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      * @return *true* upon successful start, *false* otherwise
      */
     
-    bool start(IOService* provider);
+    bool start(IOService* provider) override;
 
     /* Stops the I2C-HID Device
      * @provider The provider which we have matched against
@@ -146,7 +146,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      * that were allocated in <start>.
      */
 
-    void stop(IOService* provider);
+    void stop(IOService* provider) override;
 
     /* Create and return a new memory descriptor that describes the report descriptor for the HID device
      * @descriptor Pointer to the memory descriptor returned. This memory descriptor will be released by the caller.
@@ -229,7 +229,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      * @return *kIOPMAckImplied* on succesful state change, *kIOReturnError* otherwise
      */
 
-    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
+    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice) override;
 
     /* Issues an I2C-HID set report command.
      * @report The report data to be sent to the device
@@ -239,7 +239,7 @@ class EXPORT VoodooI2CHIDDevice : public IOHIDDevice {
      * @return *kIOReturnSuccess* on successful power state change, *kIOReturnTimeout* otherwise
      */
 
-    IOReturn setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options);
+    IOReturn setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, IOOptionBits options) override;
     
  private:
     IOACPIPlatformDevice* acpi_device;

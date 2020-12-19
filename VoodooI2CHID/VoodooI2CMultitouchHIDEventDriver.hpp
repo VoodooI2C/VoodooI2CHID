@@ -95,7 +95,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      * @return *true*
      */
 
-    bool didTerminate(IOService* provider, IOOptionBits options, bool* defer);
+    bool didTerminate(IOService* provider, IOOptionBits options, bool* defer) override;
 
     /*Gets the latest value of an element by issuing a getReport request to the
      * device. Necessary due to changes between 10.11 and 10.12.
@@ -141,7 +141,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      * @return *true* on successful start, *false* otherwise
      */
 
-    bool handleStart(IOService* provider);
+    bool handleStart(IOService* provider) override;
 
     /* Parses a digitiser usage page element
      * @element The element to parse
@@ -210,7 +210,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      * @return *kIOPMAckImplied* on succesful state change, *kIOReturnError* otherwise
      */
 
-    virtual IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
+    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice) override;
 
     /* Called during the stop routine to terminate the HID Event Driver
      * @provider The <IOHIDInterface> object which we have matched against.
@@ -218,13 +218,13 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      * This function is reponsible for releasing the resources allocated in <start>
      */
 
-    void handleStop(IOService* provider);
+    void handleStop(IOService* provider) override;
 
     /* Implemented to set a certain property
      * @provider The <IOHIDInterface> object which we have matched against.
      */
 
-    bool start(IOService* provider);
+    bool start(IOService* provider) override;
     
     /*
      * Called by ApplePS2Controller to notify of keyboard interactions
@@ -234,7 +234,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      *
      * @return kIOReturnSuccess if the message is processed
      */
-    virtual IOReturn message(UInt32 type, IOService* provider, void* argument);
+    IOReturn message(UInt32 type, IOService* provider, void* argument) override;
     
     /*
      * Used to pass user preferences from user mode to the driver
@@ -242,7 +242,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      *
      * @return kIOReturnSuccess if the properties are received successfully, otherwise kIOUnsupported
      */
-    virtual IOReturn setProperties(OSObject * properties);
+    IOReturn setProperties(OSObject * properties) override;
 
  protected:
     const char* name;
