@@ -39,14 +39,14 @@ class EXPORT VoodooI2CPrecisionTouchpadHIDEventDriver : public VoodooI2CMultitou
  public:
     /* @inherit */
     
-    void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id);
+    void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) override;
 
     /* @inherit */
 
-    bool handleStart(IOService* provider);
+    bool handleStart(IOService* provider) override;
 
     /* @inherit */
-    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
+    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice) override;
 
  protected:
  private:

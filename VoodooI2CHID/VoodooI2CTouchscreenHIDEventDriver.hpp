@@ -38,13 +38,13 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
      *
      * @inherit
      */
-    virtual void forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp);
+    void forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp) override;
     
     /* @inherit */
-    bool handleStart(IOService* provider);
+    bool handleStart(IOService* provider) override;
     
     /* @inherit */
-    void handleStop(IOService* provider);
+    void handleStop(IOService* provider) override;
     
  protected:
     /* The transducer is checked for stylus operation and pointer event dispatched.  x,y,z & pressure information is

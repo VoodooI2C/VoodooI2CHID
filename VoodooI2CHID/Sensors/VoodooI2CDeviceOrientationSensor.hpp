@@ -26,11 +26,11 @@ class EXPORT VoodooI2CDeviceOrientationSensor : public VoodooI2CSensor {
   OSDeclareDefaultStructors(VoodooI2CDeviceOrientationSensor);
 
  public:
-    void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id);
-    bool start(IOService* provider);
+    bool start(IOService* provider) override;
     static VoodooI2CSensor* withElement(IOHIDElement* element, IOService* event_driver);
 
- protected:
+    void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id) override;
+
  private:
     IOHIDElement* quaternion;
 };

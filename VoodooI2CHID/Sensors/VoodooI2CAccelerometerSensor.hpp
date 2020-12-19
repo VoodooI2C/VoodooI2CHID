@@ -33,10 +33,10 @@ class EXPORT VoodooI2CAccelerometerSensor : public VoodooI2CSensor {
   OSDeclareDefaultStructors(VoodooI2CAccelerometerSensor);
 
  public:
-    void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id);
+    void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id) override;
     void rotateDevice(IOOptionBits rotation_state);
-    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
-    bool start(IOService* provider);
+    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice) override;
+    bool start(IOService* provider) override;
     static VoodooI2CSensor* withElement(IOHIDElement* sensor_element, IOService* event_driver);
 
  protected:

@@ -21,7 +21,7 @@ class EXPORT VoodooI2CSensorHubEnabler : public IOService {
   OSDeclareDefaultStructors(VoodooI2CSensorHubEnabler);
 
  public:
-    bool start(IOService* provider);
+    bool start(IOService* provider) override;
  protected:
  private:
     const char* name;

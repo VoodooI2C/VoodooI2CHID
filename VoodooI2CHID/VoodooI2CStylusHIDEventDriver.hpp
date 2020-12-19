@@ -19,8 +19,8 @@ class EXPORT VoodooI2CStylusHIDEventDriver : public VoodooI2CTouchscreenHIDEvent
   OSDeclareDefaultStructors(VoodooI2CStylusHIDEventDriver);
 
  public:
+    bool init(OSDictionary* properties) override;
     void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor *report, IOHIDReportType report_type, UInt32 report_id) override;
-    bool init(OSDictionary* properties);
 };
 
 

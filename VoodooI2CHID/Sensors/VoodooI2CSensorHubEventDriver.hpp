@@ -29,12 +29,12 @@ class EXPORT VoodooI2CSensorHubEventDriver : public IOHIDEventService {
     IOHIDDevice* hid_device;
     const char* name;
     
-    bool handleStart(IOService* provider);
-    void handleStop(IOService* provider);
-    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
+    bool handleStart(IOService* provider) override;
+    void handleStop(IOService* provider) override;
+    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice) override;
     IOReturn setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, UInt32 reportID);
     
-    bool didTerminate(IOService* provider, IOOptionBits options, bool* defer);
+    bool didTerminate(IOService* provider, IOOptionBits options, bool* defer) override;
 
  protected:
  private:

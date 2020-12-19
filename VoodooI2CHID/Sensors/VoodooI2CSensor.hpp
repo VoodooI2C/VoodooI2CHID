@@ -37,9 +37,9 @@ class EXPORT VoodooI2CSensor : public IOService {
  public:
     IOHIDElement* element;
 
-    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice);
-    bool start(IOService* provider);
-    void stop(IOService* provider);
+    IOReturn setPowerState(unsigned long whichState, IOService* whatDevice) override;
+    bool start(IOService* provider) override;
+    void stop(IOService* provider) override;
     
     virtual void handleInterruptReport(AbsoluteTime timestamp, IOMemoryDescriptor* report, IOHIDReportType report_type, UInt32 report_id);
     static VoodooI2CSensor* withElement(IOHIDElement* element, IOService* event_driver);
