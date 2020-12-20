@@ -98,7 +98,9 @@ IOReturn VoodooI2CAccelerometerSensor::setPowerState(unsigned long whichState, I
         }
     } else {
         if (!awake) {
-            setElementValue(change_sensitivity, 3);
+            if (change_sensitivity) {
+                setElementValue(change_sensitivity, 3);
+            }
             
             awake = true;
         }
