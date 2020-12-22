@@ -580,9 +580,9 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
             continue;
         }
         
-        // On Dell Latitude 7390 2-in-1 the left button has kHIDUsage_Button_2,
-        // and the right button has kHIDUsage_Button_3. So, there is no button 1.
-        if (element->conformsTo(kHIDPage_Button)) {
+        // On some machines (Namely Dell Latitude 7390 2-in-1) the primary button has kHIDUsage_Button_2, and the secondary button has kHIDUsage_Button_3
+        // Address cases involving kHIDUsage_Button_3
+        if (element->conformsTo(kHIDPage_Button) && element->getUsage() <= kHIDUsage_Button_3) {
             if (digitiser.primaryButton == nullptr) {
                 digitiser.primaryButton = element;
             }
