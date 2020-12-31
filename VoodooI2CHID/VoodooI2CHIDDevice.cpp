@@ -409,6 +409,7 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         if (!awake) {
             awake = true;
 
+            acpi_device->evaluateObject("_PS0");
             setHIDPowerState(kVoodooI2CStateOn);
 
             VoodooI2CHIDDeviceCommand command;
