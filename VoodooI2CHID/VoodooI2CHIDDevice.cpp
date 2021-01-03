@@ -257,11 +257,13 @@ void VoodooI2CHIDDevice::releaseResources() {
     stopInterrupt();
 
     if (interrupt_simulator) {
+        work_loop->removeEventSource(interrupt_simulator);
         interrupt_simulator->release();
         interrupt_simulator = NULL;
     }
 
     if (interrupt_source) {
+        work_loop->removeEventSource(interrupt_source);
         interrupt_source->release();
         interrupt_source = NULL;
     }
@@ -456,7 +458,9 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
     }
 
     interrupt_source = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventAction, this, &VoodooI2CHIDDevice::interruptOccured), api, 0);
-    if (!interrupt_source) {
+    if (interrupt_source) {
+        work_loop->addEventSource(interrupt_source);
+    } else {
         IOLog("%s::%s Warning: Could not get interrupt event source, using polling instead\n", getName(), name);
         interrupt_simulator = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CHIDDevice::simulateInterrupt));
 
@@ -464,6 +468,8 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
             IOLog("%s::%s Could not get timer event source\n", getName(), name);
             goto exit;
         }
+
+        work_loop->addEventSource(interrupt_simulator);
     }
     startInterrupt();
 
@@ -624,11 +630,9 @@ void VoodooI2CHIDDevice::startInterrupt() {
     }
 
     if (interrupt_simulator) {
-        work_loop->addEventSource(interrupt_simulator);
         interrupt_simulator->setTimeoutMS(200);
         interrupt_simulator->enable();
     } else if (interrupt_source) {
-        work_loop->addEventSource(interrupt_source);
         interrupt_source->enable();
     }
     is_interrupt_started = true;
@@ -641,10 +645,8 @@ void VoodooI2CHIDDevice::stopInterrupt() {
 
     if (interrupt_simulator) {
         interrupt_simulator->disable();
-        work_loop->removeEventSource(interrupt_simulator);
     } else if (interrupt_source) {
         interrupt_source->disable();
-        work_loop->removeEventSource(interrupt_source);
     }
     is_interrupt_started = false;
 }
