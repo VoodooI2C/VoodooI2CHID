@@ -26,6 +26,9 @@
 #define I2C_HID_PWR_ON  0x00
 #define I2C_HID_PWR_SLEEP 0x01
 
+#define I2C_VENDOR_ID_HANTICK        0x0911
+#define I2C_PRODUCT_ID_HANTICK_5288    0x5288
+
 #define EXPORT __attribute__((visibility("default")))
 
 typedef union {

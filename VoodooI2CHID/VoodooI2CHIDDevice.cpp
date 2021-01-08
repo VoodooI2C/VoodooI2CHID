@@ -411,15 +411,22 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         if (!awake) {
             awake = true;
 
-            setHIDPowerState(kVoodooI2CStateOn);
+            if (hid_descriptor.wVendorID == I2C_VENDOR_ID_HANTICK &&
+                hid_descriptor.wProductID == I2C_PRODUCT_ID_HANTICK_5288) {
+                resetHIDDevice();
+                IOSleep(100);
+            } else {
+                setHIDPowerState(kVoodooI2CStateOn);
 
-            VoodooI2CHIDDeviceCommand command;
-            command.c.reg = hid_descriptor.wCommandRegister;
-            command.c.opcode = 0x01;
-            command.c.report_type_id = 0;
+                VoodooI2CHIDDeviceCommand command;
+                command.c.reg = hid_descriptor.wCommandRegister;
+                command.c.opcode = 0x01;
+                command.c.report_type_id = 0;
 
-            api->writeI2C(command.data, 4);
-            IOSleep(10);
+                api->writeI2C(command.data, 4);
+
+                IOSleep(10);
+            }
 
             startInterrupt();
 
