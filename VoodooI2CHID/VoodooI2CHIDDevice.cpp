@@ -30,6 +30,8 @@ bool VoodooI2CHIDDevice::init(OSDictionary* properties) {
     interrupt_source = NULL;
     ready_for_input = false;
 
+    quirks = 0;
+
     client_lock = IOLockAlloc();
 
     clients = OSArray::withCapacity(1);
@@ -93,6 +95,14 @@ IOReturn VoodooI2CHIDDevice::parseHIDDescriptor() {
     setProperty("HIDDescriptor", property_array);
 
     OSSafeReleaseNULL(property_array);
+
+    if ((hid_descriptor.wVendorID == I2C_VENDOR_ID_HANTICK &&
+         hid_descriptor.wProductID == I2C_PRODUCT_ID_HANTICK_5288) ||
+        (hid_descriptor.wVendorID == I2C_VENDOR_ID_RAYDIUM &&
+         hid_descriptor.wProductID == I2C_PRODUCT_ID_RAYDIUM_3118)) {
+        quirks |= I2C_HID_QUIRK_NO_IRQ_AFTER_RESET;
+        setProperty("I2C_HID_QUIRK_NO_IRQ_AFTER_RESET", true);
+    }
 
     return kIOReturnSuccess;
 }
@@ -413,11 +423,7 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
 
             setHIDPowerState(kVoodooI2CStateOn);
 
-            if (hid_descriptor.wVendorID == I2C_VENDOR_ID_HANTICK &&
-                hid_descriptor.wProductID == I2C_PRODUCT_ID_HANTICK_5288) {
-                setProperty("I2C_HID_QUIRK_NO_IRQ_AFTER_RESET", true);
-                IOSleep(100);
-            } else {
+            if (!(quirks & I2C_HID_QUIRK_NO_IRQ_AFTER_RESET)) {
                 VoodooI2CHIDDeviceCommand command;
                 command.c.reg = hid_descriptor.wCommandRegister;
                 command.c.opcode = 0x01;
