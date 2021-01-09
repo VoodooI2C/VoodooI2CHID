@@ -395,6 +395,17 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     return ret;
 }
 
+void VoodooI2CHIDDevice::lookupQuirks() {
+    quirks = 0;
+    for (size_t n = 0; i2c_hid_quirks[n].idVendor; n++) {
+        if (i2c_hid_quirks[n].idVendor == hid_descriptor.wVendorID &&
+            (i2c_hid_quirks[n].idProduct == HID_ANY_ID ||
+             i2c_hid_quirks[n].idProduct == hid_descriptor.wProductID)) {
+            quirks = i2c_hid_quirks[n].quirks;
+        }
+    }
+}
+
 IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* whatDevice) {
     if (whatDevice != this)
         return kIOReturnInvalid;
@@ -411,15 +422,11 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         if (!awake) {
             awake = true;
 
-            setHIDPowerState(kVoodooI2CStateOn);
-
-            VoodooI2CHIDDeviceCommand command;
-            command.c.reg = hid_descriptor.wCommandRegister;
-            command.c.opcode = 0x01;
-            command.c.report_type_id = 0;
-
-            api->writeI2C(command.data, 4);
-            IOSleep(10);
+            if (quirks & I2C_HID_QUIRK_RESET_ON_RESUME) {
+                resetHIDDevice();
+            } else {
+                setHIDPowerState(kVoodooI2CStateOn);
+            }
 
             startInterrupt();
 
@@ -473,6 +480,7 @@ bool VoodooI2CHIDDevice::handleStart(IOService* provider) {
     }
     startInterrupt();
 
+    lookupQuirks();
     resetHIDDevice();
 
 
