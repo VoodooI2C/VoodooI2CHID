@@ -411,13 +411,13 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         if (!awake) {
             awake = true;
 
+            setHIDPowerState(kVoodooI2CStateOn);
+
             if (hid_descriptor.wVendorID == I2C_VENDOR_ID_HANTICK &&
                 hid_descriptor.wProductID == I2C_PRODUCT_ID_HANTICK_5288) {
-                resetHIDDevice();
+                setProperty("I2C_HID_QUIRK_NO_IRQ_AFTER_RESET", true);
                 IOSleep(100);
             } else {
-                setHIDPowerState(kVoodooI2CStateOn);
-
                 VoodooI2CHIDDeviceCommand command;
                 command.c.reg = hid_descriptor.wCommandRegister;
                 command.c.opcode = 0x01;
