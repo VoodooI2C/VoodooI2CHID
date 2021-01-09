@@ -300,20 +300,23 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
 
     api->writeI2C(command.data, 4);
 
-    AbsoluteTime absolute_time, deadline;
+    if (quirks & I2C_HID_QUIRK_NO_IRQ_AFTER_RESET) {
+        IOSleep(100);
+    } else {
+        // Device is required to complete a host-initiated reset in at most 5 seconds. We give it 12 as Linux quirks don't handle some devices.
 
-    // Device is required to complete a host-initiated reset in at most 6 seconds.
+        AbsoluteTime absolute_time, deadline;
+        nanoseconds_to_absolutetime(12000000000, &absolute_time);
+        clock_absolutetime_interval_to_deadline(absolute_time, &deadline);
 
-    nanoseconds_to_absolutetime(12000000000, &absolute_time);
-    clock_absolutetime_interval_to_deadline(absolute_time, &deadline);
+        IOReturn sleep = command_gate->commandSleep(&reset_event, deadline, THREAD_UNINT);
 
-    IOReturn sleep = command_gate->commandSleep(&reset_event, deadline, THREAD_UNINT);
-
-    if (sleep == THREAD_TIMED_OUT) {
-        IOLog("%s::%s Timeout waiting for device to complete host initiated reset\n", getName(), name);
-        return kIOReturnTimeout;
-    } else if (sleep == THREAD_AWAKENED) {
-        IOLog("%s::%s Device initiated reset accomplished\n", getName(), name);
+        if (sleep == THREAD_TIMED_OUT) {
+            IOLog("%s::%s Timeout waiting for device to complete host initiated reset\n", getName(), name);
+            return kIOReturnTimeout;
+        } else if (sleep == THREAD_AWAKENED) {
+            IOLog("%s::%s Device initiated reset accomplished\n", getName(), name);
+        }
     }
 
     return kIOReturnSuccess;
