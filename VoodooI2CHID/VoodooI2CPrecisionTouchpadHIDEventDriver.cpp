@@ -46,6 +46,8 @@ bool VoodooI2CPrecisionTouchpadHIDEventDriver::handleStart(IOService* provider) 
 
     enterPrecisionTouchpadMode();
 
+    setProperty(kDeliverNotifications, kOSBooleanTrue);
+
     return true;
 }
 

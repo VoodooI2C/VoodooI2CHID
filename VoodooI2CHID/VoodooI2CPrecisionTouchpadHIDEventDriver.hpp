@@ -17,6 +17,8 @@
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
 
+#define kDeliverNotifications   "RM,deliverNotifications"
+
 #define kHIDUsage_Dig_Surface_Switch 0x57
 #define kHIDUsage_Dig_Button_Switch 0x58
 
