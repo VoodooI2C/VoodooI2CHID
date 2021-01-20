@@ -521,6 +521,10 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                         
                         UInt32 raw_physical_max_x = sub_element->getPhysicalMax();
                         
+                        if (raw_physical_max_x > multitouch_interface->logical_max_x) {
+                            raw_physical_max_x = (multitouch_interface->logical_max_x / 2.54);
+                        }
+                        
                         UInt8 raw_unit_exponent = sub_element->getUnitExponent();
                         if (raw_unit_exponent >> 3) {
                             raw_unit_exponent = raw_unit_exponent | 0xf0; // Raise the 4-bit int to an 8-bit int
@@ -542,6 +546,10 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                         multitouch_interface->logical_max_y = sub_element->getLogicalMax();
                         
                         UInt32 raw_physical_max_y = sub_element->getPhysicalMax();
+                        
+                        if (raw_physical_max_y > multitouch_interface->logical_max_y) {
+                            raw_physical_max_y = (multitouch_interface->logical_max_y / 2.54);
+                        }
                         
                         UInt8 raw_unit_exponent = sub_element->getUnitExponent();
                         if (raw_unit_exponent >> 3) {
