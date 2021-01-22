@@ -40,6 +40,9 @@
 
 #define kHIDUsage_Dig_Confidence kHIDUsage_Dig_TouchValid
 
+#define kHIDUsage_LengthUnitCentimeter  0x11
+#define kHIDUsage_LengthUnitInch        0x13
+
 // Message types defined by ApplePS2Keyboard
 enum {
     // from keyboard to mouse/touchpad
@@ -142,6 +145,16 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      */
 
     bool handleStart(IOService* provider) override;
+
+    /* Parses physical max HID element.
+     * @element The element to parse.
+     *
+     * This function factors reported dimensions with units and exponent.
+     *
+     * @return Physical max dimension in 0.01 mm units.
+     */
+
+    static UInt32 parseElementPhysicalMax(IOHIDElement* element);
 
     /* Parses a digitiser usage page element
      * @element The element to parse
