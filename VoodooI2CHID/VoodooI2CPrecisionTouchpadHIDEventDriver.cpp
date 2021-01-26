@@ -15,15 +15,7 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
     // We should really do this using `input_mode_element->setValue(INPUT_MODE_TOUCHPAD)`
     // but I am not able to get it to work.
 
-    VoodooI2CPrecisionTouchpadFeatureReport buffer;
-    buffer.value = INPUT_MODE_TOUCHPAD;
-    buffer.reserved = 0x00;
-
-    IOBufferMemoryDescriptor* report = IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task, 0, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
-    report->writeBytes(0, &buffer, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
-
-    hid_interface->setReport(report, kIOHIDReportTypeFeature, digitiser.input_mode->getReportID());
-    report->release();
+    digitiser.input_mode->setValue(INPUT_MODE_TOUCHPAD);
 
     ready = true;
 }
