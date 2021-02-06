@@ -23,12 +23,18 @@ OSDefineMetaClassAndStructors(VoodooI2CMultitouchHIDEventDriver, IOHIDEventServi
 
 AbsoluteTime last_multi_touch_event = 0;
 
-static int pow(int x, int y) {
-    int ret = 1;
-    while (y > 0) {
-        ret *= x;
-        y--;
+static int scientific_pow(UInt32 significand, UInt32 base, SInt32 exponent) {
+    UInt32 ret = significand;
+    while (exponent > 0) {
+        ret *= base;
+        exponent--;
     }
+
+    while (exponent < 0) {
+        ret /= base;
+        exponent++;
+    }
+
     return ret;
 }
 
@@ -468,6 +474,28 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
     super::handleStop(provider);
 }
 
+UInt32 VoodooI2CMultitouchHIDEventDriver::parseElementPhysicalMax(IOHIDElement* element) {
+    UInt32 physical_max = element->getPhysicalMax();
+
+    UInt8 raw_unit_exponent = element->getUnitExponent();
+    if (raw_unit_exponent >> 3) {
+        raw_unit_exponent = raw_unit_exponent | 0xf0; // Raise the 4-bit int to an 8-bit int
+    }
+    SInt8 unit_exponent = *reinterpret_cast<SInt8*>(&raw_unit_exponent);
+
+    // Scale to 0.01 mm units
+    UInt32 unit = element->getUnit();
+    if (unit == kHIDUsage_LengthUnitCentimeter) {
+        unit_exponent += 3;
+    } else if (unit == kHIDUsage_LengthUnitInch) {
+        physical_max *= 254;
+        unit_exponent += 1;
+    }
+
+    physical_max = scientific_pow(physical_max, 10, unit_exponent);
+    return physical_max;
+}
+
 IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* digitiser_element) {
     OSArray* children = digitiser_element->getChildElements();
     
@@ -518,46 +546,12 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                 if (sub_element->conformsTo(kHIDPage_GenericDesktop, kHIDUsage_GD_X)) {
                     if (multitouch_interface && !multitouch_interface->logical_max_x) {
                         multitouch_interface->logical_max_x = sub_element->getLogicalMax();
-                        
-                        UInt32 raw_physical_max_x = sub_element->getPhysicalMax();
-                        
-                        UInt8 raw_unit_exponent = sub_element->getUnitExponent();
-                        if (raw_unit_exponent >> 3) {
-                            raw_unit_exponent = raw_unit_exponent | 0xf0; // Raise the 4-bit int to an 8-bit int
-                        }
-                        SInt8 unit_exponent = *(SInt8 *)&raw_unit_exponent;
-                        
-                        UInt32 physical_max_x = raw_physical_max_x;
-                        
-                        physical_max_x *= pow(10, (unit_exponent - -2));
-                        
-                        if (sub_element->getUnit() == 0x13) {
-                            physical_max_x *= 2.54;
-                        }
-
-                        multitouch_interface->physical_max_x = physical_max_x;
+                        multitouch_interface->physical_max_x = parseElementPhysicalMax(sub_element);
                     }
                 } else if (sub_element->conformsTo(kHIDPage_GenericDesktop, kHIDUsage_GD_Y)) {
                     if (multitouch_interface && !multitouch_interface->logical_max_y) {
                         multitouch_interface->logical_max_y = sub_element->getLogicalMax();
-                        
-                        UInt32 raw_physical_max_y = sub_element->getPhysicalMax();
-                        
-                        UInt8 raw_unit_exponent = sub_element->getUnitExponent();
-                        if (raw_unit_exponent >> 3) {
-                            raw_unit_exponent = raw_unit_exponent | 0xf0; // Raise the 4-bit int to an 8-bit int
-                        }
-                        SInt8 unit_exponent = *(SInt8 *)&raw_unit_exponent;
-                        
-                        UInt32 physical_max_y = raw_physical_max_y;
-                        
-                        physical_max_y *= pow(10, (unit_exponent - -2));
-                        
-                        if (sub_element->getUnit() == 0x13) {
-                            physical_max_y *= 2.54;
-                        }
-                        
-                        multitouch_interface->physical_max_y = physical_max_y;
+                        multitouch_interface->physical_max_y = parseElementPhysicalMax(sub_element);
                     }
                 }
             }
