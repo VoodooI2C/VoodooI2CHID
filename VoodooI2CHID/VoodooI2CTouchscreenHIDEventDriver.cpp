@@ -213,17 +213,7 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
     }
     
     if (event.contact_count) {
-        event.contact_count = digitiser.contact_count->getValue();
-        event.transducers = digitiser.transducers;
-
         // Send multitouch information to the multitouch interface
-    
-        if (!event.contact_count)
-            return;
-    
-        if (event.contact_count > 5) {
-            return;
-        }
 
         if (event.contact_count >= 2) {
             if (event.contact_count == 2 && start_scroll) {
