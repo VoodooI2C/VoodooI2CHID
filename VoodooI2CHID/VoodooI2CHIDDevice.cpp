@@ -414,9 +414,9 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         return kIOReturnInvalid;
     if (whichState == 0) {
         if (awake) {
-            stopInterrupt();
-
             setHIDPowerState(kVoodooI2CStateOff);
+
+            stopInterrupt();
 
             IOLog("%s::%s Going to sleep\n", getName(), name);
             awake = false;
@@ -425,13 +425,13 @@ IOReturn VoodooI2CHIDDevice::setPowerState(unsigned long whichState, IOService* 
         if (!awake) {
             awake = true;
 
+            startInterrupt();
+
             if (quirks & I2C_HID_QUIRK_RESET_ON_RESUME) {
                 resetHIDDevice();
             } else {
                 setHIDPowerState(kVoodooI2CStateOn);
             }
-
-            startInterrupt();
 
             IOLog("%s::%s Woke up\n", getName(), name);
         }
