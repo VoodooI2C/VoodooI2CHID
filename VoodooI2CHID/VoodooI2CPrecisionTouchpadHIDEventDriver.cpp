@@ -12,9 +12,6 @@
 OSDefineMetaClassAndStructors(VoodooI2CPrecisionTouchpadHIDEventDriver, VoodooI2CMultitouchHIDEventDriver);
 
 void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
-    // We should really do this using `input_mode_element->setValue(INPUT_MODE_TOUCHPAD)`
-    // but I am not able to get it to work.
-
     digitiser.input_mode->setValue(INPUT_MODE_TOUCHPAD);
 
     ready = true;
