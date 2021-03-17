@@ -16,12 +16,17 @@
 #include <IOKit/hid/AppleHIDUsageTables.h>
 
 #define SET_NUMBER(key, num) do { \
-tmpNumber = OSNumber::withNumber(num, 32); \
-if (tmpNumber) { \
-kbEnableEventProps->setObject(key, tmpNumber); \
-tmpNumber->release(); \
-} \
+    tmpNumber = OSNumber::withNumber(num, 32); \
+    if (tmpNumber) { \
+        kbEnableEventProps->setObject(key, tmpNumber); \
+        tmpNumber->release(); \
+    } \
 }while (0);
+
+// constants for processing the special key input event
+#define kHIDIncrVolume  0x01
+#define kHIDDecrVolume  0x02
+#define kHIDMute        0x04
 
 #define GetReportType(type)                                             \
 ((type <= kIOHIDElementTypeInput_ScanCodes) ? kIOHIDReportTypeInput :   \
@@ -140,7 +145,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
         digitiser.current_report++;
     }
     
-    handleKeboardReport(timestamp, report_id);
+    handleKeyboardReport(timestamp, report_id);
 }
 
 void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime timestamp, UInt32 report_id) {
@@ -390,7 +395,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
         return;
 }
 
-void VoodooI2CMultitouchHIDEventDriver::handleKeboardReport(AbsoluteTime timeStamp, UInt32 reportID) {
+void VoodooI2CMultitouchHIDEventDriver::handleKeyboardReport(AbsoluteTime timeStamp, UInt32 reportID) {
     UInt32      volumeHandled   = 0;
     UInt32      volumeState     = 0;
     UInt32      index, count;
@@ -399,65 +404,53 @@ void VoodooI2CMultitouchHIDEventDriver::handleKeboardReport(AbsoluteTime timeSta
         goto exit;
     
     for (index=0, count=keyboard.elements->getCount(); index<count; index++) {
-        IOHIDElement *  element;
-        AbsoluteTime    elementTimeStamp;
-        UInt32          usagePage, usage, value, preValue;
+        IOHIDElement* element = nullptr;
+        AbsoluteTime  elementTimeStamp;
+        UInt32        usagePage, usage, value, preValue;
         
         element = OSDynamicCast(IOHIDElement, keyboard.elements->getObject(index));
-        if ( !element )
+        if (!element)
             continue;
         
-        if ( element->getReportID() != reportID )
+        if (element->getReportID() != reportID)
             continue;
         
         elementTimeStamp = element->getTimeStamp();
-        if ( CMP_ABSOLUTETIME(&timeStamp, &elementTimeStamp) != 0 )
+        if (CMP_ABSOLUTETIME(&timeStamp, &elementTimeStamp) != 0)
             continue;
         
         preValue    = element->getValue(kIOHIDValueOptionsFlagPrevious) != 0;
         value       = element->getValue() != 0;
         
-        if ( value == preValue )
+        if (value == preValue)
             continue;
         
         usagePage   = element->getUsagePage();
         usage       = element->getUsage();
         
-        if ( usagePage == kHIDPage_Consumer ) {
+        if (usagePage == kHIDPage_Consumer) {
             bool suppress = true;
-            switch ( usage ) {
+            switch (usage) {
                 case kHIDUsage_Csmr_VolumeIncrement:
-                    volumeHandled   |= 0x1;
-                    volumeState     |= (value) ? 0x1:0;
+                    volumeHandled   |= kHIDIncrVolume;
+                    volumeState     |= (value) ? kHIDIncrVolume:0;
                     break;
                 case kHIDUsage_Csmr_VolumeDecrement:
-                    volumeHandled   |= 0x2;
-                    volumeState     |= (value) ? 0x2:0;
+                    volumeHandled   |= kHIDDecrVolume;
+                    volumeState     |= (value) ? kHIDDecrVolume:0;
                     break;
                 case kHIDUsage_Csmr_Mute:
-                    volumeHandled   |= 0x4;
-                    volumeState     |= (value) ? 0x4:0;
+                    volumeHandled   |= kHIDMute;
+                    volumeState     |= (value) ? kHIDMute:0;
                     break;
                 default:
                     suppress = false;
                     break;
             }
             
-            if ( suppress )
+            if (suppress)
                 continue;
         }
-        
-        /* Disabled due to non-avaiablitity of identifiers
-         
-         else if (usage == kHIDUsage_KeyboardPower && usagePage == kHIDPage_KeyboardOrKeypad) {
-         if (value == 0) {
-         setProperty(kIOHIDKeyboardEnabledKey, kOSBooleanFalse);
-         }
-         
-         else {
-         setProperty(kIOHIDKeyboardEnabledKey, kOSBooleanTrue);
-         }
-         }*/
         
         dispatchKeyboardEvent(timeStamp, usagePage, usage, value);
     }
@@ -465,16 +458,17 @@ void VoodooI2CMultitouchHIDEventDriver::handleKeboardReport(AbsoluteTime timeSta
     // RY: Handle the case where Vol Increment, Decrement, and Mute are all down
     // If such an event occurs, it is likely that the device is defective,
     // and should be ignored.
-    if ( (volumeState != 0x7) && (volumeHandled != 0x7) ) {
+    if ((volumeState != (kHIDIncrVolume|kHIDDecrVolume|kHIDMute)) &&
+        (volumeHandled != (kHIDIncrVolume|kHIDDecrVolume|kHIDMute))) {
         // Volume Increment
-        if ( volumeHandled & 0x1 )
-            dispatchKeyboardEvent(timeStamp, kHIDPage_Consumer, kHIDUsage_Csmr_VolumeIncrement, ((volumeState & 0x1) != 0));
+        if (volumeHandled & kHIDIncrVolume)
+            dispatchKeyboardEvent(timeStamp, kHIDPage_Consumer, kHIDUsage_Csmr_VolumeIncrement, ((volumeState & kHIDIncrVolume) != 0));
         // Volume Decrement
-        if ( volumeHandled & 0x2 )
-            dispatchKeyboardEvent(timeStamp, kHIDPage_Consumer, kHIDUsage_Csmr_VolumeDecrement, ((volumeState & 0x2) != 0));
+        if (volumeHandled & kHIDDecrVolume)
+            dispatchKeyboardEvent(timeStamp, kHIDPage_Consumer, kHIDUsage_Csmr_VolumeDecrement, ((volumeState & kHIDDecrVolume) != 0));
         // Volume Mute
-        if ( volumeHandled & 0x4 )
-            dispatchKeyboardEvent(timeStamp, kHIDPage_Consumer, kHIDUsage_Csmr_Mute, ((volumeState & 0x4) != 0));
+        if (volumeHandled & kHIDMute)
+            dispatchKeyboardEvent(timeStamp, kHIDPage_Consumer, kHIDUsage_Csmr_Mute, ((volumeState & kHIDMute) != 0));
     }
     
 exit:
@@ -746,7 +740,7 @@ bool VoodooI2CMultitouchHIDEventDriver::parseKeyboardElement(IOHIDElement * elem
             // user input is possible
             
             if (usage == kHIDUsage_KeyboardPower) {
-                OSDictionary * kbEnableEventProps   = NULL;
+                OSDictionary* kbEnableEventProps    = NULL;
                 UInt32 value                        = 0;
                 
                 // To avoid problems with un-intentional clearing of the flag
@@ -759,18 +753,7 @@ bool VoodooI2CMultitouchHIDEventDriver::parseKeyboardElement(IOHIDElement * elem
                     kbEnableEventProps = OSDictionary::withCapacity(3);
                     if (!kbEnableEventProps)
                         break;
-                    
-                    /* Since the identifiers are not defined, better comment out
-                     
-                     SET_NUMBER(kIOHIDKeyboardEnabledEventEventTypeKey, kIOHIDEventTypeKeyboard);
-                     SET_NUMBER(kIOHIDKeyboardEnabledEventUsagePageKey, kHIDPage_KeyboardOrKeypad);
-                     SET_NUMBER(kIOHIDKeyboardEnabledEventUsageKey, kHIDUsage_KeyboardPower);
-                     
-                     setProperty(kIOHIDKeyboardEnabledEventKey, kbEnableEventProps);
-                     setProperty(kIOHIDKeyboardEnabledByEventKey, kOSBooleanTrue);
-                     setProperty(kIOHIDKeyboardEnabledKey, value ? kOSBooleanTrue : kOSBooleanFalse);*/
-                    
-                    kbEnableEventProps->release();
+                    OSSafeReleaseNULL(kbEnableEventProps);
                 }
                 
                 store = true;
@@ -932,10 +915,10 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
     OSArray *elementArray = hid_interface->createMatchingElements();
     keyboard.appleVendorSupported = getProperty(kIOHIDAppleVendorSupported, gIOServicePlane);
     if (elementArray) {
-        for (index=0, count=elementArray->getCount(); index<count; index++) {
-            IOHIDElement *  element     = NULL;
+        for (int i=0, count=elementArray->getCount(); i<count; i++) {
+            IOHIDElement* element   = nullptr;
             
-            element = OSDynamicCast(IOHIDElement, elementArray->getObject(index));
+            element = OSDynamicCast(IOHIDElement, elementArray->getObject(i));
             if (!element)
                 continue;
             

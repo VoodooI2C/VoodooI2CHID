@@ -122,7 +122,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      * @report_id The report ID of the interrupt report
      */
 
-    void handleKeboardReport(AbsoluteTime timeStamp, UInt32 reportID);
+    void handleKeyboardReport(AbsoluteTime timeStamp, UInt32 reportID);
 
 
     /* Called during the interrupt routine to interate over transducers
