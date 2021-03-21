@@ -141,6 +141,26 @@
 			<key>IOProviderClass</key>
 			<string>IOHIDInterface</string>
 		</dict>
+		<key>VoodooI2CHIDDevice Keyboard HID Event Driver</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>DeviceUsagePairs</key>
+			<array>
+				<dict>
+					<key>DeviceUsage</key>
+					<integer>6</integer>
+					<key>DeviceUsagePage</key>
+					<integer>1</integer>
+				</dict>
+			</array>
+			<key>IOProbeScore</key>
+			<integer>200</integer>
+			<key>IOClass</key>
+			<string>VoodooI2CKeyboardHIDEventDriver</string>
+			<key>IOProviderClass</key>
+			<string>IOHIDInterface</string>
+		</dict>
 		<key>VoodooI2CHIDDevice Generic Mouse HID Event Driver</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
