@@ -103,7 +103,7 @@ class EXPORT VoodooI2CKeyboardHIDEventDriver : public IOHIDEventService {
      * @return *true* on successful parse, *false* otherwise
      */
 
-    bool parseKeyboardElement(IOHIDElement *element);
+    void parseKeyboardElement(IOHIDElement *element);
 
 
     /* Parses all matched elements

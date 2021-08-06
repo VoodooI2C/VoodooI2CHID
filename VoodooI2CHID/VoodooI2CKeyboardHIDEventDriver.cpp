@@ -70,17 +70,18 @@ void VoodooI2CKeyboardHIDEventDriver::handleInterruptReport(AbsoluteTime timesta
                                                             UInt32 report_id) {
     UInt32      volumeHandled   = 0;
     UInt32      volumeState     = 0;
-    UInt32      index, count;
+    UInt32      maxElement;
     
     if(!keyboard.elements)
         return;
     
-    for (index=0, count=keyboard.elements->getCount(); index<count; index++) {
+    maxElement = keyboard.elements->getCount();
+    for (UInt32 i = 0; i < maxElement; i++) {
         IOHIDElement* element = nullptr;
         AbsoluteTime  elementTimeStamp;
         UInt32        usagePage, usage, value, preValue;
         
-        element = OSDynamicCast(IOHIDElement, keyboard.elements->getObject(index));
+        element = OSDynamicCast(IOHIDElement, keyboard.elements->getObject(i));
         if (!element)
             continue;
         
@@ -307,28 +308,30 @@ void VoodooI2CKeyboardHIDEventDriver::parseKeyboardElement(IOHIDElement *element
     }
 }
 
-    
+//Keyboard : Loop through all createMatchingElements() and parse KeyboardElements
 IOReturn VoodooI2CKeyboardHIDEventDriver::parseElements() {
-    //Keyboard : Loop through all createMatchingElements() and parse KeyboardElements
-        
     OSArray *elementArray = hid_interface->createMatchingElements();
     keyboard.appleVendorSupported = getProperty(kIOHIDAppleVendorSupported, gIOServicePlane);
-    if (elementArray) {
-        for (int i=0, count=elementArray->getCount(); i<count; i++) {
-            IOHIDElement* element   = nullptr;
-            
-            element = OSDynamicCast(IOHIDElement, elementArray->getObject(i));
-            if (!element)
-                continue;
-            
-            if (element->getType() == kIOHIDElementTypeCollection)
-                continue;
-            
-            if (element->getUsage() == 0)
-                continue;
-            
-            parseKeyboardElement(element);
-        }
+    
+    if (!elementArray) {
+        return kIOReturnSuccess;
+    }
+
+    int maxElement = elementArray->getCount();
+    for (int i = 0; i < maxElement; i++) {
+        IOHIDElement* element   = nullptr;
+        
+        element = OSDynamicCast(IOHIDElement, elementArray->getObject(i));
+        if (!element)
+            continue;
+        
+        if (element->getType() == kIOHIDElementTypeCollection)
+            continue;
+        
+        if (element->getUsage() == 0)
+            continue;
+        
+        parseKeyboardElement(element);
     }
     
     OSSafeReleaseNULL(elementArray);
