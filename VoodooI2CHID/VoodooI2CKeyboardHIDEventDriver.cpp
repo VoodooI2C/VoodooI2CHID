@@ -68,9 +68,9 @@ void VoodooI2CKeyboardHIDEventDriver::handleInterruptReport(AbsoluteTime timesta
                                                             IOMemoryDescriptor *report,
                                                             IOHIDReportType report_type,
                                                             UInt32 report_id) {
-    UInt32      volumeHandled   = 0;
-    UInt32      volumeState     = 0;
-    UInt32      maxElement;
+    UInt32 volumeHandled = 0;
+    UInt32 volumeState = 0;
+    UInt32 maxElement;
     
     if(!keyboard.elements)
         return;
@@ -92,8 +92,8 @@ void VoodooI2CKeyboardHIDEventDriver::handleInterruptReport(AbsoluteTime timesta
         if (CMP_ABSOLUTETIME(&timestamp, &elementTimeStamp) != 0)
             continue;
         
-        preValue    = element->getValue(kIOHIDValueOptionsFlagPrevious) != 0;
-        value       = element->getValue() != 0;
+        preValue = element->getValue(kIOHIDValueOptionsFlagPrevious) != 0;
+        value = element->getValue() != 0;
         
         if (value == preValue)
             continue;
@@ -105,16 +105,16 @@ void VoodooI2CKeyboardHIDEventDriver::handleInterruptReport(AbsoluteTime timesta
             bool suppress = true;
             switch (usage) {
                 case kHIDUsage_Csmr_VolumeIncrement:
-                    volumeHandled   |= kHIDIncrVolume;
-                    volumeState     |= (value) ? kHIDIncrVolume:0;
+                    volumeHandled |= kHIDIncrVolume;
+                    volumeState |= (value) ? kHIDIncrVolume : 0;
                     break;
                 case kHIDUsage_Csmr_VolumeDecrement:
-                    volumeHandled   |= kHIDDecrVolume;
-                    volumeState     |= (value) ? kHIDDecrVolume:0;
+                    volumeHandled |= kHIDDecrVolume;
+                    volumeState |= (value) ? kHIDDecrVolume : 0;
                     break;
                 case kHIDUsage_Csmr_Mute:
-                    volumeHandled   |= kHIDMute;
-                    volumeState     |= (value) ? kHIDMute:0;
+                    volumeHandled |= kHIDMute;
+                    volumeState |= (value) ? kHIDMute : 0;
                     break;
                 default:
                     suppress = false;
@@ -131,8 +131,8 @@ void VoodooI2CKeyboardHIDEventDriver::handleInterruptReport(AbsoluteTime timesta
     // RY: Handle the case where Vol Increment, Decrement, and Mute are all down
     // If such an event occurs, it is likely that the device is defective,
     // and should be ignored.
-    if ((volumeState != (kHIDIncrVolume|kHIDDecrVolume|kHIDMute)) &&
-        (volumeHandled != (kHIDIncrVolume|kHIDDecrVolume|kHIDMute))) {
+    if ((volumeState != (kHIDIncrVolume | kHIDDecrVolume | kHIDMute)) &&
+        (volumeHandled != (kHIDIncrVolume | kHIDDecrVolume | kHIDMute))) {
         // Volume Increment
         if (volumeHandled & kHIDIncrVolume)
             dispatchKeyboardEvent(timestamp, kHIDPage_Consumer, kHIDUsage_Csmr_VolumeIncrement, ((volumeState & kHIDIncrVolume) != 0));
@@ -199,9 +199,9 @@ void VoodooI2CKeyboardHIDEventDriver::handleStop(IOService *provider) {
 }
 
 void VoodooI2CKeyboardHIDEventDriver::parseKeyboardElement(IOHIDElement *element) {
-    UInt32 usagePage    = element->getUsagePage();
-    UInt32 usage        = element->getUsage();
-    bool   store        = false;
+    UInt32 usagePage = element->getUsagePage();
+    UInt32 usage = element->getUsage();
+    bool store = false;
     
     if (!keyboard.elements) {
         keyboard.elements = OSArray::withCapacity(4);
@@ -243,8 +243,8 @@ void VoodooI2CKeyboardHIDEventDriver::parseKeyboardElement(IOHIDElement *element
             // user input is possible
             
             if (usage == kHIDUsage_KeyboardPower) {
-                OSDictionary* kbEnableEventProps    = NULL;
-                UInt32 value                        = 0;
+                OSDictionary* kbEnableEventProps = NULL;
+                UInt32 value = 0;
                 
                 // To avoid problems with un-intentional clearing of the flag
                 // we require this report to be a feature report so that the current
@@ -388,9 +388,6 @@ IOReturn VoodooI2CKeyboardHIDEventDriver::message(UInt32 type, IOService* provid
         {
             //  Remember last time key was pressed
             key_time = *((uint64_t*)argument);
-#if DEBUG
-            IOLog("%s::keyPressed = %llu\n", getName(), key_time);
-#endif
             break;
         }
     }
