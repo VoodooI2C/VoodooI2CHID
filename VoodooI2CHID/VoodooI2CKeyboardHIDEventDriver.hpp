@@ -171,36 +171,6 @@ class EXPORT VoodooI2CKeyboardHIDEventDriver : public IOHIDEventService {
     IOCommandGate* command_gate;
     
     uint64_t key_time = 0;
-    
-    OSSet* attached_hid_pointer_devices;
-    
-    IONotifier* usb_hid_publish_notify;     // Notification when an USB mouse HID device is connected
-    IONotifier* usb_hid_terminate_notify; // Notification when an USB mouse HID device is disconnected
-    
-    IONotifier* bluetooth_hid_publish_notify; // Notification when a bluetooth HID device is connected
-    IONotifier* bluetooth_hid_terminate_notify; // Notification when a bluetooth HID device is disconnected
-    
-    /*
-     * Helper function to help parse bluetooth device notifications
-     * @newService IOService object matching criteria for addMatchingNotification
-     * @path IOService path for newService
-     */
-    void bluetoothHIDAttached(IOService *newService, char *path);
-    
-    /*
-     * IOServiceMatchingNotificationHandler (gated) to receive notification of addMatchingNotification registrations
-     * @newService IOService object matching the criteria for the addMatchingNotification registration
-     * @notifier IONotifier object for the notification registration
-     */
-    void notificationHIDAttachedHandlerGated(IOService *newService, IONotifier *notifier);
-    
-    /*
-     * IOServiceMatchingNotificationHandler to receive notification of addMatchingNotification registrations
-     * @refCon reference set when registering
-     * @newService IOService object matching the criteria for the addMatchingNotification registration
-     * @notifier IONotifier object for the notification registration
-     */
-    bool notificationHIDAttachedHandler(void *refCon, IOService *newService, IONotifier *notifier);
 };
 
 #endif /* VoodooI2CKeyboardHIDEventDriver_hpp */

@@ -17,14 +17,6 @@
 
 #define MAX_PATH_LEN 256
 
-#define SET_NUMBER(key, num) do { \
-    tmpNumber = OSNumber::withNumber(num, 32); \
-    if (tmpNumber) { \
-        kbEnableEventProps->setObject(key, tmpNumber); \
-        tmpNumber->release(); \
-    } \
-}while (0);
-
 // constants for processing the special key input event
 #define kHIDIncrVolume  0x01
 #define kHIDDecrVolume  0x02
@@ -72,7 +64,7 @@ void VoodooI2CKeyboardHIDEventDriver::handleInterruptReport(AbsoluteTime timesta
     UInt32 volumeState = 0;
     UInt32 maxElement;
     
-    if(!keyboard.elements)
+    if (!keyboard.elements)
         return;
     
     maxElement = keyboard.elements->getCount();
@@ -145,8 +137,30 @@ void VoodooI2CKeyboardHIDEventDriver::handleInterruptReport(AbsoluteTime timesta
     }
 }
 
+bool VoodooI2CKeyboardHIDEventDriver::start(IOService* provider) {
+    if (!super::start(provider))
+        return false;
+    
+    work_loop = getWorkLoop();
+    
+    if (!work_loop)
+        return false;
+    
+    work_loop->retain();
+    
+    command_gate = IOCommandGate::commandGate(this);
+    if (!command_gate) {
+        return false;
+    }
+    
+    work_loop->addEventSource(command_gate);
+    setProperty("VoodooI2CServices Supported", kOSBooleanTrue);
+
+    return true;
+}
+
 bool VoodooI2CKeyboardHIDEventDriver::handleStart(IOService *provider) {
-    if(!super::handleStart(provider)) {
+    if (!super::handleStart(provider)) {
         return false;
     }
     
@@ -205,7 +219,7 @@ void VoodooI2CKeyboardHIDEventDriver::parseKeyboardElement(IOHIDElement *element
     
     if (!keyboard.elements) {
         keyboard.elements = OSArray::withCapacity(4);
-        if(!keyboard.elements)
+        if (!keyboard.elements)
             return;
     }
     
@@ -242,26 +256,22 @@ void VoodooI2CKeyboardHIDEventDriver::parseKeyboardElement(IOHIDElement *element
             // This usage is used to let the OS know if a keyboard is in an enabled state where
             // user input is possible
             
-            if (usage == kHIDUsage_KeyboardPower) {
-                OSDictionary* kbEnableEventProps = NULL;
-                UInt32 value = 0;
-                
-                // To avoid problems with un-intentional clearing of the flag
-                // we require this report to be a feature report so that the current
-                // state can be polled if necessary
-                
-                if (element->getType() == kIOHIDElementTypeFeature) {
-                    value = element->getValue(kIOHIDValueOptionsUpdateElementValues);
-                    
-                    kbEnableEventProps = OSDictionary::withCapacity(3);
-                    if (!kbEnableEventProps)
-                        break;
-                    OSSafeReleaseNULL(kbEnableEventProps);
-                }
-                
-                store = true;
+            if (usage != kHIDUsage_KeyboardPower)
                 break;
+            
+            // To avoid problems with un-intentional clearing of the flag
+            // we require this report to be a feature report so that the current
+            // state can be polled if necessary
+            
+            if (element->getType() == kIOHIDElementTypeFeature) {
+                OSDictionary* kbEnableEventProps = OSDictionary::withCapacity(3);
+                if (!kbEnableEventProps)
+                    break;
+                OSSafeReleaseNULL(kbEnableEventProps);
             }
+                
+            store = true;
+            break;
         case kHIDPage_Consumer:
             if (usage == kHIDUsage_Csmr_ACKeyboardLayoutSelect)
                 setProperty(kIOHIDSupportsGlobeKeyKey, kOSBooleanTrue);
@@ -303,7 +313,7 @@ void VoodooI2CKeyboardHIDEventDriver::parseKeyboardElement(IOHIDElement *element
             break;
     }
     
-    if(store) {
+    if (store) {
         keyboard.elements->setObject(element);
     }
 }
@@ -340,12 +350,12 @@ IOReturn VoodooI2CKeyboardHIDEventDriver::parseElements() {
 
 void VoodooI2CKeyboardHIDEventDriver::setKeyboardProperties()
 {
+    if (!keyboard.elements)
+        return;
+    
     OSDictionary *properties = OSDictionary::withCapacity(4);
     
     if (!properties)
-        return;
-    
-    if (!keyboard.elements)
         return;
     
     properties->setObject(kIOHIDElementKey, keyboard.elements);
@@ -360,28 +370,6 @@ IOReturn VoodooI2CKeyboardHIDEventDriver::setPowerState(unsigned long whichState
     return kIOPMAckImplied;
 }
 
-bool VoodooI2CKeyboardHIDEventDriver::start(IOService* provider) {
-    if (!super::start(provider))
-        return false;
-    
-    work_loop = getWorkLoop();
-    
-    if (!work_loop)
-        return false;
-    
-    work_loop->retain();
-    
-    command_gate = IOCommandGate::commandGate(this);
-    if (!command_gate) {
-        return false;
-    }
-    
-    work_loop->addEventSource(command_gate);
-    setProperty("VoodooI2CServices Supported", kOSBooleanTrue);
-
-    return true;
-}
-
 IOReturn VoodooI2CKeyboardHIDEventDriver::message(UInt32 type, IOService* provider, void *argument) {
     switch (type) {
         case kKeyboardKeyPressTime:
@@ -393,87 +381,4 @@ IOReturn VoodooI2CKeyboardHIDEventDriver::message(UInt32 type, IOService* provid
     }
 
     return kIOReturnSuccess;
-}
-
-void VoodooI2CKeyboardHIDEventDriver::bluetoothHIDAttached(IOService *newService, char *path) {
-    // Filter on specific CoD (Class of Device) bluetooth devices only
-    OSNumber* propDeviceClass = OSDynamicCast(OSNumber, newService->getProperty("ClassOfDevice"));
-    
-    if (propDeviceClass == NULL)
-        return;
-    
-    long classOfDevice = propDeviceClass->unsigned32BitValue();
-    long deviceClassMajor = (classOfDevice & 0x1F00) >> 8;
-    long deviceClassMinor = (classOfDevice & 0xFF) >> 2;
-    long deviceClassMinor1 = deviceClassMinor & 0x30;
-    long deviceClassMinor2 = deviceClassMinor & 0x0F;
-    
-    if (deviceClassMajor != kBluetoothDeviceClassMajorPeripheral)
-        return;
-    
-    if (deviceClassMinor1 != kBluetoothDeviceClassMinorPeripheral1Pointing &&   // Seperate pointing device
-        deviceClassMinor1 != kBluetoothDeviceClassMinorPeripheral1Combo)        // Combo Bluetooth keyboard/touchpad
-        return;
-    
-    if (deviceClassMinor2 != kBluetoothDeviceClassMinorPeripheral2Unclassified &&       // Mouse
-        deviceClassMinor2 != kBluetoothDeviceClassMinorPeripheral2DigitizerTablet &&    // Magic Touchpad
-        deviceClassMinor2 != kBluetoothDeviceClassMinorPeripheral2DigitalPen)           // Wacom Tablet
-        return;
-    
-    attached_hid_pointer_devices->setObject(newService);
-    IOLog("%s: Bluetooth pointer HID device published: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
-}
-
-void VoodooI2CKeyboardHIDEventDriver::notificationHIDAttachedHandlerGated(IOService *newService, IONotifier *notifier) {
-    char path[MAX_PATH_LEN];
-    int len = MAX_PATH_LEN;
-    memset(path, 0, len);
-    newService->getPath(path, &len, gIOServicePlane);
-    
-    if (notifier == usb_hid_publish_notify) {
-        IORegistryEntry* hid_child = OSDynamicCast(IORegistryEntry, newService->getChildEntry(gIOServicePlane));
-        
-        if (!hid_child)
-            return;
-
-        OSNumber* primary_usage_page = OSDynamicCast(OSNumber, hid_child->getProperty(kIOHIDPrimaryUsagePageKey));
-        OSNumber* primary_usage = OSDynamicCast(OSNumber, hid_child->getProperty(kIOHIDPrimaryUsageKey));
-        
-        if (!primary_usage_page || !primary_usage)
-            return;
-        
-        // ignore touchscreens
-
-        if (primary_usage_page->unsigned8BitValue() != kHIDPage_Digitizer &&
-            primary_usage->unsigned8BitValue() != kHIDUsage_Dig_TouchScreen) {
-            
-            attached_hid_pointer_devices->setObject(newService);
-            IOLog("%s: USB pointer HID device published: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
-        }
-    }
-    
-    if (notifier == usb_hid_terminate_notify) {
-        attached_hid_pointer_devices->removeObject(newService);
-        IOLog("%s: USB pointer HID device terminated: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
-    }
-    
-    if (notifier == bluetooth_hid_publish_notify) {
-        bluetoothHIDAttached(newService, path);
-    }
-    
-    if (notifier == bluetooth_hid_terminate_notify) {
-        attached_hid_pointer_devices->removeObject(newService);
-        IOLog("%s: Bluetooth pointer HID device terminated: %s, # devices: %d\n", getName(), path, attached_hid_pointer_devices->getCount());
-    }
-}
-
-bool VoodooI2CKeyboardHIDEventDriver::notificationHIDAttachedHandler(void *refCon,
-                                                                     IOService *newService,
-                                                                     IONotifier *notifier) {
-    IOCommandGate::Action action = OSMemberFunctionCast(IOCommandGate::Action,
-                                                        this,
-                                                        &VoodooI2CKeyboardHIDEventDriver::notificationHIDAttachedHandlerGated);
-    
-    command_gate->runAction(action, newService, notifier);
-    return true;
 }
