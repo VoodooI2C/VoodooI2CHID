@@ -256,22 +256,22 @@ void VoodooI2CKeyboardHIDEventDriver::parseKeyboardElement(IOHIDElement *element
             // This usage is used to let the OS know if a keyboard is in an enabled state where
             // user input is possible
             
-            if (usage != kHIDUsage_KeyboardPower)
-                break;
-            
-            // To avoid problems with un-intentional clearing of the flag
-            // we require this report to be a feature report so that the current
-            // state can be polled if necessary
-            
-            if (element->getType() == kIOHIDElementTypeFeature) {
-                OSDictionary* kbEnableEventProps = OSDictionary::withCapacity(3);
-                if (!kbEnableEventProps)
-                    break;
-                OSSafeReleaseNULL(kbEnableEventProps);
-            }
+            if (usage == kHIDUsage_KeyboardPower) {
                 
-            store = true;
-            break;
+                // To avoid problems with un-intentional clearing of the flag
+                // we require this report to be a feature report so that the current
+                // state can be polled if necessary
+                
+                if (element->getType() == kIOHIDElementTypeFeature) {
+                    OSDictionary* kbEnableEventProps = OSDictionary::withCapacity(3);
+                    if (!kbEnableEventProps)
+                        break;
+                    OSSafeReleaseNULL(kbEnableEventProps);
+                }
+                
+                store = true;
+                break;
+            }
         case kHIDPage_Consumer:
             if (usage == kHIDUsage_Csmr_ACKeyboardLayoutSelect)
                 setProperty(kIOHIDSupportsGlobeKeyKey, kOSBooleanTrue);
