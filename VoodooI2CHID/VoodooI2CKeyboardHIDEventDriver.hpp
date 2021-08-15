@@ -2,7 +2,7 @@
 //  VoodooI2CKeyboardHIDEventDriver.hpp
 //  VoodooI2CHID
 //
-//  Created by 夏尚宁 on 2021/3/17.
+//  Created by Xiashangning on 2021/3/17.
 //  Copyright © 2021 Alexandre Daoud. All rights reserved.
 //
 
