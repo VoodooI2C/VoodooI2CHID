@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		0FD0AFEC258E44F900C77E6A /* libkmod.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FD0AFEB258E44F900C77E6A /* libkmod.a */; };
+		2814C7C426BD9C4A00A5999D /* VoodooI2CKeyboardHIDEventDriver.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 2814C7C226BD9C4900A5999D /* VoodooI2CKeyboardHIDEventDriver.hpp */; };
+		2814C7C526BD9C4A00A5999D /* VoodooI2CKeyboardHIDEventDriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2814C7C326BD9C4A00A5999D /* VoodooI2CKeyboardHIDEventDriver.cpp */; };
 		4E9F1E831F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4E9F1E811F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.cpp */; };
 		4E9F1E841F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4E9F1E821F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.hpp */; };
 		AC01EE9C201E2B7D005A2988 /* VoodooI2CAccelerometerSensor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC01EE9A201E2B7D005A2988 /* VoodooI2CAccelerometerSensor.cpp */; };
@@ -38,6 +40,8 @@
 
 /* Begin PBXFileReference section */
 		0FD0AFEB258E44F900C77E6A /* libkmod.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libkmod.a; path = ../../MacKernelSDK/Library/x86_64/libkmod.a; sourceTree = "<group>"; };
+		2814C7C226BD9C4900A5999D /* VoodooI2CKeyboardHIDEventDriver.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = VoodooI2CKeyboardHIDEventDriver.hpp; sourceTree = "<group>"; };
+		2814C7C326BD9C4A00A5999D /* VoodooI2CKeyboardHIDEventDriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VoodooI2CKeyboardHIDEventDriver.cpp; sourceTree = "<group>"; };
 		4E9F1E811F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VoodooI2CTouchscreenHIDEventDriver.cpp; sourceTree = "<group>"; };
 		4E9F1E821F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = VoodooI2CTouchscreenHIDEventDriver.hpp; sourceTree = "<group>"; };
 		AC01EE9A201E2B7D005A2988 /* VoodooI2CAccelerometerSensor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VoodooI2CAccelerometerSensor.cpp; path = Sensors/VoodooI2CAccelerometerSensor.cpp; sourceTree = "<group>"; };
@@ -116,6 +120,8 @@
 				AC0DE5ED1F4FFDB2006149C8 /* VoodooI2CHIDDevice.hpp */,
 				ACCFCF211F69C1DC003E4131 /* VoodooI2CMultitouchHIDEventDriver.cpp */,
 				ACCFCF221F69C1DC003E4131 /* VoodooI2CMultitouchHIDEventDriver.hpp */,
+				2814C7C326BD9C4A00A5999D /* VoodooI2CKeyboardHIDEventDriver.cpp */,
+				2814C7C226BD9C4900A5999D /* VoodooI2CKeyboardHIDEventDriver.hpp */,
 				AC0556971F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.cpp */,
 				AC0556981F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.hpp */,
 				4E9F1E811F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.cpp */,
@@ -171,6 +177,7 @@
 				AC6388CD201B8E9F005E1341 /* VoodooI2CDeviceOrientationSensor.hpp in Headers */,
 				AC0ADA352017C2DC004DB693 /* VoodooI2CStylusHIDEventDriver.hpp in Headers */,
 				4E9F1E841F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.hpp in Headers */,
+				2814C7C426BD9C4A00A5999D /* VoodooI2CKeyboardHIDEventDriver.hpp in Headers */,
 				ACE41BFE22FE5BCF00F75673 /* VoodooI2CHIDSYNA3602Device.hpp in Headers */,
 				AC01EEA1201E2BAB005A2988 /* VoodooI2CSensor.hpp in Headers */,
 				AC0DE5EF1F4FFDB2006149C8 /* VoodooI2CHIDDevice.hpp in Headers */,
@@ -251,6 +258,7 @@
 			files = (
 				ACE41BF922FE565000F75673 /* VoodooI2CHIDDeviceOverride.cpp in Sources */,
 				AC0556991F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.cpp in Sources */,
+				2814C7C526BD9C4A00A5999D /* VoodooI2CKeyboardHIDEventDriver.cpp in Sources */,
 				AC0E628B201A629A00A31157 /* VoodooI2CSensorHubEventDriver.cpp in Sources */,
 				4E9F1E831F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.cpp in Sources */,
 				AC01EE9C201E2B7D005A2988 /* VoodooI2CAccelerometerSensor.cpp in Sources */,
