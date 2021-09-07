@@ -7,6 +7,7 @@
 //
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
+#include "VoodooI2CHIDDevice.hpp"
 #include <IOKit/IOCommandGate.h>
 #include <IOKit/hid/IOHIDInterface.h>
 #include <IOKit/usb/USBSpec.h>
@@ -761,6 +762,11 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::setPowerState(unsigned long whichSta
 }
 
 bool VoodooI2CMultitouchHIDEventDriver::start(IOService* provider) {
+    IOService *parent = provider->getProvider();
+    if (OSDynamicCast(VoodooI2CHIDDevice, parent) == nullptr) {
+        return false;   
+    }
+    
     if (!super::start(provider))
         return false;
     
