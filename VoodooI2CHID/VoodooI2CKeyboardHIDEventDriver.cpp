@@ -7,6 +7,7 @@
 //
 
 #include "VoodooI2CKeyboardHIDEventDriver.hpp"
+#include "VoodooI2CHIDDevice.hpp"
 #include <IOKit/IOCommandGate.h>
 #include <IOKit/hid/IOHIDInterface.h>
 #include <IOKit/usb/USBSpec.h>
@@ -138,6 +139,10 @@ void VoodooI2CKeyboardHIDEventDriver::handleInterruptReport(AbsoluteTime timesta
 }
 
 bool VoodooI2CKeyboardHIDEventDriver::start(IOService* provider) {
+    IOService *parent = provider->getProvider();
+    if (OSDynamicCast(VoodooI2CHIDDevice, parent) == nullptr)
+        return false;
+    
     if (!super::start(provider))
         return false;
     
