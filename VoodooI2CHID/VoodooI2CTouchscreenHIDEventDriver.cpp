@@ -111,6 +111,10 @@ void VoodooI2CTouchscreenHIDEventDriver::checkRotation(IOFixed* x, IOFixed* y) {
     }
 }
 
+IOReturn VoodooI2CTouchscreenHIDEventDriver::parseElements(UInt32) {
+    return super::parseElements(kHIDUsage_Dig_TouchScreen);
+}
+
 bool VoodooI2CTouchscreenHIDEventDriver::checkStylus(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
     //  Check the current transducers for stylus operation, dispatch the pointer events and return true.
     //  At this time, Apple has removed all methods of handling additional information from the event driver.  Only x, y, buttonstate, and

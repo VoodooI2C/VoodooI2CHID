@@ -38,6 +38,10 @@ bool VoodooI2CPrecisionTouchpadHIDEventDriver::handleStart(IOService* provider) 
     return true;
 }
 
+IOReturn VoodooI2CPrecisionTouchpadHIDEventDriver::parseElements(UInt32) {
+    return super::parseElements(kHIDUsage_Dig_TouchPad);
+}
+
 IOReturn VoodooI2CPrecisionTouchpadHIDEventDriver::setPowerState(unsigned long whichState, IOService* whatDevice) {
     if (whatDevice != this)
         return kIOReturnInvalid;
