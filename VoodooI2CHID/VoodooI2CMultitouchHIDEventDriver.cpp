@@ -615,13 +615,21 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements(UInt32 usage) {
         if (element->getUsage() == 0)
             continue;
         
-        if (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_DeviceConfiguration)
-            || (usage != kHIDUsage_Dig_Any && element->conformsTo(kHIDPage_Digitizer, usage))
-            || (usage == kHIDUsage_Dig_Any
-                && (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_Pen)
-                    || element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchScreen)
-                    || element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchPad)
-            ))) {
+        /*
+         * Parse digitzer elements depending on which Event Driver is attaching.
+         * Precision/TouchScreen are specifically looking for kHIDUsage_Dig_TouchPad/TouchScreen respectively.
+         * Generic Multitouch looks for any supported Digitizer element (usage == kHIDUsage_Dig_Any).
+         * kHIDUsage_Dig_DeviceConfiguration is valid for both of the cases above.
+         */
+        
+        if (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_DeviceConfiguration)) {
+            parseDigitizerElement(element);
+        } else if (usage != kHIDUsage_Dig_Any && element->conformsTo(kHIDPage_Digitizer, usage)) {
+            parseDigitizerElement(element);
+        } else if (usage == kHIDUsage_Dig_Any
+                   && (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_Pen)
+                       || element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchScreen)
+                       || element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchPad))) {
             parseDigitizerElement(element);
         }
         
