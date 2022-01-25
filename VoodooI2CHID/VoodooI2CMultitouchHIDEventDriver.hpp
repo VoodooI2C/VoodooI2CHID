@@ -43,6 +43,9 @@
 #define kHIDUsage_LengthUnitCentimeter  0x11
 #define kHIDUsage_LengthUnitInch        0x13
 
+// Allows pen, stylus, touchpad, or touchscreen to be parsed in parseElements
+#define kHIDUsage_Dig_Any               0x00
+
 // Message types defined by ApplePS2Keyboard
 enum {
     // from keyboard to mouse/touchpad
@@ -262,11 +265,13 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     virtual void forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp);
     
     /* Parses all matched elements
+     * @usage The usage which elements should conform to so they will be parsed.
+     *
+     * If the usage argument is any value other than kHIDUsage_Dig_Any, then only elements which conform to this usage are parsed.
      *
      * @return *kIOReturnSuccess* on successful parse, *kIOReturnNotFound* if the matched elements are not supported, *kIOReturnError* otherwise
      */
-
-    virtual IOReturn parseElements(UInt32 forUsage=0);
+    virtual IOReturn parseElements(UInt32 usage);
 
  private:
     SInt32 absolute_axis_removal_percentage = 15;
