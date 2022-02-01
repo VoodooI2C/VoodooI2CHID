@@ -634,9 +634,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements(UInt32 usage) {
         }
         
         if ((usage == kHIDUsage_Dig_Any || usage == kHIDUsage_Dig_TouchScreen)
-            && multitouch_interface
-            && element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchScreen
-            )) {
+            && multitouch_interface && element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchScreen)) {
             multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, kOSBooleanTrue);
         }
     }
