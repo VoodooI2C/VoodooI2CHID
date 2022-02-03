@@ -168,7 +168,7 @@ IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportTy
     UInt8 report_id = options & 0xFF;
     UInt8 raw_report_type = (reportType == kIOHIDReportTypeFeature) ? 0x03 : 0x01;
 
-    UInt8* buffer = (UInt8*)IOMalloc(report->getLength());
+    UInt8* buffer = (UInt8*)IOMalloc(report->getLength()+2);
 
 
     if (report_id >= 0x0F) {
@@ -191,9 +191,9 @@ IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportTy
 
     memcpy(raw_command + length, args, args_len);
     length += args_len;
-    ret = api->writeReadI2C(raw_command, length, buffer, report->getLength());
+    ret = api->writeReadI2C(raw_command, length, buffer, report->getLength()+2);
 
-    report->writeBytes(0, buffer+2, report->getLength()-2);
+    report->writeBytes(0, buffer+2, report->getLength());
 
     IOFree(command, 4+args_len);
 
@@ -347,12 +347,17 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     UInt16 size;
     UInt16 arguments_length;
     UInt8 report_id = options & 0xFF;
-    UInt8* buffer = (UInt8*)IOMalloc(report->getLength());
-    report->readBytes(0, buffer, report->getLength());
-
+    UInt16 report_length = report->getLength();
+    UInt8* buffer = (UInt8*)IOMalloc(report_length);
+    
+    report->readBytes(0, buffer, report_length);
+    if(report_id == buffer[0]){
+        buffer++;
+        report_length--;
+    }
     size = 2 +
     (report_id ? 1 : 0)     /* reportID */ +
-    report->getLength()     /* buf */;
+    report_length     /* buf */;
 
     arguments_length = (report_id >= 0x0F ? 1 : 0)  /* optional third byte */ +
     2                                               /* dataRegister */ +
@@ -375,7 +380,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     if (report_id)
         arguments[idx++] = report_id;
 
-    memcpy(&arguments[idx], buffer, report->getLength());
+    memcpy(&arguments[idx], buffer, report_length);
 
     UInt8 length = 4;
 
@@ -391,7 +396,6 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     length += arguments_length;
     IOReturn ret = api->writeI2C(raw_command, length);
     IOSleep(10);
-
     IOFree(command, 4+arguments_length);
     IOFree(arguments, arguments_length);
 
