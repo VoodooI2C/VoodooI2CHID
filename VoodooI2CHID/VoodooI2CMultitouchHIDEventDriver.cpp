@@ -431,7 +431,7 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
     if (!digitiser.transducers)
         return false;
 
-    if (parseElements() != kIOReturnSuccess) {
+    if (parseElements(kHIDUsage_Dig_Any) != kIOReturnSuccess) {
         IOLog("%s::%s Could not parse multitouch elements\n", getName(), name);
         return false;
     }
@@ -597,7 +597,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
     return kIOReturnSuccess;
 }
     
-IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
+IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements(UInt32 usage) {
     int index, count;
 
     OSArray* supported_elements = OSDynamicCast(OSArray, hid_device->getProperty(kIOHIDElementKey));
@@ -614,17 +614,30 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements() {
 
         if (element->getUsage() == 0)
             continue;
-
-        if (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_Pen)
-            || element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchScreen)
-            || element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchPad)
-            || element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_DeviceConfiguration)
-            )
-            parseDigitizerElement(element);
         
-        if (multitouch_interface && element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchScreen))
+        /*
+         * Parse digitzer elements depending on which Event Driver is attaching.
+         * Precision/TouchScreen are specifically looking for kHIDUsage_Dig_TouchPad/TouchScreen respectively.
+         * Generic Multitouch looks for any supported Digitizer element (usage == kHIDUsage_Dig_Any).
+         * kHIDUsage_Dig_DeviceConfiguration is valid for both of the cases above.
+         */
+        
+        if (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_DeviceConfiguration)) {
+            parseDigitizerElement(element);
+        } else if (usage != kHIDUsage_Dig_Any && element->conformsTo(kHIDPage_Digitizer, usage)) {
+            parseDigitizerElement(element);
+        } else if (usage == kHIDUsage_Dig_Any
+                   && (element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_Pen)
+                       || element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchScreen)
+                       || element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchPad))) {
+            parseDigitizerElement(element);
+        }
+        
+        if ((usage == kHIDUsage_Dig_Any || usage == kHIDUsage_Dig_TouchScreen)
+            && multitouch_interface && element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_TouchScreen)) {
             multitouch_interface->setProperty(kIOHIDDisplayIntegratedKey, kOSBooleanTrue);
         }
+    }
     
 
     if (digitiser.styluses->getCount() == 0 && digitiser.fingers->getCount() == 0)

@@ -56,6 +56,11 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
      */
 
     bool checkStylus(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
+    
+    /*
+     * Overriden to only check for kHIDUsage_Dig_TouchScreen
+     */
+    IOReturn parseElements(UInt32) override;
 
  private:
     IOWorkLoop *work_loop;

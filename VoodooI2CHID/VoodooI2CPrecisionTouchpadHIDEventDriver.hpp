@@ -44,6 +44,11 @@ class EXPORT VoodooI2CPrecisionTouchpadHIDEventDriver : public VoodooI2CMultitou
     IOReturn setPowerState(unsigned long whichState, IOService* whatDevice) override;
 
  protected:
+    
+    /*
+     * Overriden to only check for kHIDUsage_Dig_TouchPad
+     */
+    IOReturn parseElements(UInt32) override;
  private:
     bool ready = false;
 

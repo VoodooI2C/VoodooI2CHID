@@ -43,6 +43,9 @@
 #define kHIDUsage_LengthUnitCentimeter  0x11
 #define kHIDUsage_LengthUnitInch        0x13
 
+// Allows pen, stylus, touchpad, or touchscreen to be parsed in parseElements
+#define kHIDUsage_Dig_Any               0x00
+
 // Message types defined by ApplePS2Keyboard
 enum {
     // from keyboard to mouse/touchpad
@@ -178,13 +181,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
 
     IOReturn parseDigitizerTransducerElement(IOHIDElement* element, IOHIDElement* parent);
 
-    /* Parses all matched elements
-     *
-     * @return *kIOReturnSuccess* on successful parse, *kIOReturnNotFound* if the matched elements are not supported, *kIOReturnError* otherwise
-     */
-
-    IOReturn parseElements();
-
+    
     /* Postprocessing of digitizer elements
      *
      * This function is mostly copied from Apple's own HID Event Driver code. It is responsible for cleaning up malformed report descriptors as well as setting some miscellaneous properties.
@@ -266,6 +263,15 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     bool should_have_interface = true;
 
     virtual void forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp);
+    
+    /* Parses all matched elements
+     * @usage The usage which elements should conform to so they will be parsed.
+     *
+     * If the usage argument is any value other than kHIDUsage_Dig_Any, then only elements which conform to this usage are parsed.
+     *
+     * @return *kIOReturnSuccess* on successful parse, *kIOReturnNotFound* if the matched elements are not supported, *kIOReturnError* otherwise
+     */
+    virtual IOReturn parseElements(UInt32 usage);
 
  private:
     SInt32 absolute_axis_removal_percentage = 15;
