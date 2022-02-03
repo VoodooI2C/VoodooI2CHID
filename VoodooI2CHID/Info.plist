@@ -95,11 +95,6 @@
 			</array>
 			<key>IOMatchCategory</key>
 			<string>VoodooI2CHIDMultitouch</string>
-			<key>IOPropertyMatch</key>
-			<dict>
-				<key>Transport</key>
-				<string>I2C</string>
-			</dict>
 			<key>IOProbeScore</key>
 			<integer>300</integer>
 			<key>IOClass</key>

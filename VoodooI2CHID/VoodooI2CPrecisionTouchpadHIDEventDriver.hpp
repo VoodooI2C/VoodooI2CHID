@@ -23,11 +23,6 @@
 #define INPUT_MODE_MOUSE 0x00
 #define INPUT_MODE_TOUCHPAD 0x03
 
-typedef struct __attribute__((__packed__)) {
-    UInt8 value;
-    UInt8 reserved;
-} VoodooI2CPrecisionTouchpadFeatureReport;
-
 /* Implements an HID Event Driver for Precision Touchpad devices as specified by Microsoft's protocol in the following document: https://docs.microsoft.com/en-us/windows-hardware/design/component-guidelines/precision-touchpad-devices
  *
  * The members of this class are responsible for instructing a Precision Touchpad device to enter Touchpad mode.
