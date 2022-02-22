@@ -12,8 +12,19 @@
 OSDefineMetaClassAndStructors(VoodooI2CPrecisionTouchpadHIDEventDriver, VoodooI2CMultitouchHIDEventDriver);
 
 void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
-    digitiser.input_mode->setValue(INPUT_MODE_TOUCHPAD);
+    // We should really do this using `input_mode_element->setValue(INPUT_MODE_TOUCHPAD)`.
+    // This appears to not work on Catalina or older though (Works in Big Sur/Monterey)
+    
+    VoodooI2CPrecisionTouchpadFeatureReport buffer;
+    buffer.reportID = digitiser.input_mode->getReportID();
+    buffer.value = INPUT_MODE_TOUCHPAD;
+    buffer.reserved = 0x00;
+    IOBufferMemoryDescriptor* report = IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task, 0, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
+    report->writeBytes(0, &buffer, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
 
+    hid_interface->setReport(report, kIOHIDReportTypeFeature, digitiser.input_mode->getReportID());
+    report->release();
+    
     ready = true;
 }
 
