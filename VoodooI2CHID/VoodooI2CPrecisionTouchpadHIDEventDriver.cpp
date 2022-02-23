@@ -12,9 +12,15 @@
 OSDefineMetaClassAndStructors(VoodooI2CPrecisionTouchpadHIDEventDriver, VoodooI2CMultitouchHIDEventDriver);
 
 void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
-    // We should really do this using `input_mode_element->setValue(INPUT_MODE_TOUCHPAD)`.
-    // This appears to not work on Catalina or older though (Works in Big Sur/Monterey)
+    if (version_major > CATALINA_MAJOR_VERSION) {
+        // Update value from hardware so we can rewrite mode when waking from sleep
+        digitiser.input_mode->getValue(kIOHIDValueOptionsUpdateElementValues);
+        digitiser.input_mode->setValue(INPUT_MODE_TOUCHPAD);
+        ready = true;
+        return;
+    }
     
+    // TODO: setValue appears to not work on Catalina or older
     VoodooI2CPrecisionTouchpadFeatureReport buffer;
     buffer.reportID = digitiser.input_mode->getReportID();
     buffer.value = INPUT_MODE_TOUCHPAD;

@@ -10,6 +10,7 @@
 #define VoodooI2CPrecisionTouchpadHIDEventDriver_hpp
 
 #include <IOKit/IOLib.h>
+#include <libkern/version.h>
 #include <IOKit/IOKitKeys.h>
 #include <IOKit/IOService.h>
 #include <IOKit/IOBufferMemoryDescriptor.h>
@@ -22,6 +23,8 @@
 
 #define INPUT_MODE_MOUSE 0x00
 #define INPUT_MODE_TOUCHPAD 0x03
+
+#define CATALINA_MAJOR_VERSION 20 // Darwin major version for Catalina
 
 typedef struct __attribute__((__packed__)) {
      UInt8 reportID;
