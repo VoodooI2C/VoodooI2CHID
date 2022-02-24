@@ -10,6 +10,7 @@
 #define VoodooI2CPrecisionTouchpadHIDEventDriver_hpp
 
 #include <IOKit/IOLib.h>
+#include <libkern/version.h>
 #include <IOKit/IOKitKeys.h>
 #include <IOKit/IOService.h>
 #include <IOKit/IOBufferMemoryDescriptor.h>
@@ -22,6 +23,14 @@
 
 #define INPUT_MODE_MOUSE 0x00
 #define INPUT_MODE_TOUCHPAD 0x03
+
+#define CATALINA_MAJOR_VERSION 19 // Darwin major version for Catalina
+
+typedef struct __attribute__((__packed__)) {
+     UInt8 reportID;
+     UInt8 value;
+     UInt8 reserved;
+ } VoodooI2CPrecisionTouchpadFeatureReport;
 
 /* Implements an HID Event Driver for Precision Touchpad devices as specified by Microsoft's protocol in the following document: https://docs.microsoft.com/en-us/windows-hardware/design/component-guidelines/precision-touchpad-devices
  *
