@@ -150,10 +150,9 @@ void VoodooI2CHIDDevice::getInputReport() {
     if (ret != kIOReturnSuccess)
         IOLog("%s::%s Error handling input report: 0x%.8x\n", getName(), name, ret);
 
-    buffer->release();
-    IOFree(report, hid_descriptor.wMaxInputLength);
-
+    OSSafeReleaseNULL(buffer);
 exit:
+    IOFree(report, hid_descriptor.wMaxInputLength);
     return;
 }
 
@@ -195,6 +194,7 @@ IOReturn VoodooI2CHIDDevice::getReport(IOMemoryDescriptor* report, IOHIDReportTy
 
     report->writeBytes(0, buffer+2, report->getLength());
 
+    IOFree(buffer, report->getLength()+2);
     IOFree(command, 4+args_len);
 
     return ret;
@@ -250,39 +250,33 @@ void VoodooI2CHIDDevice::releaseResources() {
     if (command_gate) {
         command_gate->disable();
         work_loop->removeEventSource(command_gate);
-        command_gate->release();
-        command_gate = NULL;
+        OSSafeReleaseNULL(command_gate);
     }
 
     stopInterrupt();
 
     if (interrupt_simulator) {
         work_loop->removeEventSource(interrupt_simulator);
-        interrupt_simulator->release();
-        interrupt_simulator = NULL;
+        OSSafeReleaseNULL(interrupt_simulator);
     }
 
     if (interrupt_source) {
         work_loop->removeEventSource(interrupt_source);
-        interrupt_source->release();
-        interrupt_source = NULL;
+        OSSafeReleaseNULL(interrupt_source);
     }
 
     if (work_loop) {
-        work_loop->release();
-        work_loop = NULL;
+        OSSafeReleaseNULL(work_loop);
     }
 
     if (acpi_device) {
-        acpi_device->release();
-        acpi_device = NULL;
+        OSSafeReleaseNULL(acpi_device);
     }
 
     if (api) {
         if (api->isOpen(this))
             api->close(this);
-        api->release();
-        api = NULL;
+        OSSafeReleaseNULL(api);
     }
 }
 
@@ -398,6 +392,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     IOSleep(10);
     IOFree(command, 4+arguments_length);
     IOFree(arguments, arguments_length);
+    IOFree(buffer, report_length);
 
     return ret;
 }
