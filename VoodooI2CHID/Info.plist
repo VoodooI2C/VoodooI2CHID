@@ -89,6 +89,7 @@
 					<integer>13</integer>
 				</dict>
 			</array>
+			<key>IOPropertyMatch</key>
 			<dict>
 				<key>Transport</key>
 				<string>I2C</string>
