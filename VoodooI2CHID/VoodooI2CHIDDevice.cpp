@@ -392,7 +392,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     IOSleep(10);
     IOFree(command, 4+arguments_length);
     IOFree(arguments, arguments_length);
-    IOFree(buffer, report_length);
+    IOFree(buffer, report->getLength());
 
     return ret;
 }
