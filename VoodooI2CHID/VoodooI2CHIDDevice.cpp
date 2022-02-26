@@ -343,6 +343,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     UInt8 report_id = options & 0xFF;
     UInt16 report_length = report->getLength();
     UInt8* buffer = (UInt8*)IOMalloc(report_length);
+    UInt8* orig_buffer = buffer;
     
     report->readBytes(0, buffer, report_length);
     if(report_id == buffer[0]){
@@ -392,7 +393,7 @@ IOReturn VoodooI2CHIDDevice::setReport(IOMemoryDescriptor* report, IOHIDReportTy
     IOSleep(10);
     IOFree(command, 4+arguments_length);
     IOFree(arguments, arguments_length);
-    IOFree(buffer, report->getLength());
+    IOFree(orig_buffer, report->getLength());
 
     return ret;
 }
