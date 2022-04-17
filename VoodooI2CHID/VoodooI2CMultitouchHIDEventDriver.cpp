@@ -179,6 +179,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
         if (transducer) {
             setButtonState(&transducer->physical_button, 0, digitiser.primaryButton->getValue(), timestamp);
             if (digitiser.secondaryButton) {
+                transducer->has_secondary_button = true;
                 setButtonState(&transducer->physical_button, 1, digitiser.secondaryButton->getValue(), timestamp);
             }
         }
