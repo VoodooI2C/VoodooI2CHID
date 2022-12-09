@@ -207,8 +207,13 @@ IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp) {
-    if (!active_framebuffer)
+    if (!active_framebuffer) {
         active_framebuffer = getFramebuffer();
+        
+        if (active_framebuffer) {
+            active_framebuffer->retain();
+        }
+    }
 
     if (active_framebuffer) {
         OSNumber* number = OSDynamicCast(OSNumber, active_framebuffer->getProperty(kIOFBTransformKey));
@@ -258,17 +263,30 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     }
     
     active_framebuffer = getFramebuffer();
+    if (active_framebuffer) {
+        active_framebuffer->retain();
+    }
     
     return true;
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::handleStop(IOService* provider) {
+    IOLog("%s::Start of handleStop\n", getName());
     if (timer_source) {
         work_loop->removeEventSource(timer_source);
         OSSafeReleaseNULL(timer_source);
     }
     
+    IOLog("%s::Released time source\n", getName());
+    
     OSSafeReleaseNULL(work_loop);
+    
+    IOLog("%s::Released work loop\n", getName());
+    
+    if (active_framebuffer) {
+        OSSafeReleaseNULL(active_framebuffer);
+        IOLog("%s::Released active framebuffer\n", getName());
+    }
     
     super::handleStop(provider);
 }

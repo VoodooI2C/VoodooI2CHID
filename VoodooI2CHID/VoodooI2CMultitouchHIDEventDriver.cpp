@@ -450,14 +450,9 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
 }
 
 void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
-    OSSafeReleaseNULL(digitiser.transducers);
-    OSSafeReleaseNULL(digitiser.wrappers);
-    OSSafeReleaseNULL(digitiser.styluses);
-    OSSafeReleaseNULL(digitiser.fingers);
-    
     unregisterHIDPointerNotifications();
     OSSafeReleaseNULL(attached_hid_pointer_devices);
-
+    
     if (multitouch_interface) {
         multitouch_interface->stop(this);
         multitouch_interface->detach(this);
@@ -470,6 +465,12 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
     }
 
     OSSafeReleaseNULL(work_loop);
+
+    
+    OSSafeReleaseNULL(digitiser.transducers);
+    OSSafeReleaseNULL(digitiser.wrappers);
+    OSSafeReleaseNULL(digitiser.styluses);
+    OSSafeReleaseNULL(digitiser.fingers);
 
     PMstop();
     super::handleStop(provider);
