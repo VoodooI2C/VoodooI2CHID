@@ -112,12 +112,12 @@ void VoodooI2CSensorHubEventDriver::handleStop(IOService* provider) {
     super::handleStop(provider);
 }
 
-bool VoodooI2CSensorHubEventDriver::didTerminate(IOService* provider, IOOptionBits options, bool* defer) {
+bool VoodooI2CSensorHubEventDriver::willTerminate(IOService* provider, IOOptionBits options) {
     if (hid_interface)
         hid_interface->close(this);
     hid_interface = NULL;
     
-    return super::didTerminate(provider, options, defer);
+    return super::willTerminate(provider, options);
 }
 
 IOReturn VoodooI2CSensorHubEventDriver::parseSensorParent(IOHIDElement* parent) {

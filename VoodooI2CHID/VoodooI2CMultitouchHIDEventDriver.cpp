@@ -48,12 +48,12 @@ void VoodooI2CMultitouchHIDEventDriver::calibrateJustifiedPreferredStateElement(
     element->setCalibration(0, 1, sat_min, sat_max);
 }
 
-bool VoodooI2CMultitouchHIDEventDriver::didTerminate(IOService* provider, IOOptionBits options, bool* defer) {
+bool VoodooI2CMultitouchHIDEventDriver::willTerminate(IOService* provider, IOOptionBits options) {
     if (hid_interface)
         hid_interface->close(this);
     hid_interface = NULL;
     
-    return super::didTerminate(provider, options, defer);
+    return super::willTerminate(provider, options);
 }
 
 void VoodooI2CMultitouchHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp) {
