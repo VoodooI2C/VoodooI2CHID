@@ -277,11 +277,7 @@ void VoodooI2CTouchscreenHIDEventDriver::handleStop(IOService* provider) {
         OSSafeReleaseNULL(timer_source);
     }
     
-    IOLog("%s::Released time source\n", getName());
-    
     OSSafeReleaseNULL(work_loop);
-    
-    IOLog("%s::Released work loop\n", getName());
     
     if (active_framebuffer) {
         OSSafeReleaseNULL(active_framebuffer);
