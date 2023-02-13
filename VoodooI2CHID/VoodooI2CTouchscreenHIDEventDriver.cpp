@@ -190,12 +190,9 @@ IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
         display = OSDynamicCast(IORegistryEntry, iterator->getNextObject());
         
         if (display) {
-            IOLog("%s::Got active display\n", getName());
             IORegistryEntry *entry = display->getParentEntry(gIOServicePlane)->getParentEntry(gIOServicePlane);
             if (entry)
                 framebuffer = reinterpret_cast<IOFramebuffer*>(entry->metaCast("IOFramebuffer"));
-            if (framebuffer)
-                IOLog("%s::Got active framebuffer\n", getName());
         }
         
         iterator->release();
@@ -271,7 +268,6 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::handleStop(IOService* provider) {
-    IOLog("%s::Start of handleStop\n", getName());
     if (timer_source) {
         work_loop->removeEventSource(timer_source);
         OSSafeReleaseNULL(timer_source);
