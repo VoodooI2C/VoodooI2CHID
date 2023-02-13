@@ -281,7 +281,6 @@ void VoodooI2CTouchscreenHIDEventDriver::handleStop(IOService* provider) {
     
     if (active_framebuffer) {
         OSSafeReleaseNULL(active_framebuffer);
-        IOLog("%s::Released active framebuffer\n", getName());
     }
     
     super::handleStop(provider);
