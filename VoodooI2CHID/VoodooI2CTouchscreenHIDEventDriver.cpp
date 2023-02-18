@@ -190,12 +190,9 @@ IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
         display = OSDynamicCast(IORegistryEntry, iterator->getNextObject());
         
         if (display) {
-            IOLog("%s::Got active display\n", getName());
             IORegistryEntry *entry = display->getParentEntry(gIOServicePlane)->getParentEntry(gIOServicePlane);
             if (entry)
                 framebuffer = reinterpret_cast<IOFramebuffer*>(entry->metaCast("IOFramebuffer"));
-            if (framebuffer)
-                IOLog("%s::Got active framebuffer\n", getName());
         }
         
         iterator->release();
@@ -207,8 +204,13 @@ IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp) {
-    if (!active_framebuffer)
+    if (!active_framebuffer) {
         active_framebuffer = getFramebuffer();
+        
+        if (active_framebuffer) {
+            active_framebuffer->retain();
+        }
+    }
 
     if (active_framebuffer) {
         OSNumber* number = OSDynamicCast(OSNumber, active_framebuffer->getProperty(kIOFBTransformKey));
@@ -258,6 +260,9 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     }
     
     active_framebuffer = getFramebuffer();
+    if (active_framebuffer) {
+        active_framebuffer->retain();
+    }
     
     return true;
 }
@@ -269,6 +274,10 @@ void VoodooI2CTouchscreenHIDEventDriver::handleStop(IOService* provider) {
     }
     
     OSSafeReleaseNULL(work_loop);
+    
+    if (active_framebuffer) {
+        OSSafeReleaseNULL(active_framebuffer);
+    }
     
     super::handleStop(provider);
 }

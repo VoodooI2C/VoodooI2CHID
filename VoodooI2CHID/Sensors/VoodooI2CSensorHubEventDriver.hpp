@@ -34,7 +34,7 @@ class EXPORT VoodooI2CSensorHubEventDriver : public IOHIDEventService {
     IOReturn setPowerState(unsigned long whichState, IOService* whatDevice) override;
     IOReturn setReport(IOMemoryDescriptor* report, IOHIDReportType reportType, UInt32 reportID);
     
-    bool didTerminate(IOService* provider, IOOptionBits options, bool* defer) override;
+    bool willTerminate(IOService* provider, IOOptionBits options) override;
 
  protected:
  private:
