@@ -24,6 +24,17 @@
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
 
+#define VOODOO_I2C_TOUCHSCREEN_DEBUG
+
+#define DOUBLE_CLICK_FAT_ZONE   40
+#define DOUBLE_CLICK_TIME       450
+#define FINGER_LIFT_DELAY       50
+
+#define HOVER       0x0
+#define LEFT_CLICK  0x1
+#define RIGHT_CLICK 0x2
+#define ERASE       0x4
+
 /* Implements an HID Event Driver for touchscreen devices as well as stylus input.
  */
 
@@ -62,6 +73,14 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
      */
     IOReturn parseElements(UInt32) override;
 
+    /* Check if this interaction is within fat finger distance
+     */
+    bool isCloseToLastInteraction(UInt16 x, UInt16 y);
+
+    /* Schedule a finger lift event
+     */
+    void scheduleLift();
+
  private:
     IOWorkLoop *work_loop;
     IOTimerEventSource *timer_source;
@@ -89,6 +108,7 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
     UInt16 compare_input_x = 0;
     UInt16 compare_input_y = 0;
     int compare_input_counter = 0;
+    UInt64 last_click_time = 0;
     
     /* The transducer is checked for singletouch finger based operation and the pointer event dispatched. This function
      * also handles a long-press, right-click function.
