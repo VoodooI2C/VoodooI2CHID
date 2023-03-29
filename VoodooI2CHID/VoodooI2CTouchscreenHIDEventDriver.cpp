@@ -193,22 +193,15 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     clock_get_uptime(&now_abs);
     
     if (do_double_click) {
-        // End the currently in progress click by hovering at 0
-        // This probably causes problems, but at least it prevents a proper click
-        dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, HOVER, 0, 0);
-
-        // Go where we last clicked
-        last_x = last_click_x;
-        last_y = last_click_y;
-
-        // Click twice
-        dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, LEFT_CLICK, last_x, last_y);
+        // Execute the current in progress click
         dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, HOVER, last_x, last_y);
+        IOLog("%s::Finger lift at %d, %d\n", getName(), last_x, last_y);
+
+        // Click again
         dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, LEFT_CLICK, last_x, last_y);
+        IOLog("%s::Left click at %d, %d\n", getName(), last_x, last_y);
+
         do_double_click = false;
-
-        IOLog("%s::Double click at %d, %d\n", getName(), last_x, last_y);
-
         last_click_time = 0;
     }
     else {
@@ -219,7 +212,6 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     }
 
     dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, HOVER, last_x, last_y);
-    
     IOLog("%s::Finger lift at %d, %d\n", getName(), last_x, last_y);
     
     //  If a right click has been executed, we reset our counter and ensure that pointer is not stuck in right
