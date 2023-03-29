@@ -96,18 +96,6 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             // Only dispatch a single click event after we've done our hover ticks
             if ((click_tick <= HOVER_TICKS + 1) || (x != last_x || y != last_y)) {
                 dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, buttons, x, y);
-
-#ifdef VOODOO_I2C_TOUCHSCREEN_DEBUG
-               if (buttons == HOVER) {
-                   IOLog("%s::Hover at %d, %d\n", getName(), x, y);
-               }
-               else if (buttons == LEFT_CLICK) {
-                   IOLog("%s::Left click at %d, %d\n", getName(), x, y);
-               }
-               else if (buttons == RIGHT_CLICK) {
-                   IOLog("%s::Right click at %d, %d\n", getName(), x, y);
-               }
-#endif
             }
 
             // Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
@@ -175,10 +163,6 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkStylus(AbsoluteTime timestamp, Voo
             }
             
             dispatchDigitizerEventWithTiltOrientation(timestamp, stylus->secondary_id, stylus->type, stylus->in_range, stylus_buttons, x, y, z, stylus_pressure, stylus->barrel_pressure.value(), stylus->azi_alti_orientation.twist.value(), stylus->tilt_orientation.x_tilt.value(), stylus->tilt_orientation.y_tilt.value());
-            
-#ifdef VOODOO_I2C_TOUCHSCREEN_DEBUG
-            IOLog("%s::Stylus at %d, %d\n", getName(), x, y);
-#endif
 
             return true;
         }
@@ -200,9 +184,6 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     clock_get_uptime(&now_abs);
 
     dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, HOVER, last_x, last_y);
-#ifdef VOODOO_I2C_TOUCHSCREEN_DEBUG
-    IOLog("%s::Finger lift at %d, %d\n", getName(), last_x, last_y);
-#endif
     
     //  If a right click has been executed, we reset our counter and ensure that pointer is not stuck in right
     //  click button down situation.
@@ -343,9 +324,6 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
         checkRotation(&cursor_x, &cursor_y);
         
         dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, HOVER, cursor_x, cursor_y);
-#ifdef VOODOO_I2C_TOUCHSCREEN_DEBUG
-        IOLog("%s::Hover for scroll at %d, %d\n", getName(), cursor_x, cursor_y);
-#endif
 
         last_x = cursor_x;
         last_y = cursor_y;
