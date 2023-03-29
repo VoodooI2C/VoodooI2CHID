@@ -78,7 +78,7 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             //  executing a drag movement.  There is little noticeable affect in other circumstances.  This also assists in transitioning
             //  between single / multitouch.
             
-            if (click_tick < 1) {
+            if (click_tick <= 2) {
                 buttons = HOVER;
                 click_tick++;
             } else {
