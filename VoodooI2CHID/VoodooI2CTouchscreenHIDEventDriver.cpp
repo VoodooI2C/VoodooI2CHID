@@ -12,14 +12,6 @@
 
 OSDefineMetaClassAndStructors(VoodooI2CTouchscreenHIDEventDriver, VoodooI2CMultitouchHIDEventDriver);
 
-static uint64_t millis() {
-    AbsoluteTime timestamp;
-    uint64_t nanoseconds;
-    clock_get_uptime(&timestamp);
-    absolutetime_to_nanoseconds(timestamp, &nanoseconds);
-    return nanoseconds / 1000000;
-}
-
 // Override of VoodooI2CMultitouchHIDEventDriver
 
 bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
@@ -87,10 +79,14 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             if (right_click)
                 buttons = RIGHT_CLICK;
             
+            // Get time in a usable format
+            uint64_t nanoseconds;
+            absolutetime_to_nanoseconds(timestamp, &nanoseconds);
+
             // If we're clicking again where we just clicked, precisely position the pointer where it was before
             if (
                 isCloseToLastClick(x, y) &&
-                (millis() - last_click_time) <= DOUBLE_CLICK_TIME
+                (nanoseconds - last_click_time) <= DOUBLE_CLICK_TIME
             ) {
                 x = last_click_x;
                 y = last_click_y;
@@ -205,7 +201,7 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
         right_click = false;
     }
     
-    last_click_time = millis();
+    last_click_time = now_abs;
     last_click_x = last_x;
     last_click_y = last_y;
 }
