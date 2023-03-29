@@ -89,7 +89,7 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             
             // If we're clicking again where we just clicked, precisely position the pointer where it was before
             if (
-                isCloseToLastInteraction(x, y) &&
+                isCloseToLastClick(x, y) &&
                 (millis() - last_click_time) <= DOUBLE_CLICK_TIME
             ) {
                 x = last_click_x;
@@ -349,7 +349,7 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
     scheduleLift();
 }
 
-bool VoodooI2CTouchscreenHIDEventDriver::isCloseToLastInteraction(IOFixed x, IOFixed y) {
+bool VoodooI2CTouchscreenHIDEventDriver::isCloseToLastClick(IOFixed x, IOFixed y) {
     return (
         abs(x - last_click_x) <= DOUBLE_CLICK_FAT_ZONE &&
         abs(y - last_click_y) <= DOUBLE_CLICK_FAT_ZONE

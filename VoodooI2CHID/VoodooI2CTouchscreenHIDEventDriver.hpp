@@ -75,7 +75,7 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
 
     /* Check if this interaction is within fat finger distance
      */
-    bool isCloseToLastInteraction(IOFixed x, IOFixed y);
+    bool isCloseToLastClick(IOFixed x, IOFixed y);
 
     /* Schedule a finger lift event
      */
