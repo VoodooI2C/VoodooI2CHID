@@ -70,15 +70,16 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             //  executing a drag movement.  There is little noticeable affect in other circumstances.  This also assists in transitioning
             //  between single / multitouch.
             
-            if (click_tick <= 2) {
+            if (click_tick < HOVER_TICKS) {
                 buttons = HOVER;
-                click_tick++;
             } else {
                 buttons = transducer->tip_switch.value();
             }
             if (right_click)
                 buttons = RIGHT_CLICK;
             
+            click_tick++;
+
             // Get time in a usable format
             uint64_t nanoseconds;
             absolutetime_to_nanoseconds(timestamp, &nanoseconds);
@@ -92,19 +93,22 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
                 y = last_click_y;
             }
 
-            dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, buttons, x, y);
+            // Only dispatch a single click event after we've done our hover ticks
+            if ((click_tick <= HOVER_TICKS + 1) || (x != last_x || y != last_y)) {
+                dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, buttons, x, y);
 
- #ifdef VOODOO_I2C_TOUCHSCREEN_DEBUG
-            if (buttons == HOVER) {
-                IOLog("%s::Hover at %d, %d\n", getName(), x, y);
-            }
-            else if (buttons == LEFT_CLICK) {
-                IOLog("%s::Left click at %d, %d\n", getName(), x, y);
-            }
-            else if (buttons == RIGHT_CLICK) {
-                IOLog("%s::Right click at %d, %d\n", getName(), x, y);
-            }
+#ifdef VOODOO_I2C_TOUCHSCREEN_DEBUG
+               if (buttons == HOVER) {
+                   IOLog("%s::Hover at %d, %d\n", getName(), x, y);
+               }
+               else if (buttons == LEFT_CLICK) {
+                   IOLog("%s::Left click at %d, %d\n", getName(), x, y);
+               }
+               else if (buttons == RIGHT_CLICK) {
+                   IOLog("%s::Right click at %d, %d\n", getName(), x, y);
+               }
 #endif
+            }
 
             // Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
             last_x = x;
