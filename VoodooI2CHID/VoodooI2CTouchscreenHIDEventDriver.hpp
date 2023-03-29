@@ -26,7 +26,7 @@
 
 #define VOODOO_I2C_TOUCHSCREEN_DEBUG
 
-#define DOUBLE_CLICK_FAT_ZONE   40
+#define DOUBLE_CLICK_FAT_ZONE   1000
 #define DOUBLE_CLICK_TIME       450
 #define FINGER_LIFT_DELAY       50
 
@@ -75,7 +75,7 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
 
     /* Check if this interaction is within fat finger distance
      */
-    bool isCloseToLastInteraction(UInt16 x, UInt16 y);
+    bool isCloseToLastInteraction(IOFixed x, IOFixed y);
 
     /* Schedule a finger lift event
      */
@@ -95,6 +95,8 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
     UInt32 stylus_buttons = 0;
     IOFixed last_x = 0;
     IOFixed last_y = 0;
+    IOFixed last_click_x = 0;
+    IOFixed last_click_y = 0;
     UInt32 barrel_switch_offset = 0;
     UInt32 eraser_switch_offset = 0;
     SInt32 last_id = 0;
@@ -109,6 +111,7 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
     UInt16 compare_input_y = 0;
     int compare_input_counter = 0;
     UInt64 last_click_time = 0;
+    bool do_double_click = false;
     
     /* The transducer is checked for singletouch finger based operation and the pointer event dispatched. This function
      * also handles a long-press, right-click function.
