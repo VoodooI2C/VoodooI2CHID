@@ -39,60 +39,66 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
             
             checkRotation(&x, &y);
-            // Begin long press right click routine.  Increasing compare_input_counter check will lengthen the time until execution.
             
-            UInt16 temp_x = x;
-            UInt16 temp_y = y;
-            
-            if (!right_click && digitiser.contact_count->getValue() == 1 && transducer->type == kDigitiserTransducerFinger && transducer->tip_switch) {
-                if (temp_x == compare_input_x && temp_y == compare_input_y) {
-                    compare_input_counter = compare_input_counter + 1;
-                    compare_input_x = temp_x;
-                    compare_input_y = temp_y;
-                    
-                    if (compare_input_counter >= 120 && !right_click) {
-                        compare_input_x = 0;
-                        compare_input_y = 0;
-                        compare_input_counter = 0;
-                        right_click = true;
-                    }
-                } else {
-                    compare_input_x = temp_x;
-                    compare_input_y = temp_y;
-                    compare_input_counter = 0;
-                }
-            }
-            //  End long press right click routine.
-            
-            
-            //  We need the first couple of single touch events to be in hover mode.  In modes such as Mission Control, this allows us
-            //  to select and drag windows vs just select and exit.  We are mimicking a cursor being moved into position prior to
-            //  executing a drag movement.  There is little noticeable affect in other circumstances.  This also assists in transitioning
-            //  between single / multitouch.
-            
-            if (click_tick < HOVER_TICKS) {
-                buttons = HOVER;
-            } else {
-                buttons = transducer->tip_switch.value();
-            }
-            if (right_click)
-                buttons = RIGHT_CLICK;
-            
-            click_tick++;
-
             // Get time in a usable format
             uint64_t nanoseconds;
             absolutetime_to_nanoseconds(timestamp, &nanoseconds);
 
-            // If we're clicking again where we just clicked, precisely position the pointer where it was before
-            if (
-                isCloseToLastClick(x, y) &&
+            //  We need the first couple of single touch events to be in hover mode.  In modes such as Mission Control, this allows us
+            //  to select and drag windows vs just select and exit.  We are mimicking a cursor being moved into position prior to
+            //  executing a drag movement.  There is little noticeable effect in other circumstances.  This also assists in transitioning
+            //  between single / multitouch.
+            
+            if (click_tick < HOVER_TICKS) {
+                buttons = HOVER;
+                touch_start_time = nanoseconds;
+                touch_start_x = x;
+                touch_start_y = y;
+            } else if (
+                !right_click &&
+                digitiser.contact_count->getValue() == 1 &&
+                isCloseTo(x, y, touch_start_x, touch_start_y) &&
+                (nanoseconds - touch_start_time) >= RIGHT_CLICK_TIME
+            ) {
+                right_click = true;
+                dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, RIGHT_CLICK, x, y);
+#ifdef VOODOO_I2C_TOUCHSCREEN_DEBUG
+                IOLog("%s::Right click at %d, %d\n", getName(), x, y);
+#endif
+                dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, HOVER, x, y);
+#ifdef VOODOO_I2C_TOUCHSCREEN_DEBUG
+                IOLog("%s::Hover at %d, %d\n", getName(), x, y);
+#endif
+            }
+            else {
+                buttons = transducer->tip_switch.value();
+            }
+
+            click_tick++;
+
+
+            if (right_click) {
+                // After a right click has been executed, all interactions are now hovers
+                buttons = HOVER;
+
+                if (isCloseTo(x, y, touch_start_x, touch_start_y)) {
+                    // Adopt the location of the touch start so we don't stray and close the right click menu
+                    x = touch_start_x;
+                    y = touch_start_y;
+                }
+                else {
+                    // Track if we moved after the right click so we know if we need to click again on release
+                    moved_during_right_click = true;
+                }
+            } else if (
+                isCloseTo(x, y, last_click_x, last_click_y) &&
                 (nanoseconds - last_click_time) <= DOUBLE_CLICK_TIME
             ) {
+                // If we're clicking again where we just clicked, precisely position the pointer where it was before
                 x = last_click_x;
                 y = last_click_y;
             }
-
+            
             // Only dispatch a single click event after we've done our hover ticks
             if ((click_tick <= HOVER_TICKS + 1) || (x != last_x || y != last_y)) {
                 dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, buttons, x, y);
@@ -177,21 +183,20 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     //  checkFingerTouch function, however, this has the side effect of not releasing the pointer.  This watchdog
     //  timer is needed regardless so the pointer release is best done here.
     
-    
-    click_tick = 0;
-    start_scroll = true;
     uint64_t now_abs;
     clock_get_uptime(&now_abs);
 
-    dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, HOVER, last_x, last_y);
-    
-    //  If a right click has been executed, we reset our counter and ensure that pointer is not stuck in right
-    //  click button down situation.
-    
-    if (right_click) {
-        right_click = false;
+    // This seems strange, but we go to hover mode after right clicking, and we need to execute a click if we've moved
+    if (right_click && moved_during_right_click) {
+        dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, LEFT_CLICK, last_x, last_y);
     }
     
+    dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, HOVER, last_x, last_y);
+    
+    click_tick = 0;
+    start_scroll = true;
+    right_click = false;
+    moved_during_right_click = false;
     last_click_time = now_abs;
     last_click_x = last_x;
     last_click_y = last_y;
@@ -335,9 +340,9 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
     scheduleLift();
 }
 
-bool VoodooI2CTouchscreenHIDEventDriver::isCloseToLastClick(IOFixed x, IOFixed y) {
-    IOFixed diff_x = x - last_click_x;
-    IOFixed diff_y = y - last_click_y;
+bool VoodooI2CTouchscreenHIDEventDriver::isCloseTo(IOFixed x, IOFixed y, IOFixed other_x, IOFixed other_y) {
+    IOFixed diff_x = x - other_x;
+    IOFixed diff_y = y - other_y;
     return  (diff_x * diff_x) +
             (diff_y * diff_y) <
             FAT_FINGER_ZONE;
