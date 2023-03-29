@@ -24,7 +24,7 @@
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
 
-#define VOODOO_I2C_TOUCHSCREEN_DEBUG
+// #define VOODOO_I2C_TOUCHSCREEN_DEBUG
 
 #define DOUBLE_CLICK_FAT_ZONE   1000
 #define DOUBLE_CLICK_TIME       450 * 1000000
