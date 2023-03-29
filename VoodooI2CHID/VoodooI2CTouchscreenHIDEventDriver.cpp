@@ -78,7 +78,7 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             //  executing a drag movement.  There is little noticeable affect in other circumstances.  This also assists in transitioning
             //  between single / multitouch.
             
-            if (click_tick <= 2) {
+            if (click_tick < 1) {
                 buttons = HOVER;
                 click_tick++;
             } else {
@@ -87,12 +87,13 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             if (right_click)
                 buttons = RIGHT_CLICK;
             
+            // If we're clicking again where we just clicked, precisely position the pointer where it was before
             if (
-                buttons == LEFT_CLICK &&
                 isCloseToLastInteraction(x, y) &&
                 (millis() - last_click_time) <= DOUBLE_CLICK_TIME
             ) {
-                do_double_click = true;
+                x = last_click_x;
+                y = last_click_y;
             }
 
             dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, buttons, x, y);
@@ -173,6 +174,8 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkStylus(AbsoluteTime timestamp, Voo
             
             dispatchDigitizerEventWithTiltOrientation(timestamp, stylus->secondary_id, stylus->type, stylus->in_range, stylus_buttons, x, y, z, stylus_pressure, stylus->barrel_pressure.value(), stylus->azi_alti_orientation.twist.value(), stylus->tilt_orientation.x_tilt.value(), stylus->tilt_orientation.y_tilt.value());
             
+            IOLog("%s::Stylus at %d, %d\n", getName(), x, y);
+
             return true;
         }
     }
@@ -191,25 +194,6 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     start_scroll = true;
     uint64_t now_abs;
     clock_get_uptime(&now_abs);
-    
-    if (do_double_click) {
-        // Execute the current in progress click
-        dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, HOVER, last_x, last_y);
-        IOLog("%s::Finger lift at %d, %d\n", getName(), last_x, last_y);
-
-        // Click again
-        dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, LEFT_CLICK, last_x, last_y);
-        IOLog("%s::Left click at %d, %d\n", getName(), last_x, last_y);
-
-        do_double_click = false;
-        last_click_time = 0;
-    }
-    else {
-        // Don't set this if we just double clicked, the next click should be a single click
-        last_click_time = millis();
-        last_click_x = last_x;
-        last_click_y = last_y;
-    }
 
     dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, HOVER, last_x, last_y);
     IOLog("%s::Finger lift at %d, %d\n", getName(), last_x, last_y);
@@ -220,6 +204,10 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     if (right_click) {
         right_click = false;
     }
+    
+    last_click_time = millis();
+    last_click_x = last_x;
+    last_click_y = last_y;
 }
 
 IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
@@ -349,7 +337,8 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
         checkRotation(&cursor_x, &cursor_y);
         
         dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, HOVER, cursor_x, cursor_y);
-        
+        IOLog("%s::Hover for scroll at %d, %d\n", getName(), cursor_x, cursor_y);
+
         last_x = cursor_x;
         last_y = cursor_y;
         last_id = transducer->secondary_id;

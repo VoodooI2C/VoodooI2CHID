@@ -111,7 +111,6 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
     UInt16 compare_input_y = 0;
     int compare_input_counter = 0;
     UInt64 last_click_time = 0;
-    bool do_double_click = false;
     
     /* The transducer is checked for singletouch finger based operation and the pointer event dispatched. This function
      * also handles a long-press, right-click function.
