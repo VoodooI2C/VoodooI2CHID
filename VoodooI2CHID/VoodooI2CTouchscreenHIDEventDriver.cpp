@@ -365,6 +365,5 @@ bool VoodooI2CTouchscreenHIDEventDriver::isCloseToLastClick(IOFixed x, IOFixed y
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::scheduleLift() {
-    timer_source->cancelTimeout();
     timer_source->setTimeoutMS(FINGER_LIFT_DELAY);
 }
