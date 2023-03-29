@@ -26,10 +26,10 @@
 
 // #define VOODOO_I2C_TOUCHSCREEN_DEBUG
 
-#define DOUBLE_CLICK_FAT_ZONE   1000
-#define DOUBLE_CLICK_TIME       450 * 1000000
-#define FINGER_LIFT_DELAY       50
-#define HOVER_TICKS             3
+#define FAT_FINGER_ZONE     1000000 // 1000^2
+#define DOUBLE_CLICK_TIME   450 * 1000000
+#define FINGER_LIFT_DELAY   50
+#define HOVER_TICKS         3
 
 #define HOVER       0x0
 #define LEFT_CLICK  0x1

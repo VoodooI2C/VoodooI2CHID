@@ -358,10 +358,11 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
 }
 
 bool VoodooI2CTouchscreenHIDEventDriver::isCloseToLastClick(IOFixed x, IOFixed y) {
-    return (
-        abs(x - last_click_x) <= DOUBLE_CLICK_FAT_ZONE &&
-        abs(y - last_click_y) <= DOUBLE_CLICK_FAT_ZONE
-    );
+    IOFixed diff_x = x - last_click_x;
+    IOFixed diff_y = y - last_click_y;
+    return  (diff_x * diff_x) +
+            (diff_y * diff_y) <
+            FAT_FINGER_ZONE;
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::scheduleLift() {
