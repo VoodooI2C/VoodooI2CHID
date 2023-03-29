@@ -62,13 +62,7 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             ) {
                 right_click = true;
                 dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, RIGHT_CLICK, x, y);
-#ifdef VOODOO_I2C_TOUCHSCREEN_DEBUG
-                IOLog("%s::Right click at %d, %d\n", getName(), x, y);
-#endif
                 dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, HOVER, x, y);
-#ifdef VOODOO_I2C_TOUCHSCREEN_DEBUG
-                IOLog("%s::Hover at %d, %d\n", getName(), x, y);
-#endif
             }
             else {
                 buttons = transducer->tip_switch.value();
