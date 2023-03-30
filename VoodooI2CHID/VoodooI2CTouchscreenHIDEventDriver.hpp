@@ -73,10 +73,6 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
      */
     IOReturn parseElements(UInt32) override;
 
-    /* Check if the first set of coordinate is within fat finger distance of the second set
-     */
-    bool isCloseTo(IOFixed x, IOFixed y, IOFixed other_x, IOFixed other_y);
-
     /* Schedule a finger lift event
      */
     void scheduleLift();

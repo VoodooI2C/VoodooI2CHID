@@ -10,6 +10,16 @@
 
 #define super VoodooI2CMultitouchHIDEventDriver
 
+/* Check if the first set of coordinates is within fat finger distance of the second set
+ */
+static bool isCloseTo(IOFixed x, IOFixed y, IOFixed other_x, IOFixed other_y) {
+   IOFixed diff_x = x - other_x;
+   IOFixed diff_y = y - other_y;
+   return  (diff_x * diff_x) +
+           (diff_y * diff_y) <
+           FAT_FINGER_ZONE;
+}
+
 OSDefineMetaClassAndStructors(VoodooI2CTouchscreenHIDEventDriver, VoodooI2CMultitouchHIDEventDriver);
 
 // Override of VoodooI2CMultitouchHIDEventDriver
@@ -332,14 +342,6 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
     }
     
     scheduleLift();
-}
-
-bool VoodooI2CTouchscreenHIDEventDriver::isCloseTo(IOFixed x, IOFixed y, IOFixed other_x, IOFixed other_y) {
-    IOFixed diff_x = x - other_x;
-    IOFixed diff_y = y - other_y;
-    return  (diff_x * diff_x) +
-            (diff_y * diff_y) <
-            FAT_FINGER_ZONE;
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::scheduleLift() {
