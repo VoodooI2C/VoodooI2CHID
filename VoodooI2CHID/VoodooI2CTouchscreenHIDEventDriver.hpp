@@ -82,10 +82,15 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
      */
     void scheduleDragStart();
 
+    /* Schedule a scroll end event
+     */
+    void scheduleScrollEnd();
+
  private:
     IOWorkLoop *work_loop;
     IOTimerEventSource *timer_source;
     IOTimerEventSource *drag_timer_source;
+    IOTimerEventSource *scroll_timer_source;
     
     IOFramebuffer* active_framebuffer;
     UInt8 current_rotation;
@@ -169,6 +174,9 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
     
     /* Start dragging */
     void dragStart();
+
+    /* End scrolling dragging */
+    void resetScroll();
 
     IOFramebuffer* getFramebuffer();
     

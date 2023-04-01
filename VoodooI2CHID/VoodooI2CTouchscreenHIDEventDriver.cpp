@@ -192,10 +192,12 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     last_click_x = last_x;
     last_click_y = last_y;
     absolutetime_to_nanoseconds(now_abs, &last_click_time);
+
+    resetTouch();
+    resetScroll();
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::resetTouch() {
-    start_scroll = true;
     finger_down = false;
     right_click = false;
     is_dragging = false;
@@ -253,8 +255,11 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
 
             absolutetime_to_nanoseconds(timestamp, &last_multitouch_interaction);
 
-            if (event.contact_count == 2 && start_scroll) {
-                scrollPosition(timestamp, event);
+            if (event.contact_count == 2) {
+                if (start_scroll) {
+                    scrollPosition(timestamp, event);
+                }
+                scheduleScrollEnd();
             }
 
             multitouch_interface->handleInterruptReport(event, timestamp);
@@ -295,6 +300,13 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
         return false;
     }
     
+    scroll_timer_source = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CTouchscreenHIDEventDriver::resetScroll));
+
+    if (!scroll_timer_source || work_loop->addEventSource(scroll_timer_source) != kIOReturnSuccess) {
+        IOLog("%s::Could not add timer source to work loop\n", getName());
+        return false;
+    }
+
     active_framebuffer = getFramebuffer();
     if (active_framebuffer) {
         active_framebuffer->retain();
@@ -349,8 +361,6 @@ void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, 
         
         start_scroll = false;
     }
-    
-//    scheduleClick();
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::dragStart() {
@@ -361,10 +371,18 @@ void VoodooI2CTouchscreenHIDEventDriver::dragStart() {
     is_dragging = true;
 }
 
+void VoodooI2CTouchscreenHIDEventDriver::resetScroll() {
+    start_scroll = true;
+}
+
 void VoodooI2CTouchscreenHIDEventDriver::scheduleClick() {
     timer_source->setTimeoutMS(FINGER_LIFT_DELAY);
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::scheduleDragStart() {
     drag_timer_source->setTimeoutMS(DRAG_START_DELAY);
+}
+
+void VoodooI2CTouchscreenHIDEventDriver::scheduleScrollEnd() {
+    scroll_timer_source->setTimeoutMS(FINGER_LIFT_DELAY);
 }
