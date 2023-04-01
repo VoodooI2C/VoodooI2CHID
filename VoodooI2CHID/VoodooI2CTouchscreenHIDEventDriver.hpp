@@ -113,14 +113,14 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
     /* handler variables
      */
     
-    bool finger_down = false;
-    bool right_click = false;
-    bool is_dragging = false;
-    bool is_drag_start_requested = false;
+    bool is_finger_down = false;
+    bool is_right_clicking = false;
     bool moved_during_right_click = false;
-    bool start_scroll = true;
-    UInt64 last_multitouch_interaction = 0;
-    UInt64 last_interaction = 0;
+    bool is_dragging = false;
+    bool drag_start_requested = false;
+    bool is_scrolling = false;
+    UInt64 last_multitouch_interaction_time = 0;
+    UInt64 last_interaction_time = 0;
     UInt64 touch_start_time = 0;
     UInt64 last_click_time = 0;
     
