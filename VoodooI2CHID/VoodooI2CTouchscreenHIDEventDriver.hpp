@@ -131,24 +131,9 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
      * @return `true` if we got a finger touch event, `false` otherwise
      */
     bool checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
-    
-    /* Handle single touch interactions, as well as double-click and right-click
-     *
-     * @timestamp The timestamp of the current event being processed
-     * @event The current event
-     * @return `true` if we got a finger touch event, `false` otherwise
-     */
-    bool handleSingleTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
-
-    /* Handle multi-touch interactions
-     *
-     * @timestamp The timestamp of the current event being processed
-     * @event The current event
-     * @return `true` if we got a finger touch event, `false` otherwise
-     */
-    bool handleMultiTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
 
     /* Convert logical coordinates to IOFixed and Scaled;
+     *
      * @transducer A pointer to transducer to get coordinates from
      * @x A pointer to an unset x coordinate
      * @y A pointer to an unset y coordinate
@@ -160,13 +145,10 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
      *
      * @x A pointer to the x coordinate
      * @y A pointer to the y coordinate
-     *
      */
     void checkRotation(IOFixed* x, IOFixed* y);
     
-    /* This timeout based function executes a singletouch finger based pointer lift event as well as ensures that the pointer is not
-     * stuck in a 'right click' mode after the long-press right-click function has been triggered.
-     */
+    /* Execute a singletouch finger based pointer click and lift event */
     void fingerLift();
 
     /* Reset variables associated with single touch */
@@ -186,7 +168,6 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
      *
      * @event The current event
      */
-    
     void scrollPosition(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
 };
 #endif /* VoodooI2CTouchscreenHIDEventDriver_hpp */
