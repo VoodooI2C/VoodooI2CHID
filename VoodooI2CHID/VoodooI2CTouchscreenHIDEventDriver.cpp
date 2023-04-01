@@ -189,15 +189,18 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     }
     dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, HOVER, last_x, last_y);
     
+    last_click_x = last_x;
+    last_click_y = last_y;
+    absolutetime_to_nanoseconds(now_abs, &last_click_time);
+}
+
+void VoodooI2CTouchscreenHIDEventDriver::resetTouch() {
     start_scroll = true;
     finger_down = false;
     right_click = false;
     is_dragging = false;
     is_drag_start_requested = false;
     moved_during_right_click = false;
-    last_click_x = last_x;
-    last_click_y = last_y;
-    absolutetime_to_nanoseconds(now_abs, &last_click_time);
 }
 
 IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
@@ -246,6 +249,7 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
             // Immediately cancel any outstanding click
             timer_source->cancelTimeout();
             drag_timer_source->cancelTimeout();
+            resetTouch();
 
             absolutetime_to_nanoseconds(timestamp, &last_multitouch_interaction);
 

@@ -163,6 +163,9 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
      * stuck in a 'right click' mode after the long-press right-click function has been triggered.
      */
     void fingerLift();
+
+    /* Reset variables associated with single touch */
+    void resetTouch();
     
     /* Start dragging */
     void dragStart();
