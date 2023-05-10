@@ -12,29 +12,12 @@
 OSDefineMetaClassAndStructors(VoodooI2CPrecisionTouchpadHIDEventDriver, VoodooI2CMultitouchHIDEventDriver);
 
 void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
-    // This needs to be investigated further for USB touchpad support,
-    // it is currently commented out as it causes issues with input devices
-    // failing to wake from sleep and does not work on 10.15 and lower
-
-    /* if (version_major > CATALINA_MAJOR_VERSION) {
-        // Update value from hardware so we can rewrite mode when waking from sleep
-        digitiser.input_mode->getValue(kIOHIDValueOptionsUpdateElementValues);
-        digitiser.input_mode->setValue(INPUT_MODE_TOUCHPAD);
-        ready = true;
-        return;
-    }*/
+    UInt8 inputMode[] = { INPUT_MODE_TOUCHPAD };
     
-    // TODO: setValue appears to not work on Catalina or older
-    VoodooI2CPrecisionTouchpadFeatureReport buffer;
-    buffer.reportID = digitiser.input_mode->getReportID();
-    buffer.value = INPUT_MODE_TOUCHPAD;
-    buffer.reserved = 0x00;
-    IOBufferMemoryDescriptor* report = IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task, 0, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
-    report->writeBytes(0, &buffer, sizeof(VoodooI2CPrecisionTouchpadFeatureReport));
-
-    hid_interface->setReport(report, kIOHIDReportTypeFeature, digitiser.input_mode->getReportID());
-    report->release();
-    
+    // Use setDataValue as it does not check for duplicate writes
+    OSData *value = OSData::withBytes(inputMode, sizeof(inputMode));
+    digitiser.input_mode->setDataValue(value);
+    OSSafeReleaseNULL(value);
     ready = true;
 }
 
