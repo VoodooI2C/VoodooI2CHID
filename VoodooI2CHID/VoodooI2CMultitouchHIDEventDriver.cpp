@@ -269,7 +269,16 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                 }
                 break;
             case kHIDPage_Button:
-                setButtonState(&transducer->physical_button, (usage - 1), value, timestamp);
+                if (usage == kHIDUsage_Button_1) {
+                    // kHIDUsage_Button_1 is for the clickpad surface
+                    setButtonState(&transducer->physical_button, 0, value, timestamp);
+                } else {
+                    // kHIDUsage_Button_2/3 are for external buttons, thus should be reported
+                    // through the trackpoint device.
+                    transducer->has_secondary_button = true;
+                    setButtonState(&transducer->physical_button, (usage - 2), value, timestamp);
+                }
+                
                 handled    |= element_is_current;
                 break;
             case kHIDPage_Digitizer:
