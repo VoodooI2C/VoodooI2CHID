@@ -25,67 +25,52 @@ OSDefineMetaClassAndStructors(VoodooI2CTouchscreenHIDEventDriver, VoodooI2CMulti
 // Override of VoodooI2CMultitouchHIDEventDriver
 
 bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
-    bool got_transducer = false;
+    absolutetime_to_nanoseconds(timestamp, &last_interaction_time);
     
-    // If there is a finger touch event, decide if it is single or multitouch.
-    
-    for (int index = 0; index < digitiser.contact_count->getValue() + 1; index++) {
-        VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
-        
-        if (!transducer)
-            return false;
-        
-        if (transducer->type == kDigitiserTransducerFinger && digitiser.contact_count->getValue() >= 2) {
-            // Our finger event is multitouch reset clicktick and wait to be dispatched to the multitouch engines.
-            
-            click_tick = 0;
-        }
-        
-        if (transducer->type == kDigitiserTransducerFinger && transducer->tip_switch.value()) {
-            got_transducer = true;
-            // Convert logical coordinates to IOFixed and Scaled;
-            
-            IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
-            IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
-            
-            checkRotation(&x, &y);
-            
-            // Get time in a usable format
-            uint64_t nanoseconds;
-            absolutetime_to_nanoseconds(timestamp, &nanoseconds);
+    // Avoid phantom clicks happening after scrolling
+    if ((last_interaction_time - last_multitouch_interaction_time) < MULTITOUCH_TIMEOUT) {
+        return false;
+    }
 
-            //  We need the first couple of single touch events to be in hover mode.  In modes such as Mission Control, this allows us
-            //  to select and drag windows vs just select and exit.  We are mimicking a cursor being moved into position prior to
-            //  executing a drag movement.  There is little noticeable effect in other circumstances.  This also assists in transitioning
-            //  between single / multitouch.
+    VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(0));
+    
+    if (transducer && transducer->type == kDigitiserTransducerFinger && transducer->tip_switch.value()) {
+        IOFixed x;
+        IOFixed y;
+        getCoordinates(transducer, &x, &y);
+        
+        if (
+            isCloseTo(x, y, last_click_x, last_click_y) &&
+            (last_interaction_time - last_click_time) <= DOUBLE_CLICK_TIME
+        ) {
+            // Double click start
+            // If we're clicking again where we just clicked, precisely position the pointer where it was before
+            x = last_click_x;
+            y = last_click_y;
+        }
+
+        if (!is_finger_down) {
+            is_finger_down = true;
+            touch_start_time = last_interaction_time;
+            touch_start_x = x;
+            touch_start_y = y;
+        } else if (!is_dragging) {
+            bool interaction_is_close_to_start = isCloseTo(x, y, touch_start_x, touch_start_y);
             
-            if (click_tick < HOVER_TICKS) {
-                buttons = HOVER;
-                touch_start_time = nanoseconds;
-                touch_start_x = x;
-                touch_start_y = y;
-            } else if (
-                !right_click &&
-                digitiser.contact_count->getValue() == 1 &&
-                isCloseTo(x, y, touch_start_x, touch_start_y) &&
-                (nanoseconds - touch_start_time) >= RIGHT_CLICK_TIME
+            if (
+                !is_right_clicking &&
+                 interaction_is_close_to_start &&
+                (last_interaction_time - touch_start_time) >= RIGHT_CLICK_TIME
             ) {
-                right_click = true;
+                // Right click start
                 dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, RIGHT_CLICK, x, y);
                 dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, HOVER, x, y);
-            }
-            else {
-                buttons = transducer->tip_switch.value();
+                is_right_clicking = true;
             }
 
-            click_tick++;
-
-
-            if (right_click) {
-                // After a right click has been executed, all interactions are now hovers
-                buttons = HOVER;
-
-                if (isCloseTo(x, y, touch_start_x, touch_start_y)) {
+            if (is_right_clicking) {
+                // Continue right click
+                if (interaction_is_close_to_start) {
                     // Adopt the location of the touch start so we don't stray and close the right click menu
                     x = touch_start_x;
                     y = touch_start_y;
@@ -94,32 +79,41 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
                     // Track if we moved after the right click so we know if we need to click again on release
                     moved_during_right_click = true;
                 }
-            } else if (
-                isCloseTo(x, y, last_click_x, last_click_y) &&
-                (nanoseconds - last_click_time) <= DOUBLE_CLICK_TIME
-            ) {
-                // If we're clicking again where we just clicked, precisely position the pointer where it was before
-                x = last_click_x;
-                y = last_click_y;
+            } else {
+                // Check for drag start
+                if (!is_dragging && !drag_start_requested && !interaction_is_close_to_start) {
+                    scheduleDragStart();
+                    drag_start_requested = true;
+                }
             }
-            
-            // Only dispatch a single click event after we've done our hover ticks
-            if ((click_tick <= HOVER_TICKS + 1) || (x != last_x || y != last_y)) {
-                dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, buttons, x, y);
-            }
-
-            // Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
-            last_x = x;
-            last_y = y;
-            last_id = transducer->secondary_id;
-
-            //  This timer serves to let us know when a finger based event is finished executing as well as let us
-            // know to reset the clicktick counter.
-            
-            scheduleLift();
         }
+
+        finger_interaction = HOVER;
+        if (is_dragging) {
+            finger_interaction = LEFT_CLICK;
+        }
+
+        dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, finger_interaction, x, y);
+
+        // Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
+        last_x = x;
+        last_y = y;
+        last_id = transducer->secondary_id;
+
+        scheduleClick();
+        
+        return true;
     }
-    return got_transducer;
+
+    return false;
+}
+
+void VoodooI2CTouchscreenHIDEventDriver::getCoordinates(VoodooI2CDigitiserTransducer* transducer, IOFixed* x, IOFixed* y) {
+    // Convert logical coordinates to IOFixed and Scaled;
+    *x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
+    *y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
+
+    checkRotation(x, y);
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::checkRotation(IOFixed* x, IOFixed* y) {
@@ -190,20 +184,25 @@ void VoodooI2CTouchscreenHIDEventDriver::fingerLift() {
     uint64_t now_abs;
     clock_get_uptime(&now_abs);
 
-    // This seems strange, but we go to hover mode after right clicking, and we need to execute a click if we've moved
-    if (right_click && moved_during_right_click) {
+    if (!is_dragging && (!is_right_clicking || moved_during_right_click)) {
         dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, LEFT_CLICK, last_x, last_y);
     }
-    
     dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, HOVER, last_x, last_y);
     
-    click_tick = 0;
-    start_scroll = true;
-    right_click = false;
-    moved_during_right_click = false;
-    last_click_time = now_abs;
     last_click_x = last_x;
     last_click_y = last_y;
+    absolutetime_to_nanoseconds(now_abs, &last_click_time);
+
+    resetTouch();
+    resetScroll();
+}
+
+void VoodooI2CTouchscreenHIDEventDriver::resetTouch() {
+    is_finger_down = false;
+    is_right_clicking = false;
+    moved_during_right_click = false;
+    is_dragging = false;
+    drag_start_requested = false;
 }
 
 IOFramebuffer* VoodooI2CTouchscreenHIDEventDriver::getFramebuffer() {
@@ -249,10 +248,18 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
         // Send multitouch information to the multitouch interface
 
         if (event.contact_count >= 2) {
-            if (event.contact_count == 2 && start_scroll) {
-                scrollPosition(timestamp, event);
-            } else if (event.contact_count == 2 && !start_scroll) {
-                scheduleLift();
+            // Immediately cancel any outstanding click
+            timer_source->cancelTimeout();
+            drag_timer_source->cancelTimeout();
+            resetTouch();
+
+            absolutetime_to_nanoseconds(timestamp, &last_multitouch_interaction_time);
+
+            if (event.contact_count == 2) {
+                if (!is_scrolling) {
+                    scrollPosition(timestamp, event);
+                }
+                scheduleScrollEnd();
             }
 
             multitouch_interface->handleInterruptReport(event, timestamp);
@@ -286,6 +293,20 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
         return false;
     }
     
+    drag_timer_source = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CTouchscreenHIDEventDriver::dragStart));
+
+    if (!drag_timer_source || work_loop->addEventSource(drag_timer_source) != kIOReturnSuccess) {
+        IOLog("%s::Could not add timer source to work loop\n", getName());
+        return false;
+    }
+    
+    scroll_timer_source = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &VoodooI2CTouchscreenHIDEventDriver::resetScroll));
+
+    if (!scroll_timer_source || work_loop->addEventSource(scroll_timer_source) != kIOReturnSuccess) {
+        IOLog("%s::Could not add timer source to work loop\n", getName());
+        return false;
+    }
+
     active_framebuffer = getFramebuffer();
     if (active_framebuffer) {
         active_framebuffer->retain();
@@ -310,40 +331,56 @@ void VoodooI2CTouchscreenHIDEventDriver::handleStop(IOService* provider) {
 }
 
 void VoodooI2CTouchscreenHIDEventDriver::scrollPosition(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event) {
-    if (start_scroll) {
-        int index = 0;
-        VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
-        if (transducer->type == kDigitiserTransducerStylus) {
-            index = 1;
-            transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
-        }
-        
-        IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
-        IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
-        
-        index++;
+    int index = 0;
+    VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
+    if (transducer->type == kDigitiserTransducerStylus) {
+        index = 1;
         transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
-        
-        IOFixed x2 = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
-        IOFixed y2 = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
-        
-        IOFixed cursor_x = (x+x2)/2;
-        IOFixed cursor_y = (y+y2)/2;
-        
-        checkRotation(&cursor_x, &cursor_y);
-        
-        dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, HOVER, cursor_x, cursor_y);
-
-        last_x = cursor_x;
-        last_y = cursor_y;
-        last_id = transducer->secondary_id;
-        
-        start_scroll = false;
     }
     
-    scheduleLift();
+    IOFixed x = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
+    IOFixed y = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
+    
+    index++;
+    transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
+    
+    IOFixed x2 = ((transducer->coordinates.x.value() * 1.0f) / transducer->logical_max_x) * 65535;
+    IOFixed y2 = ((transducer->coordinates.y.value() * 1.0f) / transducer->logical_max_y) * 65535;
+    
+    IOFixed cursor_x = (x+x2)/2;
+    IOFixed cursor_y = (y+y2)/2;
+    
+    checkRotation(&cursor_x, &cursor_y);
+    
+    dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, HOVER, cursor_x, cursor_y);
+
+    last_x = cursor_x;
+    last_y = cursor_y;
+    last_id = transducer->secondary_id;
+    
+    is_scrolling = true;
 }
 
-void VoodooI2CTouchscreenHIDEventDriver::scheduleLift() {
+void VoodooI2CTouchscreenHIDEventDriver::dragStart() {
+    // Start dragging where the interaction began
+    uint64_t now_abs;
+    clock_get_uptime(&now_abs);
+    dispatchDigitizerEventWithTiltOrientation(now_abs, last_id, kDigitiserTransducerFinger, 0x1, LEFT_CLICK, touch_start_x, touch_start_y);
+    is_dragging = true;
+}
+
+void VoodooI2CTouchscreenHIDEventDriver::resetScroll() {
+    is_scrolling = false;
+}
+
+void VoodooI2CTouchscreenHIDEventDriver::scheduleClick() {
     timer_source->setTimeoutMS(FINGER_LIFT_DELAY);
+}
+
+void VoodooI2CTouchscreenHIDEventDriver::scheduleDragStart() {
+    drag_timer_source->setTimeoutMS(DRAG_START_DELAY);
+}
+
+void VoodooI2CTouchscreenHIDEventDriver::scheduleScrollEnd() {
+    scroll_timer_source->setTimeoutMS(FINGER_LIFT_DELAY);
 }

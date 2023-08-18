@@ -24,11 +24,12 @@
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
 
-#define FAT_FINGER_ZONE     1000000 // 1000^2
+#define FAT_FINGER_ZONE     2250000 // 1500^2
 #define DOUBLE_CLICK_TIME   450 * 1000000
 #define RIGHT_CLICK_TIME    500 * 1000000
-#define FINGER_LIFT_DELAY   50
-#define HOVER_TICKS         3
+#define MULTITOUCH_TIMEOUT  250 * 1000000
+#define FINGER_LIFT_DELAY   50 // milliseconds
+#define DRAG_START_DELAY    50
 
 #define HOVER       0x0
 #define LEFT_CLICK  0x1
@@ -75,11 +76,21 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
 
     /* Schedule a finger lift event
      */
-    void scheduleLift();
+    void scheduleClick();
+
+    /* Schedule a drag start event
+     */
+    void scheduleDragStart();
+
+    /* Schedule a scroll end event
+     */
+    void scheduleScrollEnd();
 
  private:
     IOWorkLoop *work_loop;
     IOTimerEventSource *timer_source;
+    IOTimerEventSource *drag_timer_source;
+    IOTimerEventSource *scroll_timer_source;
     
     IOFramebuffer* active_framebuffer;
     UInt8 current_rotation;
@@ -87,7 +98,7 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
     /* transducer variables
      */
     
-    UInt32 buttons = 0;
+    UInt32 finger_interaction = 0;
     UInt32 stylus_buttons = 0;
     IOFixed last_x = 0;
     IOFixed last_y = 0;
@@ -102,38 +113,53 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
     /* handler variables
      */
     
-    UInt32 click_tick = 0;
-    bool right_click = false;
+    bool is_finger_down = false;
+    bool is_right_clicking = false;
     bool moved_during_right_click = false;
-    bool start_scroll = true;
+    bool is_dragging = false;
+    bool drag_start_requested = false;
+    bool is_scrolling = false;
+    UInt64 last_multitouch_interaction_time = 0;
+    UInt64 last_interaction_time = 0;
     UInt64 touch_start_time = 0;
     UInt64 last_click_time = 0;
     
-    /* The transducer is checked for singletouch finger based operation and the pointer event dispatched. This function
-     * also handles a long-press, right-click function.
+    /* Checks if a finger touch is single or multi and branches accordingly
      *
      * @timestamp The timestamp of the current event being processed
-     *
      * @event The current event
      * @return `true` if we got a finger touch event, `false` otherwise
      */
     bool checkFingerTouch(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
-    
+
+    /* Convert logical coordinates to IOFixed and Scaled;
+     *
+     * @transducer A pointer to transducer to get coordinates from
+     * @x A pointer to an unset x coordinate
+     * @y A pointer to an unset y coordinate
+     */
+    void getCoordinates(VoodooI2CDigitiserTransducer* transducer, IOFixed* x, IOFixed* y);
+
     /* Checks to see if the x and y coordinates need to be modified
      * to account for a rotation
      *
      * @x A pointer to the x coordinate
      * @y A pointer to the y coordinate
-     *
      */
-
     void checkRotation(IOFixed* x, IOFixed* y);
     
-    /* This timeout based function executes a singletouch finger based pointer lift event as well as ensures that the pointer is not
-     * stuck in a 'right click' mode after the long-press right-click function has been triggered.
-     */
+    /* Execute a singletouch finger based pointer click and lift event */
     void fingerLift();
+
+    /* Reset variables associated with single touch */
+    void resetTouch();
     
+    /* Start dragging */
+    void dragStart();
+
+    /* End scrolling dragging */
+    void resetScroll();
+
     IOFramebuffer* getFramebuffer();
     
     /* Resets the pointer to the current finger location when scrolling begins
@@ -142,7 +168,6 @@ class EXPORT VoodooI2CTouchscreenHIDEventDriver : public VoodooI2CMultitouchHIDE
      *
      * @event The current event
      */
-    
     void scrollPosition(AbsoluteTime timestamp, VoodooI2CMultitouchEvent event);
 };
 #endif /* VoodooI2CTouchscreenHIDEventDriver_hpp */
