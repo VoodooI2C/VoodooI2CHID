@@ -96,7 +96,7 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
             }
 
             dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, finger_interaction, x, y);
- 
+
             // Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
             last_x = x;
             last_y = y;
