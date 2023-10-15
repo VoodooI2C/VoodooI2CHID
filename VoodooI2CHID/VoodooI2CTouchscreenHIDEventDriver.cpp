@@ -34,78 +34,78 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
 
     // The first transducer is fixed to stylus on some touchscreens
     for (int index = 0; index < digitiser.contact_count->getValue() + 1; index++) {
-    VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
-    
-    if (transducer && transducer->type == kDigitiserTransducerFinger && transducer->tip_switch.value()) {
-        IOFixed x;
-        IOFixed y;
-        getCoordinates(transducer, &x, &y);
-        
-        if (
-            isCloseTo(x, y, last_click_x, last_click_y) &&
-            (last_interaction_time - last_click_time) <= DOUBLE_CLICK_TIME
-        ) {
-            // Double click start
-            // If we're clicking again where we just clicked, precisely position the pointer where it was before
-            x = last_click_x;
-            y = last_click_y;
-        }
+        VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
 
-        if (!is_finger_down) {
-            is_finger_down = true;
-            touch_start_time = last_interaction_time;
-            touch_start_x = x;
-            touch_start_y = y;
-        } else if (!is_dragging) {
-            bool interaction_is_close_to_start = isCloseTo(x, y, touch_start_x, touch_start_y);
-            
+        if (transducer && transducer->type == kDigitiserTransducerFinger && transducer->tip_switch.value()) {
+            IOFixed x;
+            IOFixed y;
+            getCoordinates(transducer, &x, &y);
+
             if (
-                !is_right_clicking &&
-                 interaction_is_close_to_start &&
-                (last_interaction_time - touch_start_time) >= RIGHT_CLICK_TIME
+                isCloseTo(x, y, last_click_x, last_click_y) &&
+                (last_interaction_time - last_click_time) <= DOUBLE_CLICK_TIME
             ) {
-                // Right click start
-                dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, RIGHT_CLICK, x, y);
-                dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, HOVER, x, y);
-                is_right_clicking = true;
+                // Double click start
+                // If we're clicking again where we just clicked, precisely position the pointer where it was before
+                x = last_click_x;
+                y = last_click_y;
             }
 
-            if (is_right_clicking) {
-                // Continue right click
-                if (interaction_is_close_to_start) {
-                    // Adopt the location of the touch start so we don't stray and close the right click menu
-                    x = touch_start_x;
-                    y = touch_start_y;
+            if (!is_finger_down) {
+                is_finger_down = true;
+                touch_start_time = last_interaction_time;
+                touch_start_x = x;
+                touch_start_y = y;
+            } else if (!is_dragging) {
+                bool interaction_is_close_to_start = isCloseTo(x, y, touch_start_x, touch_start_y);
+
+                if (
+                    !is_right_clicking &&
+                     interaction_is_close_to_start &&
+                    (last_interaction_time - touch_start_time) >= RIGHT_CLICK_TIME
+                ) {
+                    // Right click start
+                    dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, RIGHT_CLICK, x, y);
+                    dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, HOVER, x, y);
+                    is_right_clicking = true;
                 }
-                else {
-                    // Track if we moved after the right click so we know if we need to click again on release
-                    moved_during_right_click = true;
-                }
-            } else {
-                // Check for drag start
-                if (!is_dragging && !drag_start_requested && !interaction_is_close_to_start) {
-                    scheduleDragStart();
-                    drag_start_requested = true;
+
+                if (is_right_clicking) {
+                    // Continue right click
+                    if (interaction_is_close_to_start) {
+                        // Adopt the location of the touch start so we don't stray and close the right click menu
+                        x = touch_start_x;
+                        y = touch_start_y;
+                    }
+                    else {
+                        // Track if we moved after the right click so we know if we need to click again on release
+                        moved_during_right_click = true;
+                    }
+                } else {
+                    // Check for drag start
+                    if (!is_dragging && !drag_start_requested && !interaction_is_close_to_start) {
+                        scheduleDragStart();
+                        drag_start_requested = true;
+                    }
                 }
             }
+
+            finger_interaction = HOVER;
+            if (is_dragging) {
+                finger_interaction = LEFT_CLICK;
+            }
+
+            dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, finger_interaction, x, y);
+ 
+            // Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
+            last_x = x;
+            last_y = y;
+            last_id = transducer->secondary_id;
+
+            scheduleClick();
+
+            return true;
         }
-
-        finger_interaction = HOVER;
-        if (is_dragging) {
-            finger_interaction = LEFT_CLICK;
-        }
-
-        dispatchDigitizerEventWithTiltOrientation(timestamp, transducer->secondary_id, transducer->type, 0x1, finger_interaction, x, y);
-
-        // Track last ID and coordinates so that we can send the finger lift event after our watch dog timeout.
-        last_x = x;
-        last_y = y;
-        last_id = transducer->secondary_id;
-
-        scheduleClick();
-        
-        return true;
-    }
     }
     return false;
 }
