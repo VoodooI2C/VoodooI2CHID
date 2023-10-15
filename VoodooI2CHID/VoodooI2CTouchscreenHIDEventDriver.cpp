@@ -32,7 +32,9 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
         return false;
     }
 
-    VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(0));
+    // The first transducer is fixed to stylus on some touchscreens
+    for (int index = 0; index < digitiser.contact_count->getValue() + 1; index++) {
+    VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, event.transducers->getObject(index));
     
     if (transducer && transducer->type == kDigitiserTransducerFinger && transducer->tip_switch.value()) {
         IOFixed x;
@@ -104,7 +106,7 @@ bool VoodooI2CTouchscreenHIDEventDriver::checkFingerTouch(AbsoluteTime timestamp
         
         return true;
     }
-
+    }
     return false;
 }
 
