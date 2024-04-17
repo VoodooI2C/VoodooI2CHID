@@ -115,7 +115,6 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
         digitiser.current_report = 1;
     }
 
-    IOLog("I2C - Got Interrupt Report\n");
     handleDigitizerReport(timestamp, report_id);
 
     if (digitiser.current_report == digitiser.report_count) {
@@ -123,7 +122,6 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
         event.contact_count = digitiser.current_contact_count;
         event.transducers = digitiser.transducers;
 
-        IOLog("I2C - Trying to Forward Report\n");
         forwardReport(event, timestamp);
         
         digitiser.report_count = 1;
@@ -701,7 +699,6 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements(UInt32 usage) {
             }
         
             VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, wrapper->transducers->getObject(0));
-//            transducer->is_valid = true;
         
             for (int j = 0; j < transducer->collection->getChildElements()->getCount(); j++) {
                 IOHIDElement* element = OSDynamicCast(IOHIDElement, transducer->collection->getChildElements()->getObject(j));
