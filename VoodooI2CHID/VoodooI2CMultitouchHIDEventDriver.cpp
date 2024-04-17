@@ -115,6 +115,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
         digitiser.current_report = 1;
     }
 
+    IOLog("I2C - Got Interrupt Report\n");
     handleDigitizerReport(timestamp, report_id);
 
     if (digitiser.current_report == digitiser.report_count) {
@@ -122,6 +123,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
         event.contact_count = digitiser.current_contact_count;
         event.transducers = digitiser.transducers;
 
+        IOLog("I2C - Trying to Forward Report\n");
         forwardReport(event, timestamp);
         
         digitiser.report_count = 1;
@@ -207,6 +209,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
 void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2CDigitiserTransducer* transducer, AbsoluteTime timestamp, UInt32 report_id) {
     bool handled = false;
     bool has_confidence = false;
+    bool has_valid = false;
     UInt32 element_index = 0;
     UInt32 element_count = 0;
     
@@ -297,6 +300,12 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         transducer->in_range = value != 0;
                         handled    |= element_is_current;
                         break;
+                    case kHIDUsage_Dig_Confidence:
+                    case kHIDUsage_Dig_Quality:
+                        transducer->confidence.update(element->getValue(), timestamp);
+                        handled    |= element_is_current;
+                        has_confidence = true;
+                        break;
                     case kHIDUsage_Dig_TipPressure:
                     case kHIDUsage_Dig_SecondaryTipSwitch:
                     {
@@ -334,13 +343,11 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_DataValid:
-                    case kHIDUsage_Dig_TouchValid:
-                    case kHIDUsage_Dig_Quality:
                         if (value)
                             transducer->is_valid = true;
                         else
                             transducer->is_valid = false;
-                        has_confidence = true;
+                        has_valid = true;
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_BarrelPressure:
@@ -382,6 +389,9 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
     }
 
     if (!has_confidence)
+        transducer->confidence.update(1, timestamp);
+    
+    if (!has_valid)
         transducer->is_valid = true;
     
     if (!handled)
@@ -691,6 +701,7 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements(UInt32 usage) {
             }
         
             VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, wrapper->transducers->getObject(0));
+//            transducer->is_valid = true;
         
             for (int j = 0; j < transducer->collection->getChildElements()->getCount(); j++) {
                 IOHIDElement* element = OSDynamicCast(IOHIDElement, transducer->collection->getChildElements()->getObject(j));

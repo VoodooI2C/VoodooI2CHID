@@ -246,6 +246,8 @@ void VoodooI2CTouchscreenHIDEventDriver::forwardReport(VoodooI2CMultitouchEvent 
         multitouch_interface->setProperty(kIOFBTransformKey, current_rotation, 8);
     }
     
+    IOLog("I2C - Touchscreen Forward Report\n");
+    
     if (event.contact_count) {
         // Send multitouch information to the multitouch interface
 
@@ -312,6 +314,16 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     active_framebuffer = getFramebuffer();
     if (active_framebuffer) {
         active_framebuffer->retain();
+    }
+    
+    if (digitiser.input_mode != nullptr) {
+        UInt8 inputMode[] = { 2 };
+        setProperty("Set Touchpadmode", kOSBooleanTrue);
+    
+        // Use setDataValue as it does not check for duplicate writes
+        OSData *value = OSData::withBytes(inputMode, sizeof(inputMode));
+        digitiser.input_mode->setDataValue(value);
+        OSSafeReleaseNULL(value);
     }
     
     return true;
