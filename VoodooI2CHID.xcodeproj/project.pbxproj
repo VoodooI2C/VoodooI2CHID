@@ -34,6 +34,8 @@
 		ACE41BFE22FE5BCF00F75673 /* VoodooI2CHIDSYNA3602Device.hpp in Headers */ = {isa = PBXBuildFile; fileRef = ACE41BFC22FE5BCF00F75673 /* VoodooI2CHIDSYNA3602Device.hpp */; };
 		ACF66526201A762F00D211EA /* VoodooI2CSensorHubEnabler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ACF66524201A762F00D211EA /* VoodooI2CSensorHubEnabler.cpp */; };
 		ACF66527201A762F00D211EA /* VoodooI2CSensorHubEnabler.hpp in Headers */ = {isa = PBXBuildFile; fileRef = ACF66525201A762F00D211EA /* VoodooI2CSensorHubEnabler.hpp */; };
+		EE3DD2D72C0AC1A100C2873F /* VoodooI2CHIDTrackpointWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EE3DD2D52C0AC1A100C2873F /* VoodooI2CHIDTrackpointWrapper.cpp */; };
+		EE3DD2D82C0AC1A100C2873F /* VoodooI2CHIDTrackpointWrapper.hpp in Headers */ = {isa = PBXBuildFile; fileRef = EE3DD2D62C0AC1A100C2873F /* VoodooI2CHIDTrackpointWrapper.hpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,6 +69,8 @@
 		ACE41BFC22FE5BCF00F75673 /* VoodooI2CHIDSYNA3602Device.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VoodooI2CHIDSYNA3602Device.hpp; sourceTree = "<group>"; };
 		ACF66524201A762F00D211EA /* VoodooI2CSensorHubEnabler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VoodooI2CSensorHubEnabler.cpp; path = Sensors/VoodooI2CSensorHubEnabler.cpp; sourceTree = "<group>"; };
 		ACF66525201A762F00D211EA /* VoodooI2CSensorHubEnabler.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = VoodooI2CSensorHubEnabler.hpp; path = Sensors/VoodooI2CSensorHubEnabler.hpp; sourceTree = "<group>"; };
+		EE3DD2D52C0AC1A100C2873F /* VoodooI2CHIDTrackpointWrapper.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VoodooI2CHIDTrackpointWrapper.cpp; sourceTree = "<group>"; };
+		EE3DD2D62C0AC1A100C2873F /* VoodooI2CHIDTrackpointWrapper.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VoodooI2CHIDTrackpointWrapper.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +128,8 @@
 				AC0B0C541FFB08600039AC33 /* VoodooI2CHIDTransducerWrapper.hpp */,
 				AC0ADA322017C2DC004DB693 /* VoodooI2CStylusHIDEventDriver.cpp */,
 				AC0ADA332017C2DC004DB693 /* VoodooI2CStylusHIDEventDriver.hpp */,
+				EE3DD2D52C0AC1A100C2873F /* VoodooI2CHIDTrackpointWrapper.cpp */,
+				EE3DD2D62C0AC1A100C2873F /* VoodooI2CHIDTrackpointWrapper.hpp */,
 			);
 			path = VoodooI2CHID;
 			sourceTree = "<group>";
@@ -166,6 +172,7 @@
 			files = (
 				ACCFCF241F69C1DC003E4131 /* VoodooI2CMultitouchHIDEventDriver.hpp in Headers */,
 				ACE41BFA22FE565000F75673 /* VoodooI2CHIDDeviceOverride.hpp in Headers */,
+				EE3DD2D82C0AC1A100C2873F /* VoodooI2CHIDTrackpointWrapper.hpp in Headers */,
 				ACF66527201A762F00D211EA /* VoodooI2CSensorHubEnabler.hpp in Headers */,
 				AC05569A1F7333FB00ABFD91 /* VoodooI2CPrecisionTouchpadHIDEventDriver.hpp in Headers */,
 				AC6388CD201B8E9F005E1341 /* VoodooI2CDeviceOrientationSensor.hpp in Headers */,
@@ -254,6 +261,7 @@
 				AC0E628B201A629A00A31157 /* VoodooI2CSensorHubEventDriver.cpp in Sources */,
 				4E9F1E831F8AFECD00E91849 /* VoodooI2CTouchscreenHIDEventDriver.cpp in Sources */,
 				AC01EE9C201E2B7D005A2988 /* VoodooI2CAccelerometerSensor.cpp in Sources */,
+				EE3DD2D72C0AC1A100C2873F /* VoodooI2CHIDTrackpointWrapper.cpp in Sources */,
 				ACCFCF231F69C1DC003E4131 /* VoodooI2CMultitouchHIDEventDriver.cpp in Sources */,
 				ACF66526201A762F00D211EA /* VoodooI2CSensorHubEnabler.cpp in Sources */,
 				ACE41BFD22FE5BCF00F75673 /* VoodooI2CHIDSYNA3602Device.cpp in Sources */,
