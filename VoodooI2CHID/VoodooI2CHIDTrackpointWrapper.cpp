@@ -11,7 +11,7 @@
 #define super OSObject
 OSDefineMetaClassAndStructors(VoodooI2CHIDTrackpointWrapper, OSObject);
 
-VoodooI2CHIDTrackpointWrapper* wrapper() {
+VoodooI2CHIDTrackpointWrapper* VoodooI2CHIDTrackpointWrapper::wrapper() {
     auto *tp = OSTypeAlloc(VoodooI2CHIDTrackpointWrapper);
     if (tp == nullptr) {
         return nullptr;
