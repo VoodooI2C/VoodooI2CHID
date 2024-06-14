@@ -94,6 +94,31 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
     uint64_t now_ns;
     absolutetime_to_nanoseconds(now_abs, &now_ns);
     
+    for (int index = 0; index < trackpointReports->getCount(); index++) {
+        VoodooI2CHIDTrackpointWrapper* tp = OSDynamicCast(VoodooI2CHIDTrackpointWrapper, trackpointReports->getObject(index));
+        
+        if (tp == nullptr || tp->report_id != report_id) {
+            continue;
+        }
+        
+        UInt8 button_bitmap = 0;
+        for (int btn_idx = 0; btn_idx < tp->buttons->getCount(); btn_idx++) {
+            IOHIDElement* elem = OSDynamicCast(IOHIDElement, tp->buttons->getObject(btn_idx));
+            if (elem->getValue()) {
+                button_bitmap |= BIT(elem->getUsage() - 1);
+            }
+        }
+        
+        VoodooI2CTrackpointEvent event;
+        UInt32 dx = tp->dx->getValue();
+        UInt32 dy = tp->dy->getValue();
+        event.dx = *reinterpret_cast<SInt32 *>(&dx);
+        event.dy = *reinterpret_cast<SInt32 *>(&dy);
+        event.buttons = button_bitmap;
+        multitouch_interface->handleTrackpointReport(event, timestamp);
+        return;
+    }
+    
     if (report_type == kIOHIDReportTypeInput && readyForReports())
         clock_get_uptime(&last_multi_touch_event);
     
@@ -207,6 +232,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
 void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2CDigitiserTransducer* transducer, AbsoluteTime timestamp, UInt32 report_id) {
     bool handled = false;
     bool has_confidence = false;
+    bool has_valid = false;
     UInt32 element_index = 0;
     UInt32 element_count = 0;
     
@@ -297,6 +323,12 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         transducer->in_range = value != 0;
                         handled    |= element_is_current;
                         break;
+                    case kHIDUsage_Dig_Confidence:
+                    case kHIDUsage_Dig_Quality:
+                        transducer->confidence.update(element->getValue(), timestamp);
+                        handled    |= element_is_current;
+                        has_confidence = true;
+                        break;
                     case kHIDUsage_Dig_TipPressure:
                     case kHIDUsage_Dig_SecondaryTipSwitch:
                     {
@@ -334,13 +366,11 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_DataValid:
-                    case kHIDUsage_Dig_TouchValid:
-                    case kHIDUsage_Dig_Quality:
                         if (value)
                             transducer->is_valid = true;
                         else
                             transducer->is_valid = false;
-                        has_confidence = true;
+                        has_valid = true;
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_BarrelPressure:
@@ -382,6 +412,9 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
     }
 
     if (!has_confidence)
+        transducer->confidence.update(1, timestamp);
+    
+    if (!has_valid)
         transducer->is_valid = true;
     
     if (!handled)
@@ -440,6 +473,10 @@ bool VoodooI2CMultitouchHIDEventDriver::handleStart(IOService* provider) {
 
     if (!digitiser.transducers)
         return false;
+    
+    trackpointReports = OSArray::withCapacity(1);
+    if (!trackpointReports)
+        return false;
 
     if (parseElements(kHIDUsage_Dig_Any) != kIOReturnSuccess) {
         IOLog("%s::%s Could not parse multitouch elements\n", getName(), name);
@@ -475,7 +512,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleStop(IOService* provider) {
 
     OSSafeReleaseNULL(work_loop);
 
-    
+    OSSafeReleaseNULL(trackpointReports);
     OSSafeReleaseNULL(digitiser.transducers);
     OSSafeReleaseNULL(digitiser.wrappers);
     OSSafeReleaseNULL(digitiser.styluses);
@@ -607,6 +644,43 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
 
     return kIOReturnSuccess;
 }
+
+IOReturn VoodooI2CMultitouchHIDEventDriver::parseTrackpointElement(IOHIDElement* element) {
+    auto* tp = VoodooI2CHIDTrackpointWrapper::wrapper();
+    if (tp == nullptr) {
+        return kIOReturnNoMemory;
+    }
+    
+    const auto* collections = element->getChildElements();
+    IOHIDElement* collection = OSDynamicCast(IOHIDElement, collections->getObject(0));
+    if (collection == nullptr ||
+        !collection->conformsTo(kHIDPage_GenericDesktop, kHIDUsage_GD_Pointer)) {
+        OSSafeReleaseNULL(tp);
+        return kIOReturnSuccess;
+    }
+    
+    OSArray* elements = collection->getChildElements();
+    for (int index = 0; index < elements->getCount(); index++) {
+        IOHIDElement* element = OSDynamicCast(IOHIDElement, elements->getObject(index));
+        if (element == nullptr) {
+            continue;
+        }
+        
+        if (element->conformsTo(kHIDPage_GenericDesktop, kHIDUsage_GD_X)) {
+            tp->dx = element;
+            tp->report_id = element->getReportID();
+        } else if (element->conformsTo(kHIDPage_GenericDesktop, kHIDUsage_GD_Y)) {
+            tp->dy = element;
+        } else if (element->conformsTo(kHIDPage_Button)) {
+            tp->buttons->setObject(element);
+        }
+    }
+    
+    trackpointReports->setObject(tp);
+    OSSafeReleaseNULL(tp);
+    
+    return kIOReturnError;
+}
     
 IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements(UInt32 usage) {
     int index, count;
@@ -625,6 +699,11 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseElements(UInt32 usage) {
 
         if (element->getUsage() == 0)
             continue;
+        
+        /* Trackpoint devices */
+        if (element->conformsTo(kHIDPage_GenericDesktop, kHIDUsage_GD_Mouse)) {
+            parseTrackpointElement(element);
+        }
         
         /*
          * Parse digitzer elements depending on which Event Driver is attaching.
@@ -776,6 +855,7 @@ void VoodooI2CMultitouchHIDEventDriver::setDigitizerProperties() {
     setOSDictionaryNumber(properties, "Transducer Count",  digitiser.transducers->getCount());
 
     setProperty("Digitizer", properties);
+    setProperty("Trackpoints", trackpointReports->getCount(), 32);
 
     OSSafeReleaseNULL(properties);
 }

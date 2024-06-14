@@ -313,7 +313,7 @@ bool VoodooI2CTouchscreenHIDEventDriver::handleStart(IOService* provider) {
     if (active_framebuffer) {
         active_framebuffer->retain();
     }
-    
+
     return true;
 }
 

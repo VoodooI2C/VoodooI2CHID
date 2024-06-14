@@ -31,6 +31,7 @@
 
 #include "VoodooI2CHIDDevice.hpp"
 #include "VoodooI2CHIDTransducerWrapper.hpp"
+#include "VoodooI2CHIDTrackpointWrapper.hpp"
 
 #include "../../../Multitouch Support/VoodooI2CDigitiserStylus.hpp"
 #include "../../../Multitouch Support/VoodooI2CMultitouchInterface.hpp"
@@ -63,6 +64,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
   OSDeclareDefaultStructors(VoodooI2CMultitouchHIDEventDriver);
 
  public:
+    
     struct {
         OSArray*           fingers = NULL;
         OSArray*           styluses = NULL;
@@ -179,7 +181,16 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      */
 
     IOReturn parseDigitizerTransducerElement(IOHIDElement* element, IOHIDElement* parent);
-
+    
+    /* Parses a mouse usage page element
+     * @element The element to parse
+     *
+     * This function is reponsible for adding a new mouse report.
+     *
+     * @return *kIOReturnSuccess* on successful parse, *kIOReturnDeviceError*, *kIOReturnError* or *kIOReturnNoDevice* if the mouse element is not supported
+     */
+    
+    IOReturn parseTrackpointElement(IOHIDElement* element);
     
     /* Postprocessing of digitizer elements
      *
@@ -260,6 +271,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
     IOHIDDevice* hid_device;
     VoodooI2CMultitouchInterface* multitouch_interface;
     bool should_have_interface = true;
+    OSArray* trackpointReports = nullptr;
 
     virtual void forwardReport(VoodooI2CMultitouchEvent event, AbsoluteTime timestamp);
     
