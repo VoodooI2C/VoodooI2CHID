@@ -110,10 +110,13 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
         }
         
         VoodooI2CTrackpointEvent event;
-        event.dx = (UInt8) tp->dx->getValue();
-        event.dy = (UInt8) tp->dy->getValue();
+        UInt32 dx = tp->dx->getValue();
+        UInt32 dy = tp->dy->getValue();
+        event.dx = *reinterpret_cast<SInt32 *>(&dx);
+        event.dy = *reinterpret_cast<SInt32 *>(&dy);
         event.buttons = button_bitmap;
         multitouch_interface->handleTrackpointReport(event, timestamp);
+        return;
     }
     
     if (report_type == kIOHIDReportTypeInput && readyForReports())
