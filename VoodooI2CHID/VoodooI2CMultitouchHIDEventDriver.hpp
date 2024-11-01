@@ -63,7 +63,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
   OSDeclareDefaultStructors(VoodooI2CMultitouchHIDEventDriver);
 
  public:
-    struct {
+    struct Digitiser {
         OSArray*           fingers = NULL;
         OSArray*           styluses = NULL;
         
