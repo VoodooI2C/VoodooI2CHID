@@ -207,6 +207,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
 void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2CDigitiserTransducer* transducer, AbsoluteTime timestamp, UInt32 report_id) {
     bool handled = false;
     bool has_confidence = false;
+    bool has_valid = false;
     UInt32 element_index = 0;
     UInt32 element_count = 0;
     
@@ -297,6 +298,12 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         transducer->in_range = value != 0;
                         handled    |= element_is_current;
                         break;
+                    case kHIDUsage_Dig_Confidence:
+                    case kHIDUsage_Dig_Quality:
+                        transducer->confidence.update(element->getValue(), timestamp);
+                        handled    |= element_is_current;
+                        has_confidence = true;
+                        break;
                     case kHIDUsage_Dig_TipPressure:
                     case kHIDUsage_Dig_SecondaryTipSwitch:
                     {
@@ -334,13 +341,11 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_DataValid:
-                    case kHIDUsage_Dig_TouchValid:
-                    case kHIDUsage_Dig_Quality:
                         if (value)
                             transducer->is_valid = true;
                         else
                             transducer->is_valid = false;
-                        has_confidence = true;
+                        has_valid = true;
                         handled    |= element_is_current;
                         break;
                     case kHIDUsage_Dig_BarrelPressure:
@@ -382,6 +387,9 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
     }
 
     if (!has_confidence)
+        transducer->confidence.update(1, timestamp);
+    
+    if (!has_valid)
         transducer->is_valid = true;
     
     if (!handled)
