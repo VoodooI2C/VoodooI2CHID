@@ -76,6 +76,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
         IOHIDElement*      input_mode = NULL;
         IOHIDElement*      primaryButton = NULL;
         IOHIDElement*      secondaryButton = NULL;
+        IOHIDElement*      tertiaryButton = NULL;
 
         DigitiserTransducerButtonState external_buttons;
         

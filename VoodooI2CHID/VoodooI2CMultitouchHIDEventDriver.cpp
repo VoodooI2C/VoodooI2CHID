@@ -175,12 +175,15 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
     }
     
     // Now handle button report
-    if (digitiser.primaryButton) { // there can't be secondary button without primary
+    if (digitiser.primaryButton || digitiser.secondaryButton || digitiser.tertiaryButton) {
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, digitiser.transducers->getObject(0));
+
         if (transducer) {
-            setButtonStateForUsage(transducer, digitiser.primaryButton->getUsage(), digitiser.primaryButton->getValue(), timestamp);
-            if (digitiser.secondaryButton) {
-                setButtonStateForUsage(transducer, digitiser.secondaryButton->getUsage(), digitiser.secondaryButton->getValue(), timestamp);
+            IOHIDElement* buttons[] = { digitiser.primaryButton, digitiser.secondaryButton, digitiser.tertiaryButton };
+
+            for (int i = 0; i < 3; i++) {
+                if (buttons[i])
+                    setButtonStateForUsage(transducer, buttons[i]->getUsage(), buttons[i]->getValue(), timestamp);
             }
         }
     }
@@ -585,22 +588,21 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
             continue;
         }
         
-        // On some machines (Namely Dell Latitude 7390 2-in-1) the primary button has kHIDUsage_Button_2, and the secondary button has kHIDUsage_Button_3
-        // Address cases involving kHIDUsage_Button_3
-        if (element->conformsTo(kHIDPage_Button) && element->getUsage() <= kHIDUsage_Button_3) {
-            if (digitiser.primaryButton == nullptr) {
-                digitiser.primaryButton = element;
-            }
-            else if (element->getUsage() > digitiser.primaryButton->getUsage()) {
-                // Candidate for a secondary button
-                if (digitiser.secondaryButton == nullptr || element->getUsage() < digitiser.secondaryButton->getUsage()) {
+        // Button usages 1/2/3 have a fixed meaning: 1 is the button integrated with the
+        // digitizer, 2 and 3 are external primary/secondary buttons
+        if (element->conformsTo(kHIDPage_Button)) {
+            switch (element->getUsage()) {
+                case kHIDUsage_Button_1:
+                    digitiser.primaryButton = element;
+                    break;
+                case kHIDUsage_Button_2:
                     digitiser.secondaryButton = element;
-                }
-            }
-            else if (element->getUsage() < digitiser.primaryButton->getUsage()) {
-                // This is the new primary button. Old primary becomes secondary.
-                digitiser.secondaryButton = digitiser.primaryButton;
-                digitiser.primaryButton = element;
+                    break;
+                case kHIDUsage_Button_3:
+                    digitiser.tertiaryButton = element;
+                    break;
+                default:
+                    break;
             }
         }
     }
