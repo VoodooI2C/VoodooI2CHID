@@ -76,6 +76,9 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
         IOHIDElement*      input_mode = NULL;
         IOHIDElement*      primaryButton = NULL;
         IOHIDElement*      secondaryButton = NULL;
+        IOHIDElement*      tertiaryButton = NULL;
+
+        DigitiserTransducerButtonState external_buttons;
         
         // collection level elements
         
@@ -203,6 +206,15 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
      */
 
     static inline void setButtonState(DigitiserTransducerButtonState* state, UInt32 bit, UInt32 value, AbsoluteTime timestamp);
+
+    /* Routes a report level button to the matching transducer/digitiser button state
+     * @transducer The transducer the button belongs to
+     * @usage The HID button usage
+     * @value The value to be written
+     * @timestamp The timestamp pertaining to the value
+     */
+
+    inline void setButtonStateForUsage(VoodooI2CDigitiserTransducer* transducer, UInt32 usage, UInt32 value, AbsoluteTime timestamp);
 
     /* Publishes some miscellaneous properties to the IOService plane
      */

@@ -120,6 +120,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
     if (digitiser.current_report == digitiser.report_count) {
         VoodooI2CMultitouchEvent event;
         event.contact_count = digitiser.current_contact_count;
+        event.external_buttons = digitiser.external_buttons.value();
         event.transducers = digitiser.transducers;
 
         forwardReport(event, timestamp);
@@ -174,13 +175,15 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
     }
     
     // Now handle button report
-    if (digitiser.primaryButton) { // there can't be secondary button without primary
+    if (digitiser.primaryButton || digitiser.secondaryButton || digitiser.tertiaryButton) {
         VoodooI2CDigitiserTransducer* transducer = OSDynamicCast(VoodooI2CDigitiserTransducer, digitiser.transducers->getObject(0));
+
         if (transducer) {
-            setButtonState(&transducer->physical_button, 0, digitiser.primaryButton->getValue(), timestamp);
-            if (digitiser.secondaryButton) {
-                transducer->has_secondary_button = true;
-                setButtonState(&transducer->physical_button, 1, digitiser.secondaryButton->getValue(), timestamp);
+            IOHIDElement* buttons[] = { digitiser.primaryButton, digitiser.secondaryButton, digitiser.tertiaryButton };
+
+            for (int i = 0; i < 3; i++) {
+                if (buttons[i])
+                    setButtonStateForUsage(transducer, buttons[i]->getUsage(), buttons[i]->getValue(), timestamp);
             }
         }
     }
@@ -270,15 +273,7 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerTransducerReport(VoodooI2
                 }
                 break;
             case kHIDPage_Button:
-                if (usage == kHIDUsage_Button_1) {
-                    // kHIDUsage_Button_1 is for the clickpad surface
-                    setButtonState(&transducer->physical_button, 0, value, timestamp);
-                } else {
-                    // kHIDUsage_Button_2/3 are for external buttons, thus should be reported
-                    // through the trackpoint device.
-                    transducer->has_secondary_button = true;
-                    setButtonState(&transducer->physical_button, (usage - 2), value, timestamp);
-                }
+                setButtonStateForUsage(transducer, usage, value, timestamp);
                 
                 handled    |= element_is_current;
                 break;
@@ -593,22 +588,21 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
             continue;
         }
         
-        // On some machines (Namely Dell Latitude 7390 2-in-1) the primary button has kHIDUsage_Button_2, and the secondary button has kHIDUsage_Button_3
-        // Address cases involving kHIDUsage_Button_3
-        if (element->conformsTo(kHIDPage_Button) && element->getUsage() <= kHIDUsage_Button_3) {
-            if (digitiser.primaryButton == nullptr) {
-                digitiser.primaryButton = element;
-            }
-            else if (element->getUsage() > digitiser.primaryButton->getUsage()) {
-                // Candidate for a secondary button
-                if (digitiser.secondaryButton == nullptr || element->getUsage() < digitiser.secondaryButton->getUsage()) {
+        // Button usages 1/2/3 have a fixed meaning: 1 is the button integrated with the
+        // digitizer, 2 and 3 are external primary/secondary buttons
+        if (element->conformsTo(kHIDPage_Button)) {
+            switch (element->getUsage()) {
+                case kHIDUsage_Button_1:
+                    digitiser.primaryButton = element;
+                    break;
+                case kHIDUsage_Button_2:
                     digitiser.secondaryButton = element;
-                }
-            }
-            else if (element->getUsage() < digitiser.primaryButton->getUsage()) {
-                // This is the new primary button. Old primary becomes secondary.
-                digitiser.secondaryButton = digitiser.primaryButton;
-                digitiser.primaryButton = element;
+                    break;
+                case kHIDUsage_Button_3:
+                    digitiser.tertiaryButton = element;
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -757,6 +751,18 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::publishMultitouchInterface() {
 exit:
     OSSafeReleaseNULL(multitouch_interface);
     return kIOReturnError;
+}
+
+inline void VoodooI2CMultitouchHIDEventDriver::setButtonStateForUsage(VoodooI2CDigitiserTransducer* transducer, UInt32 usage, UInt32 value, AbsoluteTime timestamp) {
+    if (usage == kHIDUsage_Button_1) {
+        // Button 1 is the button integrated with the digitizer (the clickpad itself)
+        setButtonState(&transducer->physical_button, 0, value, timestamp);
+    } else if (usage <= kHIDUsage_Button_3) {
+        // Button 2/3 are external buttons, shifted down by one so the value can be sent
+        // through the trackpoint device as plain mouse buttons
+        transducer->has_secondary_button = true;
+        setButtonState(&digitiser.external_buttons, usage - kHIDUsage_Button_2, value, timestamp);
+    }
 }
 
 inline void VoodooI2CMultitouchHIDEventDriver::setButtonState(DigitiserTransducerButtonState* state, UInt32 bit, UInt32 value, AbsoluteTime timestamp) {
