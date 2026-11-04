@@ -12,10 +12,30 @@
 OSDefineMetaClassAndStructors(VoodooI2CPrecisionTouchpadHIDEventDriver, VoodooI2CMultitouchHIDEventDriver);
 
 void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
+    int retry = 0;
+
+    // Wait until input_mode becomes available
+    while (!digitiser.input_mode && retry < kMaxRetries) {
+        IOSleep(50);
+        retry++;
+    }
+    
+    // Still not ready -> give up
+    if (!digitiser.input_mode) {
+        IOLog("VoodooI2CHID: retry limit reached\n");
+        return;
+    }
+    
     UInt8 inputMode[] = { INPUT_MODE_TOUCHPAD };
     
     // Use setDataValue as it does not check for duplicate writes
     OSData *value = OSData::withBytes(inputMode, sizeof(inputMode));
+    
+    if (!value) {
+        IOLog("VoodooI2CHID: failed to allocate memory for input mode setDataValue\n");
+        return;
+    }
+    
     digitiser.input_mode->setDataValue(value);
     OSSafeReleaseNULL(value);
     ready = true;
@@ -37,6 +57,8 @@ bool VoodooI2CPrecisionTouchpadHIDEventDriver::handleStart(IOService* provider) 
 
     IOLog("%s::%s Putting device into Precision Touchpad Mode\n", getName(), name);
 
+    ready = false;
+    
     enterPrecisionTouchpadMode();
 
     return true;
@@ -52,8 +74,10 @@ IOReturn VoodooI2CPrecisionTouchpadHIDEventDriver::setPowerState(unsigned long w
     if (!whichState) {
         if (awake)
             awake = false;
+        ready = false;
     } else {
         if (!awake) {
+            ready = false;
             IOSleep(10);
             enterPrecisionTouchpadMode();
 
