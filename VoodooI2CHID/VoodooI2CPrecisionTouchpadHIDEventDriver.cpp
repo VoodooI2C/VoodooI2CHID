@@ -18,6 +18,20 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
     OSData *value = OSData::withBytes(inputMode, sizeof(inputMode));
     digitiser.input_mode->setDataValue(value);
     OSSafeReleaseNULL(value);
+
+    // Some touchpads (e.g. Samsung Galaxy Book3 IMG4100) power up with surface and button
+    // reporting off and stay silent in PTP mode until the host turns them on, like Windows and Linux do.
+    UInt8 on[] = { 1 };
+    if (digitiser.surface_switch) {
+        OSData *v = OSData::withBytes(on, sizeof(on));
+        digitiser.surface_switch->setDataValue(v);
+        OSSafeReleaseNULL(v);
+    }
+    if (digitiser.button_switch) {
+        OSData *v = OSData::withBytes(on, sizeof(on));
+        digitiser.button_switch->setDataValue(v);
+        OSSafeReleaseNULL(v);
+    }
     ready = true;
 }
 
