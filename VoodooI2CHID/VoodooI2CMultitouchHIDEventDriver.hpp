@@ -74,6 +74,8 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
         
         IOHIDElement*      contact_count = NULL;
         IOHIDElement*      input_mode = NULL;
+        IOHIDElement*      surface_switch = NULL;
+        IOHIDElement*      button_switch = NULL;
         IOHIDElement*      primaryButton = NULL;
         IOHIDElement*      secondaryButton = NULL;
         IOHIDElement*      tertiaryButton = NULL;
