@@ -528,13 +528,16 @@ IOReturn VoodooI2CMultitouchHIDEventDriver::parseDigitizerElement(IOHIDElement* 
                 for (int j = 0; j < sub_array->getCount(); j++) {
                     IOHIDElement* sub_element = OSDynamicCast(IOHIDElement, sub_array->getObject(j));
 
-                    if (sub_element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_DeviceMode))
+                    if (sub_element->conformsTo(kHIDPage_Digitizer, kHIDUsage_Dig_DeviceMode)) {
                         digitiser.input_mode = sub_element;
+                    }
                     // Function switch report (Windows PTP): surface switch 0x57, button switch 0x58
-                    else if (sub_element->getUsagePage() == kHIDPage_Digitizer && sub_element->getUsage() == 0x57)
+                    else if (sub_element->getUsagePage() == kHIDPage_Digitizer && sub_element->getUsage() == 0x57) {
                         digitiser.surface_switch = sub_element;
-                    else if (sub_element->getUsagePage() == kHIDPage_Digitizer && sub_element->getUsage() == 0x58)
+                    }
+                    else if (sub_element->getUsagePage() == kHIDPage_Digitizer && sub_element->getUsage() == 0x58) {
                         digitiser.button_switch = sub_element;
+                    }
                 }
             }
         }

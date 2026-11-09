@@ -23,14 +23,14 @@ void VoodooI2CPrecisionTouchpadHIDEventDriver::enterPrecisionTouchpadMode() {
     // reporting off and stay silent in PTP mode until the host turns them on, like Windows and Linux do.
     UInt8 on[] = { 1 };
     if (digitiser.surface_switch) {
-        OSData *v = OSData::withBytes(on, sizeof(on));
-        digitiser.surface_switch->setDataValue(v);
-        OSSafeReleaseNULL(v);
+        value = OSData::withBytes(on, sizeof(on));
+        digitiser.surface_switch->setDataValue(value);
+        OSSafeReleaseNULL(value);
     }
     if (digitiser.button_switch) {
-        OSData *v = OSData::withBytes(on, sizeof(on));
-        digitiser.button_switch->setDataValue(v);
-        OSSafeReleaseNULL(v);
+        value = OSData::withBytes(on, sizeof(on));
+        digitiser.button_switch->setDataValue(value);
+        OSSafeReleaseNULL(value);
     }
     ready = true;
 }
