@@ -7,6 +7,7 @@
 //
 
 #include "VoodooI2CMultitouchHIDEventDriver.hpp"
+#include <IOKit/pwr_mgt/RootDomain.h>
 #include <IOKit/IOCommandGate.h>
 #include <IOKit/hid/IOHIDInterface.h>
 #include <IOKit/usb/USBSpec.h>
@@ -103,6 +104,15 @@ void VoodooI2CMultitouchHIDEventDriver::handleInterruptReport(AbsoluteTime times
     
     if (!readyForReports() || report_type != kIOHIDReportTypeInput)
         return;
+
+    // After the display has been off for a while macOS no longer treats the emulated
+    // trackpad's touches as user activity, so only a click wakes it. Declare user
+    // activity ourselves (at most once a second), as a built-in trackpad would.
+    if (now_ns - last_user_active_ns > 1000000000ULL) {
+        last_user_active_ns = now_ns;
+        if (IOPMrootDomain *root = getPMRootDomain())
+            root->requestUserActive(this, "VoodooI2C trackpad touch");
+    }
 
     if (digitiser.contact_count && digitiser.contact_count->getValue()) {
         digitiser.current_contact_count = digitiser.contact_count->getValue();

@@ -294,6 +294,7 @@ class EXPORT VoodooI2CMultitouchHIDEventDriver : public IOHIDEventService {
 
     uint64_t max_after_typing = 500000000;
     uint64_t key_time = 0;
+    uint64_t last_user_active_ns = 0;  // rate limit for requestUserActive (wake the display on touch)
     
     IOWorkLoop* work_loop;
     IOCommandGate* command_gate;
