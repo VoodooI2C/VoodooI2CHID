@@ -158,7 +158,12 @@ void VoodooI2CMultitouchHIDEventDriver::handleDigitizerReport(AbsoluteTime times
         // This is equivalent to ceil(1.0f * (first_identifer + 1) / finger_count) - 1
         UInt8 actual_index = (first_identifier + finger_count) / finger_count - 1;
     
-        if (actual_index != digitiser.current_report - 1) {
+        // Only trust the identifier if it points to a report within the current frame. Some devices
+        // (e.g. Goodix GXTP7386) use incrementing tracking IDs as contact identifiers rather than slot
+        // numbers, so an identifier of 5 or more in a single report frame does not mean the report
+        // belongs to a later wrapper. Re-indexing in that case would route it to an unused finger wrapper
+        // or the stylus wrapper and the touch would be lost.
+        if (actual_index < digitiser.report_count && actual_index != digitiser.current_report - 1) {
             wrapper = OSDynamicCast(VoodooI2CHIDTransducerWrapper, digitiser.wrappers->getObject(actual_index));
             if (!wrapper) {
                 // Fall back to the original wrapper
