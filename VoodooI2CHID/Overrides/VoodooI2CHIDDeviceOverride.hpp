@@ -17,7 +17,8 @@ class VoodooI2CHIDDeviceOverride : public VoodooI2CHIDDevice {
  protected:
     VoodooI2CHIDDeviceHIDDescriptor hid_descriptor_override;
     UInt8* report_descriptor_override;
-    
+    bool use_device_descriptor = false;
+
     IOReturn getHIDDescriptor() override;
     IOReturn newReportDescriptor(IOMemoryDescriptor** descriptor) const override;
 };
