@@ -22,8 +22,6 @@ IOReturn VoodooI2CHIDDeviceOverride::getHIDDescriptor() {
         return kIOReturnSuccess;
     }
 
-    use_device_descriptor = false;
-
     IOLog("%s::%s Overriding HID descriptor\n", getName(), name);
     memcpy(&hid_descriptor, &hid_descriptor_override, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
 
