@@ -12,6 +12,16 @@
 OSDefineMetaClassAndStructors(VoodooI2CHIDDeviceOverride, VoodooI2CHIDDevice);
 
 IOReturn VoodooI2CHIDDeviceOverride::getHIDDescriptor() {
+    // Overrides are matched by ACPI name only, and other devices can share that name
+    // (e.g. SYNA3602). The devices the overrides were written for return an empty HID
+    // descriptor, so try the device's own descriptor first and only override when it
+    // cannot be read or is invalid.
+    if (super::getHIDDescriptor() == kIOReturnSuccess) {
+        IOLog("%s::%s Device returned a valid HID descriptor, not overriding\n", getName(), name);
+        use_device_descriptor = true;
+        return kIOReturnSuccess;
+    }
+
     IOLog("%s::%s Overriding HID descriptor\n", getName(), name);
     memcpy(&hid_descriptor, &hid_descriptor_override, sizeof(VoodooI2CHIDDeviceHIDDescriptor));
 
@@ -19,6 +29,9 @@ IOReturn VoodooI2CHIDDeviceOverride::getHIDDescriptor() {
 }
 
 IOReturn VoodooI2CHIDDeviceOverride::newReportDescriptor(IOMemoryDescriptor** descriptor) const {
+    if (use_device_descriptor)
+        return super::newReportDescriptor(descriptor);
+
     IOLog("%s::%s Overriding report descriptor\n", getName(), name);
 
     if (!hid_descriptor.wReportDescLength) {
